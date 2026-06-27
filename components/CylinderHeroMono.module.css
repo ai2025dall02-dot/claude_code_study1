@@ -1,0 +1,147 @@
+/* 블랙앤화이트 무드. 배경/텍스트/장식은 전부 무채색.
+   포스터 이미지에는 어떤 필터/오버레이도 적용하지 않음 (컬러 원본 유지). */
+.scene {
+  position: relative;
+  height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  perspective: 1500px;
+  background:
+    radial-gradient(70% 60% at 50% 34%, #ffffff 0%, transparent 70%),
+    linear-gradient(#f2f2f0, #d9d9d6);
+  color: #111;
+}
+
+/* 무채색 그레인 */
+.scene::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* 가장자리 비네트 (밝은 무채색) */
+.scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  background: radial-gradient(120% 85% at 50% 50%, transparent 52%, rgba(245, 245, 244, 0.92) 100%);
+}
+
+/* 배경 워터마크 (큰 무채색 타이포) */
+.watermark {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Arial Black", Helvetica, system-ui, sans-serif;
+  font-weight: 900;
+  font-size: clamp(140px, 30vw, 460px);
+  letter-spacing: -0.04em;
+  color: #000;
+  opacity: 0.035;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* 바깥 래퍼: 고정 기울기만 (rotateX/rotateZ) — 회전과 분리 */
+.tilt {
+  position: relative;
+  z-index: 2;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--tiltX, -9deg)) rotateZ(var(--tiltZ, -2deg)) scale(var(--scale, 1));
+}
+
+/* 안쪽 링: rotateY 무한 회전만 */
+.ring {
+  position: relative;
+  width: var(--cw);
+  height: var(--ch);
+  transform-style: preserve-3d;
+  animation: spin var(--dur, 38s) linear infinite;
+}
+.scene:hover .ring {
+  animation-play-state: paused;
+}
+@keyframes spin {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+
+/* 셀: 원기둥 옆면 배치 (rotateY(θ) translateZ(radius)) — transform은 인라인 주입.
+   포스터 자체엔 필터/오버레이 없음. 그림자/테두리만(이미지 픽셀 불변). */
+.cell {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  background: #cfcfcc; /* 이미지 로딩 전 무채색 플레이스홀더 */
+  box-shadow: 0 30px 55px rgba(20, 20, 20, 0.32), 0 6px 16px rgba(20, 20, 20, 0.2);
+  outline: 1px solid rgba(0, 0, 0, 0.12);
+  outline-offset: -1px;
+}
+.cell img {
+  object-fit: cover;
+  /* 명시적으로 어떤 필터도 걸지 않음 (컬러 원본 그대로) */
+  filter: none;
+}
+
+/* 중앙 카피 — 무채색 */
+.copy {
+  position: absolute;
+  z-index: 7;
+  text-align: center;
+  pointer-events: none;
+  padding: 0 var(--gutter);
+}
+.eyebrow {
+  font-family: var(--font-meta, monospace);
+  font-size: clamp(11px, 1.1vw, 13px);
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: #4a4a48;
+  margin: 0 0 1rem;
+}
+.title {
+  font-family: var(--font-display, Georgia, serif);
+  font-weight: 800;
+  font-size: clamp(2rem, 6vw, 4.6rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  color: #0c0c0c;
+  margin: 0;
+  word-break: keep-all;
+  white-space: pre-line;
+}
+
+.hint {
+  position: absolute;
+  bottom: clamp(1.4rem, 3vw, 2.2rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 7;
+  font-family: var(--font-meta, monospace);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6c6c6a;
+}
+
+@media (max-width: 900px) {
+  .tilt { --scale: 0.66; }
+}
+@media (max-width: 560px) {
+  .tilt { --scale: 0.46; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ring { animation: none; }
+}
