@@ -147,17 +147,17 @@
 /* ── 원통형(3D 실린더) 카드 덱 ── */
 .deck {
   position: absolute;
-  left: 62%;
-  top: 70%;
+  left: 50%;
+  top: 55%;
   z-index: 6;
-  perspective: 1050px;
+  perspective: 1300px;
 }
 /* 바깥 래퍼: 고정 기울기(대각 스윕)만 — 회전과 분리 */
 .deckTilt {
   position: absolute;
   left: 0;
   top: 0;
-  transform: translate(-50%, -50%) rotateZ(-15deg) rotateX(26deg) scale(var(--scale, 1));
+  transform: translate(-50%, -50%) rotateZ(-8deg) rotateX(4deg) scale(var(--scale, 1));
   transform-style: preserve-3d;
 }
 /* 안쪽 링: rotateY 무한 회전만 */
