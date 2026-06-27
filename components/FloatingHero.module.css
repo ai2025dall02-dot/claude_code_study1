@@ -1,0 +1,92 @@
+.hero {
+  position: relative;
+  height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+  background:
+    radial-gradient(120% 80% at 50% -10%, #211b36 0%, transparent 55%),
+    radial-gradient(100% 70% at 50% 110%, #17131f 0%, transparent 60%),
+    linear-gradient(#0e0c16, #0a0910);
+}
+
+/* 중앙 글로우 */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(42% 34% at 50% 48%, rgba(228, 162, 59, 0.1), transparent 70%);
+  pointer-events: none;
+}
+
+/* 배경 레이어 */
+.bg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* 개별 요소: 바깥 래퍼 = 등장(opacity/y), 안쪽 = 상시 floating */
+.item {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  will-change: transform, opacity;
+}
+.float {
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+.float svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 중앙 카피 */
+.copy {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 0 var(--gutter);
+  max-width: 940px;
+}
+.headline {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.4rem, 7vw, 5.5rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--screen);
+  margin: 0;
+  word-break: keep-all;
+  text-wrap: balance;
+}
+.accent {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--amber);
+}
+.sub {
+  margin: 1.6rem auto 0;
+  max-width: 40ch;
+  font-family: var(--font-sans);
+  color: var(--screen-dim);
+  font-size: clamp(1rem, 1.8vw, 1.2rem);
+  line-height: 1.7;
+}
+.eyebrow {
+  font-family: var(--font-meta);
+  font-size: clamp(11px, 1.1vw, 13px);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 0 0 1.4rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float { animation: none !important; }
+}
