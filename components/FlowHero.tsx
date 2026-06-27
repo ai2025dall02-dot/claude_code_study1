@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import styles from "./FlowHero.module.css";
 
@@ -14,19 +17,77 @@ const CARDS: FlowCard[] = [
   { label: "ARCHIVE", caption: "필름의 끝 · 16mm", img: "/posters-photo/m2.jpg" },
 ];
 
-// 원통형 덱: 카드 부족 시 자연스러운 곡면을 위해 두 바퀴로 채움
+// 원통형 덱: 카드 부족 시 곡면을 채우기 위해 두 바퀴
 const DECK = [...CARDS, ...CARDS];
 const CW = 212;
 const CH = 300;
 const COUNT = DECK.length;
 const STEP = 360 / COUNT;
-const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.12);
+const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.38);
+const SPEED = 7; // deg/sec (기존 ~52s/turn 과 유사)
+
+// 각도를 -180~180 으로 정규화
+function norm(a: number) {
+  const m = ((a % 360) + 360) % 360;
+  return m > 180 ? m - 360 : m;
+}
 
 export default function FlowHero() {
+  const ringRef = useRef<HTMLDivElement>(null);
+  const cellRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const pausedRef = useRef(false);
+  const rotRef = useRef(0);
+
+  useEffect(() => {
+    const ring = ringRef.current;
+    if (!ring) return;
+
+    // 각 셀의 절대 각도(i*STEP + rot)로 정면 ±90° 판정 → .isFront 토글
+    const applyFront = () => {
+      for (let i = 0; i < COUNT; i++) {
+        const cell = cellRefs.current[i];
+        if (!cell) continue;
+        const a = norm(i * STEP + rotRef.current);
+        cell.classList.toggle(styles.isFront, Math.abs(a) <= 90);
+      }
+    };
+
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      // [5] reduced-motion: rAF 정지, 한 번만 배치
+      ring.style.transform = "rotateY(0deg)";
+      applyFront();
+      return;
+    }
+
+    // [1] 회전을 requestAnimationFrame 으로 구동
+    let raf = 0;
+    let last = 0;
+    const frame = (t: number) => {
+      if (!last) last = t;
+      const dt = (t - last) / 1000;
+      last = t;
+      if (!pausedRef.current) rotRef.current += SPEED * dt; // rot 누적
+      ring.style.transform = `rotateY(${rotRef.current}deg)`;
+      applyFront();
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // [4] 카드 호버: 전체 회전 정지 + 그 카드만 확대
+  const onEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    pausedRef.current = true;
+    e.currentTarget.classList.add(styles.hovered);
+  };
+  const onLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    pausedRef.current = false;
+    e.currentTarget.classList.remove(styles.hovered);
+  };
 
   return (
     <section className={styles.stage}>
-      {/* NAV */}
       <header className={styles.nav}>
         <span className={styles.nav__brand}>FILMNOUVELLE</span>
         <nav className={styles.nav__links}>
@@ -38,17 +99,14 @@ export default function FlowHero() {
         </nav>
       </header>
 
-      {/* 우측 아웃라인 대형 글자 */}
       <p className={styles.outline} aria-hidden="true">
         REEL
       </p>
 
-      {/* 좌측 거대 줄무늬 디졸브 글자 */}
       <h1 className={styles.bigword} aria-label="MOVIE">
         MOVIE
       </h1>
 
-      {/* 원형 회전 텍스트 */}
       <svg className={styles.ringText} viewBox="0 0 100 100" aria-hidden="true">
         <defs>
           <path id="flowCirc" d="M50,50 m-42,0 a42,42 0 1,1 84,0 a42,42 0 1,1 -84,0" />
@@ -60,52 +118,53 @@ export default function FlowHero() {
         </text>
       </svg>
 
-      {/* 3D 큐브 */}
       <div className={styles.cubeWrap} aria-hidden="true">
         <div className={styles.cube}>
           <i /><i /><i /><i /><i /><i />
         </div>
       </div>
 
-      {/* 원통형 3D 카드 덱 — 바깥=고정 기울기, 안쪽=rotateY 무한회전 */}
+      {/* 원통형 3D 카드 덱 — 바깥=고정 기울기, 안쪽=rAF rotateY */}
       <div className={styles.deck}>
         <div className={styles.deckTilt}>
           <div
             className={styles.deckRing}
-            style={
-              {
-                "--cw": `${CW}px`,
-                "--ch": `${CH}px`,
-                "--dur": "52s",
-              } as React.CSSProperties
-            }
+            ref={ringRef}
+            style={{ "--cw": `${CW}px`, "--ch": `${CH}px` } as React.CSSProperties}
           >
-            {DECK.map((c, i) => (
-              <div
-                key={i}
-                className={styles.cell}
-                style={{ transform: `rotateY(${i * STEP}deg) translateZ(${RADIUS}px)` }}
-              >
-                <div className={styles.card}>
-                  <div className={styles.card__head}>
-                    <span className={styles.card__label}>{c.label}</span>
-                    <span className={styles.card__no}>
-                      {String((i % CARDS.length) + 1).padStart(2, "0")}
-                    </span>
+            {DECK.map((c, i) => {
+              const initFront = Math.abs(norm(i * STEP)) <= 90;
+              return (
+                <div
+                  key={i}
+                  ref={(el) => {
+                    cellRefs.current[i] = el;
+                  }}
+                  className={`${styles.cell}${initFront ? " " + styles.isFront : ""}`}
+                  style={{
+                    transform: `rotateY(${i * STEP}deg) translateZ(${RADIUS}px)`,
+                  }}
+                >
+                  <div className={styles.card} onMouseEnter={onEnter} onMouseLeave={onLeave}>
+                    {/* 정면 카드: 이미지 + 라벨/캡션 */}
+                    <div className={styles.front}>
+                      <div className={styles.card__head}>
+                        <span className={styles.card__label}>{c.label}</span>
+                        <span className={styles.card__no}>
+                          {String((i % CARDS.length) + 1).padStart(2, "0")}
+                        </span>
+                      </div>
+                      <div className={styles.card__media}>
+                        <Image src={c.img} alt={c.caption} fill sizes="212px" priority={i < 6} />
+                      </div>
+                      <span className={styles.card__cap}>{c.caption}</span>
+                    </div>
+                    {/* 비정면 카드: 옅은 회색 빈 패널 */}
+                    <div className={styles.panel} aria-hidden="true" />
                   </div>
-                  <div className={styles.card__media}>
-                    <Image
-                      src={c.img}
-                      alt={c.caption}
-                      fill
-                      sizes="212px"
-                      priority={i < 5}
-                    />
-                  </div>
-                  <span className={styles.card__cap}>{c.caption}</span>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
