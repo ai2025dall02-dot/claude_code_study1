@@ -23,7 +23,7 @@ const CW = 212;
 const CH = 300;
 const COUNT = DECK.length;
 const STEP = 360 / COUNT;
-const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.38);
+const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.15);
 const SPEED = 7; // deg/sec (기존 ~52s/turn 과 유사)
 
 // 각도를 -180~180 으로 정규화
@@ -63,11 +63,23 @@ export default function FlowHero() {
     // [1] 회전을 requestAnimationFrame 으로 구동
     let raf = 0;
     let last = 0;
+    let pausedWritten = false;
     const frame = (t: number) => {
       if (!last) last = t;
       const dt = (t - last) / 1000;
-      last = t;
-      if (!pausedRef.current) rotRef.current += SPEED * dt; // rot 누적
+      last = t; // dt 누적 점프 방지 위해 항상 갱신
+      if (pausedRef.current) {
+        // [2] paused 동안 ring transform 을 매 프레임 재기록하지 않고 진입 시 1회만
+        if (!pausedWritten) {
+          ring.style.transform = `rotateY(${rotRef.current}deg)`;
+          applyFront();
+          pausedWritten = true;
+        }
+        raf = requestAnimationFrame(frame);
+        return;
+      }
+      pausedWritten = false;
+      rotRef.current += SPEED * dt; // rot 누적
       ring.style.transform = `rotateY(${rotRef.current}deg)`;
       applyFront();
       raf = requestAnimationFrame(frame);

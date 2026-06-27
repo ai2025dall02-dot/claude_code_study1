@@ -178,21 +178,32 @@
   position: relative;
   width: 100%;
   height: 100%;
-  background: #fff;
+  background: transparent;
   border-radius: 3px;
   padding: 9px 9px 11px;
   display: flex;
   flex-direction: column;
+  /* [2] GPU 합성 레이어로 분리 → 호버 확대 버벅임 방지 */
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  /* transform 만 transition (box-shadow 등 무거운 속성 제외) */
+  transition: transform 0.25s ease;
+}
+/* 정면 카드만 흰 타일 + 그림자 (비정면은 투명 → 뒤가 비침) */
+.cell.isFront .card {
+  background: #fff;
   box-shadow: 0 26px 50px rgba(20, 20, 20, 0.22), 0 4px 14px rgba(20, 20, 20, 0.14);
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
 }
 /* [4] 개별 카드 호버 확대 (.cell 이 아니라 .card 에 → 배치 유지) */
 .card.hovered {
-  transform: scale(1.16);
+  transform: scale(1.16) translateZ(0);
   z-index: 50;
+}
+.cell.isFront .card.hovered {
   box-shadow: 0 44px 90px rgba(20, 20, 20, 0.42), 0 12px 26px rgba(20, 20, 20, 0.3);
 }
-/* [2] 정면(.isFront) 카드만 콘텐츠 표시, 그 외엔 옅은 회색 빈 패널 */
+/* [2] 정면(.isFront) 카드만 콘텐츠 표시 */
 .front {
   display: none;
   flex: 1;
@@ -202,10 +213,12 @@
 .cell.isFront .front {
   display: flex;
 }
+/* [3] 빈 자리: 반투명 패널 → 뒤의 줄무늬 대형 글자가 비쳐 보임 */
 .panel {
   position: absolute;
   inset: 0;
-  background: #ececec;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 3px;
 }
 .cell.isFront .panel {
