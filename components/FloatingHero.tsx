@@ -109,7 +109,7 @@ export default function FloatingHero() {
   };
 
   return (
-    <section className={styles.hero}>
+    <section className={styles.hero} id="top">
       {/* 배경 부유 요소 */}
       <motion.div className={styles.bg} variants={container} initial="hidden" animate="show">
         {ELEMENTS.map((el) => (
