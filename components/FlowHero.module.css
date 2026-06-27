@@ -1,0 +1,244 @@
+/* DAYONEDREAM 무드: 하이키 화이트 에디토리얼 + 블랙 볼드 타이포 +
+   부채꼴 컬러 카드 + 원형 회전 텍스트 + 3D 큐브 + 줄무늬 디졸브 대형 글자 */
+.stage {
+  position: relative;
+  height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background:
+    radial-gradient(80% 70% at 30% 0%, #ffffff 0%, transparent 60%),
+    linear-gradient(#f4f3f1, #e9e8e4);
+  color: #0c0c0c;
+  font-family: var(--font-sans);
+}
+
+/* ── NAV ── */
+.nav {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem clamp(1.4rem, 4vw, 3rem);
+}
+.nav__brand {
+  font-family: "Arial Black", Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: clamp(15px, 1.7vw, 20px);
+  letter-spacing: -0.02em;
+  color: #0c0c0c;
+}
+.nav__links {
+  display: flex;
+  gap: clamp(1rem, 2.4vw, 2.6rem);
+}
+.nav__links a {
+  font-family: "Arial Black", Helvetica, sans-serif;
+  font-weight: 800;
+  font-size: clamp(11px, 1vw, 13px);
+  letter-spacing: 0.04em;
+  color: #0c0c0c;
+  transition: opacity 0.2s;
+}
+.nav__links a:hover { opacity: 0.45; }
+@media (max-width: 880px) {
+  .nav__links { display: none; }
+}
+
+/* ── 거대 줄무늬 디졸브 글자 ── */
+.bigword {
+  position: absolute;
+  left: -0.06em;
+  top: 4%;
+  z-index: 2;
+  margin: 0;
+  font-family: "Arial Black", Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: clamp(150px, 30vw, 440px);
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  color: #0b0b0c;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-mask-image:
+    linear-gradient(90deg, #000 0 30%, transparent 72%),
+    repeating-linear-gradient(90deg, #000 0 0.08em, transparent 0.08em 0.16em);
+  mask-image:
+    linear-gradient(90deg, #000 0 30%, transparent 72%),
+    repeating-linear-gradient(90deg, #000 0 0.08em, transparent 0.08em 0.16em);
+  -webkit-mask-composite: source-over;
+  mask-composite: add;
+}
+
+/* ── 우측 아웃라인 대형 글자 ── */
+.outline {
+  position: absolute;
+  right: -1.5%;
+  bottom: 1%;
+  z-index: 1;
+  margin: 0;
+  font-family: "Arial Black", Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: clamp(140px, 26vw, 380px);
+  line-height: 0.8;
+  letter-spacing: -0.03em;
+  color: transparent;
+  -webkit-text-stroke: 1.4px #c9c7c2;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* ── 원형 회전 텍스트 ── */
+.ringText {
+  position: absolute;
+  right: clamp(-90px, -4vw, -40px);
+  top: 58%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: clamp(220px, 28vw, 340px);
+  height: clamp(220px, 28vw, 340px);
+  animation: spin 24s linear infinite;
+}
+.ringText text {
+  font-family: "Arial Black", Helvetica, sans-serif;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  fill: #0c0c0c;
+}
+@keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+
+/* ── 3D 큐브 ── */
+.cubeWrap {
+  position: absolute;
+  left: 7%;
+  bottom: 16%;
+  z-index: 4;
+  width: 130px;
+  height: 130px;
+  perspective: 620px;
+}
+.cube {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: cubespin 16s linear infinite;
+  filter: drop-shadow(0 30px 30px rgba(0, 0, 0, 0.28));
+}
+.cube i {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #34343a, #0b0b0d);
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.06);
+  opacity: 0.94;
+}
+.cube i:nth-child(1) { transform: translateZ(65px); }
+.cube i:nth-child(2) { transform: rotateY(180deg) translateZ(65px); }
+.cube i:nth-child(3) { transform: rotateY(90deg) translateZ(65px); }
+.cube i:nth-child(4) { transform: rotateY(-90deg) translateZ(65px); }
+.cube i:nth-child(5) { transform: rotateX(90deg) translateZ(65px); }
+.cube i:nth-child(6) { transform: rotateX(-90deg) translateZ(65px); }
+@keyframes cubespin {
+  from { transform: rotateX(-22deg) rotateY(0deg); }
+  to { transform: rotateX(-22deg) rotateY(360deg); }
+}
+
+/* ── 부채꼴 카드 ── */
+.fan {
+  --radius: 96vh;
+  --cw: clamp(150px, 16vw, 218px);
+  --ch: clamp(210px, 22vw, 300px);
+  position: absolute;
+  left: 60%;
+  top: 156vh; /* 화면 아래 피벗 */
+  width: 0;
+  height: 0;
+  z-index: 6;
+}
+.slot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--cw);
+  height: var(--ch);
+  transform-origin: center center;
+  animation: cardIn 0.9s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+@keyframes cardIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.card {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-radius: 3px;
+  padding: 9px 9px 11px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 26px 50px rgba(20, 20, 20, 0.22), 0 4px 14px rgba(20, 20, 20, 0.14);
+  transform: scale(var(--s, 1));
+  opacity: var(--o, 1);
+}
+.card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.card__label {
+  font-family: "Arial Black", Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: clamp(11px, 1vw, 14px);
+  letter-spacing: -0.01em;
+  color: #0c0c0c;
+}
+.card__no {
+  font-family: var(--font-meta, monospace);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: #9a9a96;
+}
+.card__media {
+  position: relative;
+  flex: 1;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #ddd;
+}
+.card__media img { object-fit: cover; filter: none; } /* 컬러 원본 유지 */
+.card__cap {
+  margin-top: 8px;
+  font-family: var(--font-meta, monospace);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4a4a48;
+}
+
+/* ── 하단 러닝 라벨 ── */
+.tagline {
+  position: absolute;
+  left: clamp(1.4rem, 4vw, 3rem);
+  bottom: clamp(1.3rem, 3vw, 2rem);
+  z-index: 8;
+  font-family: var(--font-meta, monospace);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6c6c68;
+}
+
+@media (max-width: 880px) {
+  .fan { --radius: 78vh; left: 56%; top: 150vh; }
+  .cubeWrap { width: 92px; height: 92px; bottom: 10%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ringText, .cube { animation: none; }
+  .slot { animation: none; opacity: 1; }
+}
