@@ -5,9 +5,7 @@
   height: 100vh;
   min-height: 100dvh;
   overflow: hidden;
-  background:
-    radial-gradient(80% 70% at 30% 0%, #ffffff 0%, transparent 60%),
-    linear-gradient(#f4f3f1, #e9e8e4);
+  background: #f8f8f8;
   color: #0c0c0c;
   font-family: var(--font-sans);
 }
@@ -146,30 +144,40 @@
   to { transform: rotateX(-22deg) rotateY(360deg); }
 }
 
-/* ── 부채꼴 카드 ── */
-.fan {
-  --radius: 96vh;
-  --cw: clamp(150px, 16vw, 218px);
-  --ch: clamp(210px, 22vw, 300px);
+/* ── 원통형(3D 실린더) 카드 덱 ── */
+.deck {
   position: absolute;
   left: 60%;
-  top: 156vh; /* 화면 아래 피벗 */
-  width: 0;
-  height: 0;
+  top: 60%;
   z-index: 6;
+  perspective: 1700px;
 }
-.slot {
+/* 바깥 래퍼: 고정 기울기(대각 스윕)만 — 회전과 분리 */
+.deckTilt {
   position: absolute;
   left: 0;
   top: 0;
+  transform: translate(-50%, -50%) rotateZ(-12deg) rotateX(7deg) scale(var(--scale, 1));
+  transform-style: preserve-3d;
+}
+/* 안쪽 링: rotateY 무한 회전만 */
+.deckRing {
+  position: relative;
   width: var(--cw);
   height: var(--ch);
-  transform-origin: center center;
-  animation: cardIn 0.9s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)) both;
+  transform-style: preserve-3d;
+  animation: spinY var(--dur, 52s) linear infinite;
 }
-@keyframes cardIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.deck:hover .deckRing { animation-play-state: paused; }
+@keyframes spinY {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+/* 셀: 원기둥 옆면 배치 (rotateY(θ) translateZ(radius)) */
+.cell {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
 }
 .card {
   width: 100%;
@@ -180,8 +188,6 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 26px 50px rgba(20, 20, 20, 0.22), 0 4px 14px rgba(20, 20, 20, 0.14);
-  transform: scale(var(--s, 1));
-  opacity: var(--o, 1);
 }
 .card__head {
   display: flex;
@@ -233,12 +239,15 @@
   color: #6c6c68;
 }
 
+@media (max-width: 1100px) {
+  .deckTilt { --scale: 0.78; }
+}
 @media (max-width: 880px) {
-  .fan { --radius: 78vh; left: 56%; top: 150vh; }
+  .deck { left: 56%; }
+  .deckTilt { --scale: 0.6; }
   .cubeWrap { width: 92px; height: 92px; bottom: 10%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ringText, .cube { animation: none; }
-  .slot { animation: none; opacity: 1; }
+  .ringText, .cube, .deckRing { animation: none; }
 }

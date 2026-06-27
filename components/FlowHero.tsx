@@ -14,11 +14,15 @@ const CARDS: FlowCard[] = [
   { label: "ARCHIVE", caption: "필름의 끝 · 16mm", img: "/posters-photo/m2.jpg" },
 ];
 
-const SPREAD = 72;
+// 원통형 덱: 카드 부족 시 자연스러운 곡면을 위해 두 바퀴로 채움
+const DECK = [...CARDS, ...CARDS];
+const CW = 212;
+const CH = 300;
+const COUNT = DECK.length;
+const STEP = 360 / COUNT;
+const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.12);
 
 export default function FlowHero() {
-  const n = CARDS.length;
-  const half = SPREAD / 2;
 
   return (
     <section className={styles.stage}>
@@ -40,8 +44,8 @@ export default function FlowHero() {
       </p>
 
       {/* 좌측 거대 줄무늬 디졸브 글자 */}
-      <h1 className={styles.bigword} aria-label="FILM">
-        FILM
+      <h1 className={styles.bigword} aria-label="MOVIE">
+        MOVIE
       </h1>
 
       {/* 원형 회전 텍스트 */}
@@ -63,48 +67,47 @@ export default function FlowHero() {
         </div>
       </div>
 
-      {/* 부채꼴 카드 */}
-      <div className={styles.fan}>
-        {CARDS.map((c, i) => {
-          const theta = -half + (SPREAD / (n - 1)) * i;
-          const t = Math.abs(theta) / half;
-          const scale = 1 - 0.12 * t;
-          const opacity = (1 - 0.12 * t).toFixed(2);
-          const z = Math.round(100 - Math.abs(theta));
-          return (
-            <div
-              key={c.label}
-              className={styles.slot}
-              style={{
-                transform: `translate(-50%, -50%) rotate(${theta}deg) translateY(calc(var(--radius) * -1))`,
-                zIndex: z,
-                animationDelay: `${0.15 + i * 0.1}s`,
-              }}
-            >
+      {/* 원통형 3D 카드 덱 — 바깥=고정 기울기, 안쪽=rotateY 무한회전 */}
+      <div className={styles.deck}>
+        <div className={styles.deckTilt}>
+          <div
+            className={styles.deckRing}
+            style={
+              {
+                "--cw": `${CW}px`,
+                "--ch": `${CH}px`,
+                "--dur": "52s",
+              } as React.CSSProperties
+            }
+          >
+            {DECK.map((c, i) => (
               <div
-                className={styles.card}
-                style={{ "--s": scale, "--o": opacity } as React.CSSProperties}
+                key={i}
+                className={styles.cell}
+                style={{ transform: `rotateY(${i * STEP}deg) translateZ(${RADIUS}px)` }}
               >
-                <div className={styles.card__head}>
-                  <span className={styles.card__label}>{c.label}</span>
-                  <span className={styles.card__no}>
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
+                <div className={styles.card}>
+                  <div className={styles.card__head}>
+                    <span className={styles.card__label}>{c.label}</span>
+                    <span className={styles.card__no}>
+                      {String((i % CARDS.length) + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <div className={styles.card__media}>
+                    <Image
+                      src={c.img}
+                      alt={c.caption}
+                      fill
+                      sizes="212px"
+                      priority={i < 5}
+                    />
+                  </div>
+                  <span className={styles.card__cap}>{c.caption}</span>
                 </div>
-                <div className={styles.card__media}>
-                  <Image
-                    src={c.img}
-                    alt={c.caption}
-                    fill
-                    sizes="220px"
-                    priority={i < 4}
-                  />
-                </div>
-                <span className={styles.card__cap}>{c.caption}</span>
               </div>
-            </div>
-          );
-        })}
+            ))}
+          </div>
+        </div>
       </div>
 
       <p className={styles.tagline}>Film Nouvelle — One Reel In Infinite Flow</p>
