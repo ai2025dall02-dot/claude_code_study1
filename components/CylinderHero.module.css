@@ -1,0 +1,122 @@
+.scene {
+  position: relative;
+  height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  perspective: 1500px;
+  background:
+    radial-gradient(60% 50% at 50% 34%, #1d1930 0%, transparent 70%),
+    radial-gradient(80% 60% at 50% 120%, #15121d 0%, transparent 60%),
+    linear-gradient(#0c0a12, #08070c);
+}
+
+/* 가장자리 비네트 */
+.scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  background: radial-gradient(120% 80% at 50% 50%, transparent 55%, rgba(6, 5, 10, 0.85) 100%);
+}
+
+/* 바깥 래퍼: 고정 기울기(rotateX/rotateZ)만 담당 — 회전과 분리 */
+.tilt {
+  transform-style: preserve-3d;
+  transform: rotateX(var(--tiltX, -9deg)) rotateZ(var(--tiltZ, -2deg)) scale(var(--scale, 1));
+}
+
+/* 안쪽 링: rotateY 무한 회전만 담당 */
+.ring {
+  position: relative;
+  width: var(--cw);
+  height: var(--ch);
+  transform-style: preserve-3d;
+  animation: spin var(--dur, 38s) linear infinite;
+}
+.scene:hover .ring {
+  animation-play-state: paused;
+}
+
+@keyframes spin {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+
+/* 셀: 원기둥 옆면 배치 (rotateY(θ) translateZ(radius)) — 인라인으로 transform 주입 */
+.cell {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.55);
+  outline: 1px solid rgba(255, 255, 255, 0.08);
+  outline-offset: -1px;
+}
+.cell img {
+  object-fit: cover;
+}
+/* 안쪽 광택/그림자 */
+.cell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.12), transparent 38%);
+  pointer-events: none;
+}
+
+/* 중앙 카피 (캐러셀 위에 떠 있음, 상호작용 없음) */
+.copy {
+  position: absolute;
+  z-index: 7;
+  text-align: center;
+  pointer-events: none;
+  padding: 0 var(--gutter);
+}
+.eyebrow {
+  font-family: var(--font-meta, monospace);
+  font-size: clamp(11px, 1.1vw, 13px);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--amber, #e4a23b);
+  margin: 0 0 1rem;
+}
+.title {
+  font-family: var(--font-display, Georgia, serif);
+  font-weight: 800;
+  font-size: clamp(2rem, 6vw, 4.6rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  color: #f1ede4;
+  margin: 0;
+  text-shadow: 0 4px 40px rgba(0, 0, 0, 0.6);
+  word-break: keep-all;
+  white-space: pre-line;
+}
+
+.hint {
+  position: absolute;
+  bottom: clamp(1.4rem, 3vw, 2.2rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 7;
+  font-family: var(--font-meta, monospace);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(236, 231, 220, 0.5);
+}
+
+@media (max-width: 900px) {
+  .tilt { --scale: 0.66; }
+}
+@media (max-width: 560px) {
+  .tilt { --scale: 0.46; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring { animation: none; }
+}

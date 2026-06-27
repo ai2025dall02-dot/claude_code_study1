@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+<stop offset="0" stop-color="#246B6B"/><stop offset="1" stop-color="#07120F"/>
+</linearGradient>
+<radialGradient id="vig" cx="0.5" cy="0.42" r="0.75">
+<stop offset="0.55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.55"/>
+</radialGradient>
+<filter id="gr"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+</defs>
+<rect width="400" height="600" fill="url(#bg)"/>
+<path d="M0 300 Q100 280 200 300 T400 300" fill="none" stroke="#9FE8D8" stroke-width="2" opacity="0.5"/><path d="M0 334 Q100 314 200 334 T400 334" fill="none" stroke="#9FE8D8" stroke-width="2" opacity="0.43"/><path d="M0 368 Q100 348 200 368 T400 368" fill="none" stroke="#9FE8D8" stroke-width="2" opacity="0.36"/><path d="M0 402 Q100 382 200 402 T400 402" fill="none" stroke="#9FE8D8" stroke-width="2" opacity="0.29"/><path d="M0 436 Q100 416 200 436 T400 436" fill="none" stroke="#9FE8D8" stroke-width="2" opacity="0.21999999999999997"/><circle cx="300" cy="180" r="40" fill="#9FE8D8" opacity="0.4"/>
+<rect width="400" height="600" fill="url(#vig)"/>
+<rect width="400" height="600" filter="url(#gr)" opacity="0.05"/>
+<text x="32" y="60" font-family="monospace" font-size="13" letter-spacing="3" fill="#fff" fill-opacity="0.82">FILM NOUVELLE</text>
+<text x="32" y="500" font-family="Georgia, 'Nanum Myeongjo', serif" font-size="50" font-weight="800" fill="#F5F1EA">바다의 문</text>
+<text x="33" y="538" font-family="monospace" font-size="13" letter-spacing="2.5" fill="#fff" fill-opacity="0.7">SEA GATE</text>
+<text x="33" y="566" font-family="monospace" font-size="11" letter-spacing="2" fill="#fff" fill-opacity="0.5">DIR. S. Oh</text>
+</svg>

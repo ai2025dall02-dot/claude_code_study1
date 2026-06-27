@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+<stop offset="0" stop-color="#2E5266"/><stop offset="1" stop-color="#0A1016"/>
+</linearGradient>
+<radialGradient id="vig" cx="0.5" cy="0.42" r="0.75">
+<stop offset="0.55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.55"/>
+</radialGradient>
+<filter id="gr"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+</defs>
+<rect width="400" height="600" fill="url(#bg)"/>
+<path d="M200 150 L150 470 L250 470 Z" fill="#BFE3FF" opacity="0.28"/><circle cx="200" cy="150" r="10" fill="#BFE3FF"/><circle cx="92" cy="120" r="2.4" fill="#BFE3FF"/><circle cx="320" cy="180" r="2.4" fill="#BFE3FF"/><circle cx="280" cy="90" r="1.8" fill="#BFE3FF"/>
+<rect width="400" height="600" fill="url(#vig)"/>
+<rect width="400" height="600" filter="url(#gr)" opacity="0.05"/>
+<text x="32" y="60" font-family="monospace" font-size="13" letter-spacing="3" fill="#fff" fill-opacity="0.82">FILM NOUVELLE</text>
+<text x="32" y="500" font-family="Georgia, 'Nanum Myeongjo', serif" font-size="50" font-weight="800" fill="#F5F1EA">북위 48도</text>
+<text x="33" y="538" font-family="monospace" font-size="13" letter-spacing="2.5" fill="#fff" fill-opacity="0.7">48° NORTH</text>
+<text x="33" y="566" font-family="monospace" font-size="11" letter-spacing="2" fill="#fff" fill-opacity="0.5">DIR. L. Marchand</text>
+</svg>

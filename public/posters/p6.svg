@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+<stop offset="0" stop-color="#8A6A3B"/><stop offset="1" stop-color="#18120A"/>
+</linearGradient>
+<radialGradient id="vig" cx="0.5" cy="0.42" r="0.75">
+<stop offset="0.55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.55"/>
+</radialGradient>
+<filter id="gr"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+</defs>
+<rect width="400" height="600" fill="url(#bg)"/>
+<circle cx="200" cy="250" r="92" fill="none" stroke="#F0CE94" stroke-width="3" opacity="0.8"/><circle cx="200" cy="250" r="20" fill="#F0CE94" opacity="0.85"/><circle cx="258" cy="250" r="13" fill="#F0CE94" opacity="0.7"/><circle cx="229" cy="300.2294734194974" r="13" fill="#F0CE94" opacity="0.7"/><circle cx="171" cy="300.2294734194974" r="13" fill="#F0CE94" opacity="0.7"/><circle cx="142" cy="250" r="13" fill="#F0CE94" opacity="0.7"/><circle cx="170.99999999999997" cy="199.77052658050258" r="13" fill="#F0CE94" opacity="0.7"/><circle cx="229" cy="199.77052658050258" r="13" fill="#F0CE94" opacity="0.7"/><rect x="6" y="0" width="14" height="600" fill="#F0CE94" opacity="0.18"/><rect x="380" y="0" width="14" height="600" fill="#F0CE94" opacity="0.18"/>
+<rect width="400" height="600" fill="url(#vig)"/>
+<rect width="400" height="600" filter="url(#gr)" opacity="0.05"/>
+<text x="32" y="60" font-family="monospace" font-size="13" letter-spacing="3" fill="#fff" fill-opacity="0.82">FILM NOUVELLE</text>
+<text x="32" y="500" font-family="Georgia, 'Nanum Myeongjo', serif" font-size="50" font-weight="800" fill="#F5F1EA">필름의 끝</text>
+<text x="33" y="538" font-family="monospace" font-size="13" letter-spacing="2.5" fill="#fff" fill-opacity="0.7">END OF REEL</text>
+<text x="33" y="566" font-family="monospace" font-size="11" letter-spacing="2" fill="#fff" fill-opacity="0.5">DIR. Y. Tanaka</text>
+</svg>
