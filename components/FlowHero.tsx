@@ -6,6 +6,12 @@ import styles from "./FlowHero.module.css";
 
 export type FlowCard = { label: string; caption: string; img: string };
 
+// 필름 릴 구멍 좌표 (viewBox 100×100, 중심 50,50 / 반지름 27 / 6개)
+const REEL_HOLES: [number, number][] = [0, 60, 120, 180, 240, 300].map((deg) => {
+  const a = (deg * Math.PI) / 180;
+  return [50 + 27 * Math.cos(a), 50 + 27 * Math.sin(a)];
+});
+
 const CARDS: FlowCard[] = [
   { label: "NOW SHOWING", caption: "여름의 잔상 · 2024", img: "/posters-photo/m1.jpg" },
   { label: "DIRECTOR", caption: "정하루 인터뷰", img: "/posters-photo/m5.jpg" },
@@ -107,8 +113,15 @@ export default function FlowHero() {
         REEL
       </p>
 
+      {/* 줄무늬 디졸브 대형 글자 — mask-composite(브라우저 호환 취약) 대신
+          단일 마스크 2겹을 겹쳐(합집합) 왼쪽 솔리드 + 오른쪽 줄무늬 디졸브 */}
       <h1 className={styles.bigword} aria-label="MOVIE">
-        MOVIE
+        <span className={styles.bigword__left} aria-hidden="true">
+          MOVIE
+        </span>
+        <span className={styles.bigword__stripes} aria-hidden="true">
+          MOVIE
+        </span>
       </h1>
 
       <svg className={styles.ringText} viewBox="0 0 100 100" aria-hidden="true">
@@ -122,10 +135,23 @@ export default function FlowHero() {
         </text>
       </svg>
 
-      <div className={styles.cubeWrap} aria-hidden="true">
-        <div className={styles.cube}>
-          <i /><i /><i /><i /><i /><i />
-        </div>
+      {/* 회전하는 영화 필름 릴 */}
+      <div className={styles.reelWrap} aria-hidden="true">
+        <svg className={styles.reel} viewBox="0 0 100 100">
+          <defs>
+            <radialGradient id="reelFace" cx="38%" cy="32%" r="80%">
+              <stop offset="0%" stopColor="#3a3a42" />
+              <stop offset="100%" stopColor="#0b0b0d" />
+            </radialGradient>
+          </defs>
+          <circle cx="50" cy="50" r="47" fill="url(#reelFace)" stroke="rgba(0,0,0,0.55)" strokeWidth="1" />
+          <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="2" />
+          {REEL_HOLES.map(([cx, cy], i) => (
+            <circle key={i} cx={cx} cy={cy} r="8.4" fill="#f6f6f4" stroke="rgba(0,0,0,0.5)" strokeWidth="0.8" />
+          ))}
+          <circle cx="50" cy="50" r="9.5" fill="#16161a" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+          <circle cx="50" cy="50" r="3.2" fill="#f6f6f4" />
+        </svg>
       </div>
 
       {/* 원통형 3D 카드 덱 — 바깥=고정 기울기, 안쪽=rAF rotateY */}
