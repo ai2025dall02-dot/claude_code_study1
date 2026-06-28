@@ -44,18 +44,22 @@ export default function About() {
     ["#26262a", "#060607"]
   );
 
-  // 아래에서 위로 + opacity 0→1 (원칙은 custom 인덱스로 좌측부터 stagger)
-  const fadeUp: Variants = {
-    hidden: { opacity: 0, y: reduce ? 0 : 48 },
-    show: (i = 0) => ({
+  // 인용문이 끝난 뒤(아래쪽) 등장하는 그룹: 좌측·위에서부터 순차 cascade
+  const group: Variants = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.18, delayChildren: 0.15 } },
+  };
+  const innerGroup: Variants = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.14 } },
+  };
+  const item: Variants = {
+    hidden: { opacity: 0, y: reduce ? 0 : 44 },
+    show: {
       opacity: 1,
       y: 0,
-      transition: {
-        duration: 0.8,
-        ease: [0.16, 1, 0.3, 1],
-        delay: reduce ? 0 : i * 0.15,
-      },
-    }),
+      transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
+    },
   };
 
   return (
@@ -65,8 +69,18 @@ export default function About() {
       className={`${styles.section} ${styles.about}`}
       style={{ backgroundColor }}
     >
-      <div className={styles.inner}>
-        <header className={styles.head}>
+      {/* 1) 인용문 — 가장 먼저 등장하는 word-by-word reveal */}
+      <TextReveal text="좋은 영화는 사라지지 않는다. 다만 옮겨질 곳을 기다릴 뿐이다." />
+
+      {/* 2) 텀(공백)을 두고 이어서 나머지 텍스트들이 순차로 등장 */}
+      <motion.div
+        className={`${styles.inner} ${styles.aboutAfter}`}
+        variants={group}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, margin: "-15% 0px" }}
+      >
+        <motion.header className={styles.head} variants={item}>
           <div>
             <span className={styles.eyebrow}>About — 배급사 소개</span>
             <h2 className={styles.title}>
@@ -74,41 +88,25 @@ export default function About() {
             </h2>
           </div>
           <span className={styles.index}>Since 2014 · Seoul</span>
-        </header>
+        </motion.header>
 
-        <motion.p
-          className={styles.aboutBody}
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-12% 0px" }}
-        >
+        <motion.p className={styles.aboutBody} variants={item}>
           필름 누벨은 2014년, 극장에서 사라져 가던 독립·예술영화를 다시 스크린에
           올리기 위해 시작했습니다. 우리는 한 해에 단 몇 편만을 고릅니다. 적게
           고르는 대신, 한 편의 영화가 관객을 만나는 모든 길 — 개봉, 기획전, 공동체
           상영, 아카이브 — 을 끝까지 동행합니다.
         </motion.p>
 
-        <div className={styles.principles}>
-          {PRINCIPLES.map((pr, i) => (
-            <motion.div
-              key={pr.title}
-              custom={i}
-              variants={fadeUp}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-10% 0px" }}
-            >
+        <motion.div className={styles.principles} variants={innerGroup}>
+          {PRINCIPLES.map((pr) => (
+            <motion.div key={pr.title} variants={item}>
               <span className={styles.principle__label}>원칙 / {pr.label}</span>
               <h3 className={styles.principle__title}>{pr.title}</h3>
               <p className={styles.principle__text}>{pr.text}</p>
             </motion.div>
           ))}
-        </div>
-      </div>
-
-      {/* 인용문: word-by-word reveal 유지 + 섹션 하단으로 이동 */}
-      <TextReveal text="좋은 영화는 사라지지 않는다. 다만 옮겨질 곳을 기다릴 뿐이다." />
+        </motion.div>
+      </motion.div>
     </motion.section>
   );
 }

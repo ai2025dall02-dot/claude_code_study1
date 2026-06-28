@@ -327,6 +327,10 @@
 .about .title { color: #fafafa; }
 .about .title em { -webkit-text-stroke-color: #fafafa; }
 .about .index { color: #8a8a86; }
+/* 인용문 reveal 이후 — 나머지 그룹이 등장하기 전 felt 한 텀(공백) */
+.aboutAfter {
+  margin-top: clamp(11rem, 32vh, 26rem);
+}
 .quote {
   font-family: "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
