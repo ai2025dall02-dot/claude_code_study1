@@ -17,15 +17,16 @@ const CARDS: FlowCard[] = [
   { label: "ARCHIVE", caption: "필름의 끝 · 16mm", img: "/posters-photo/m2.jpg" },
 ];
 
-// 원통형 덱: 곡면을 채우기 위해 두 바퀴
-const DECK = [...CARDS, ...CARDS];
+// 원통형 덱: 5장 × 2바퀴 = 10장 → STEP 36° (간격 시원하게)
+const DECK_CARDS = CARDS.slice(0, 5);
+const DECK = [...DECK_CARDS, ...DECK_CARDS];
 const CW = 212;
 const CH = 300;
 const COUNT = DECK.length;
 const STEP = 360 / COUNT;
-const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.075) + 60;
+const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.075) + 120;
 const SPEED = 7; // deg/sec
-const FULL_DEG = 35; // ±이 범위 안은 opacity 1 (STEP=30 → 가운데+양옆 3장)
+const FULL_DEG = 42; // ±이 범위 안은 opacity 1 (STEP=36 → 가운데+양옆 3장)
 const FADE_BAND = 30; // 그 바깥에서 1→0 으로 페이드되는 폭(deg)
 
 function norm(a: number) {
@@ -170,7 +171,7 @@ export default function FlowHero() {
                     <div className={styles.card__head}>
                       <span className={styles.card__label}>{c.label}</span>
                       <span className={styles.card__no}>
-                        {String((i % CARDS.length) + 1).padStart(2, "0")}
+                        {String((i % DECK_CARDS.length) + 1).padStart(2, "0")}
                       </span>
                     </div>
                     <div className={styles.card__media}>
