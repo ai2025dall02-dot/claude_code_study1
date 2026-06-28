@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import IntroProvider from "@/components/Intro";
 import SiteNav from "@/components/SiteNav";
 import FlowHero from "@/components/FlowHero";
 import Landing from "@/components/Landing";
@@ -9,10 +10,12 @@ export const metadata: Metadata = {
 
 export default function HeroFlowPage() {
   return (
-    <main>
-      <SiteNav />
-      <FlowHero />
-      <Landing />
-    </main>
+    <IntroProvider>
+      <main>
+        <SiteNav />
+        <FlowHero />
+        <Landing />
+      </main>
+    </IntroProvider>
   );
 }

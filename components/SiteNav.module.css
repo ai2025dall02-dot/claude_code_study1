@@ -27,7 +27,26 @@
   font-size: clamp(15px, 1.7vw, 20px);
   letter-spacing: -0.02em;
   color: #0c0c0c;
-  transition: opacity 0.2s;
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: 0.1s;
+}
+.brand:hover { opacity: 0.5; }
+
+/* 인트로 등장: 브랜드는 좌, 메뉴는 우에서 */
+.links {
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: 0.25s;
+}
+.nav[data-revealed="false"] .brand { opacity: 0; transform: translateX(-24px); }
+.nav[data-revealed="false"] .links { opacity: 0; transform: translateX(30px); }
+@media (prefers-reduced-motion: reduce) {
+  .nav[data-revealed="false"] .brand,
+  .nav[data-revealed="false"] .links {
+    opacity: 1;
+    transform: none;
+  }
 }
 .brand:hover { opacity: 0.5; }
 

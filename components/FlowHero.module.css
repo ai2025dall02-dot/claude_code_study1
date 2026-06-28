@@ -44,6 +44,42 @@
   .nav__links { display: none; }
 }
 
+/* ── 인트로 등장 (카운트다운 후 좌·우·하단에서 서서히) ── */
+.bigword,
+.outline,
+.ringText,
+.deck,
+.reelWrap,
+.tagline {
+  transition: opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.bigword { transition-delay: 0.05s; }
+.outline { transition-delay: 0.18s; }
+.deck { transition-delay: 0.28s; }
+.ringText { transition-delay: 0.4s; }
+.reelWrap { transition-delay: 0.46s; }
+.tagline { transition-delay: 0.56s; }
+
+.stage[data-revealed="false"] .bigword { opacity: 0; transform: translateX(-9vw); }   /* 좌 */
+.stage[data-revealed="false"] .outline { opacity: 0; transform: translateX(9vw); }    /* 우 */
+.stage[data-revealed="false"] .ringText { opacity: 0; }                                /* 우(스핀 보존 → 페이드) */
+.stage[data-revealed="false"] .deck { opacity: 0; transform: translateY(90px); }       /* 하단 */
+.stage[data-revealed="false"] .reelWrap { opacity: 0; transform: translateY(70px); }   /* 하단 */
+.stage[data-revealed="false"] .tagline { opacity: 0; transform: translateY(34px); }    /* 하단 */
+
+@media (prefers-reduced-motion: reduce) {
+  .stage[data-revealed="false"] .bigword,
+  .stage[data-revealed="false"] .outline,
+  .stage[data-revealed="false"] .ringText,
+  .stage[data-revealed="false"] .deck,
+  .stage[data-revealed="false"] .reelWrap,
+  .stage[data-revealed="false"] .tagline {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* ── 거대 줄무늬 디졸브 글자 ── */
 .bigword {
   position: absolute;

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
+import { useIntroRevealed } from "./Intro";
 import styles from "./FlowHero.module.css";
 
 export type FlowCard = { label: string; caption: string; img: string };
@@ -46,6 +47,7 @@ function opacityAt(i: number, rot: number) {
 }
 
 export default function FlowHero() {
+  const revealed = useIntroRevealed();
   const ringRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const pausedRef = useRef(false);
@@ -108,7 +110,7 @@ export default function FlowHero() {
   };
 
   return (
-    <section className={styles.stage} id="home">
+    <section className={styles.stage} id="home" data-revealed={revealed}>
       <p className={styles.outline} aria-hidden="true">
         REEL
       </p>

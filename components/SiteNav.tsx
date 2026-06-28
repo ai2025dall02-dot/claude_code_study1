@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useIntroRevealed } from "./Intro";
 import styles from "./SiteNav.module.css";
 
 const LINKS: { label: string; href: string }[] = [
@@ -13,6 +14,7 @@ const LINKS: { label: string; href: string }[] = [
 ];
 
 export default function SiteNav() {
+  const revealed = useIntroRevealed();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export default function SiteNav() {
   }, []);
 
   return (
-    <header className={styles.nav} data-scrolled={scrolled}>
+    <header className={styles.nav} data-scrolled={scrolled} data-revealed={revealed}>
       <a className={styles.brand} href="#home" aria-label="필름 누벨 — 히어로로 이동">
         FILMNOUVELLE
       </a>
