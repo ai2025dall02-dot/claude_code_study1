@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
 import FlowHero from "@/components/FlowHero";
+import Landing from "@/components/Landing";
 
 export const metadata: Metadata = {
-  title: "FLOW 히어로 — 필름 누벨",
+  title: "필름 누벨 — 독립·예술영화 배급",
 };
 
 export default function HeroFlowPage() {
-  return <FlowHero />;
+  return (
+    <main>
+      <FlowHero />
+      <Landing />
+    </main>
+  );
 }
