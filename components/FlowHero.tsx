@@ -23,7 +23,7 @@ const CW = 212;
 const CH = 300;
 const COUNT = DECK.length;
 const STEP = 360 / COUNT;
-const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.15);
+const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.075);
 const SPEED = 7; // deg/sec (기존 ~52s/turn 과 유사)
 
 // 각도를 -180~180 으로 정규화
