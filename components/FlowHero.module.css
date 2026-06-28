@@ -148,7 +148,7 @@
 .deck {
   position: absolute;
   left: 50%;
-  top: 78%;
+  top: 60%;
   z-index: 6;
   perspective: 1600px;
 }
@@ -158,7 +158,7 @@
   left: 0;
   top: 0;
   --scale: 0.9;
-  transform: translate(-50%, -50%) rotateZ(-14deg) rotateX(16deg) scale(var(--scale, 1));
+  transform: translate(-50%, -50%) rotateZ(-14deg) rotateX(28deg) scale(var(--scale, 1));
   transform-style: preserve-3d;
 }
 /* 안쪽 링: rotateY 무한 회전만 */
