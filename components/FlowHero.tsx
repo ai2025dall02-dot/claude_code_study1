@@ -24,8 +24,9 @@ const CH = 300;
 const COUNT = DECK.length;
 const STEP = 360 / COUNT;
 // 카드 간격(배수 1.075)은 유지하고, 고정 가산값으로 반지름만 키워 완만한 호
-const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.075) + 175;
+const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.075) + 60;
 const SPEED = 7; // deg/sec (기존 ~52s/turn 과 유사)
+const FRONT_DEG = 45; // 정면 판정 범위(±deg) — 좁힐수록 또렷한 카드 수 감소
 
 // 각도를 -180~180 으로 정규화
 function norm(a: number) {
@@ -49,7 +50,7 @@ export default function FlowHero() {
         const cell = cellRefs.current[i];
         if (!cell) continue;
         const a = norm(i * STEP + rotRef.current);
-        cell.classList.toggle(styles.isFront, Math.abs(a) <= 90);
+        cell.classList.toggle(styles.isFront, Math.abs(a) <= FRONT_DEG);
       }
     };
 
@@ -146,7 +147,7 @@ export default function FlowHero() {
             style={{ "--cw": `${CW}px`, "--ch": `${CH}px` } as React.CSSProperties}
           >
             {DECK.map((c, i) => {
-              const initFront = Math.abs(norm(i * STEP)) <= 90;
+              const initFront = Math.abs(norm(i * STEP)) <= FRONT_DEG;
               return (
                 <div
                   key={i}
