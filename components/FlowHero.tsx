@@ -23,7 +23,8 @@ const CW = 212;
 const CH = 300;
 const COUNT = DECK.length;
 const STEP = 360 / COUNT;
-const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.075);
+// 카드 간격(배수 1.075)은 유지하고, 고정 가산값으로 반지름만 키워 완만한 호
+const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.075) + 175;
 const SPEED = 7; // deg/sec (기존 ~52s/turn 과 유사)
 
 // 각도를 -180~180 으로 정규화
