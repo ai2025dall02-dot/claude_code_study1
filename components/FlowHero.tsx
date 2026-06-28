@@ -25,17 +25,19 @@ const COUNT = DECK.length;
 const STEP = 360 / COUNT;
 const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.075) + 60;
 const SPEED = 7; // deg/sec
-const FADE_DEG = 70; // 정면(0)=opacity 1 → ±FADE_DEG 에서 0 으로 선형 페이드
+const FULL_DEG = 35; // ±이 범위 안은 opacity 1 (STEP=30 → 가운데+양옆 3장)
+const FADE_BAND = 30; // 그 바깥에서 1→0 으로 페이드되는 폭(deg)
 
 function norm(a: number) {
   const m = ((a % 360) + 360) % 360;
   return m > 180 ? m - 360 : m;
 }
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
-// 정면으로부터의 각도(dist)에 따른 연속 opacity
+// 평탄 구간(±FULL_DEG=1) + 가장자리 FADE_BAND 에서 선형 페이드
 function opacityAt(i: number, rot: number) {
   const dist = Math.abs(norm(i * STEP + rot));
-  return clamp((FADE_DEG - dist) / FADE_DEG, 0, 1);
+  if (dist <= FULL_DEG) return 1;
+  return clamp((FULL_DEG + FADE_BAND - dist) / FADE_BAND, 0, 1);
 }
 
 export default function FlowHero() {
