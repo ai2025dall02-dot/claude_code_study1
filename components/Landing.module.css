@@ -347,10 +347,27 @@
 }
 .aboutBody {
   margin-top: 2.4rem;
-  max-width: 54ch;
+  max-width: 70ch;
   color: #b9b9b4;
   font-size: 1.05rem;
   line-height: 1.85;
+}
+/* 제목 타이핑 커서 */
+.caret {
+  display: inline-block;
+  width: 0.055em;
+  height: 0.78em;
+  margin-left: 0.04em;
+  background: currentColor;
+  vertical-align: baseline;
+  animation: caretBlink 1.05s steps(1) infinite;
+}
+@keyframes caretBlink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .caret { animation: none; opacity: 0.6; }
 }
 .principles {
   margin-top: clamp(3rem, 7vw, 5rem);

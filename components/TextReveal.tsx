@@ -1,40 +1,50 @@
 "use client";
 
-import { ReactNode, useRef } from "react";
+import { Fragment, ReactNode, useRef } from "react";
 import { motion, MotionValue, useScroll, useTransform } from "framer-motion";
 import styles from "./TextReveal.module.css";
 
 /**
  * Scroll-driven word-by-word reveal.
- * Adapted from the Magic UI "text reveal" pattern to this project's
- * CSS-module setup (no Tailwind). The original assigned the scroll ref to
- * both the wrapper and the <p>; here the ref lives only on the tall wrapper
- * so scroll progress tracks the section as intended.
+ * `text` accepts a string ("\n" = 줄바꿈) or an array of lines.
+ * 각 줄은 flex 줄바꿈으로 분리되고 가운데 정렬되며, 단어 reveal 진행도는
+ * 줄을 넘어 연속(0→1)으로 이어진다. (원본의 ref 이중 할당 버그도 수정)
  */
 export function TextReveal({
   text,
   className,
 }: {
-  text: string;
+  text: string | string[];
   className?: string;
 }) {
   const targetRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({ target: targetRef });
-  const words = text.split(" ");
 
+  const lines = (Array.isArray(text) ? text : text.split("\n"))
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const total = lines.reduce((n, l) => n + l.split(/\s+/).length, 0);
+
+  let idx = 0;
   return (
     <div ref={targetRef} className={`${styles.wrap} ${className ?? ""}`}>
       <div className={styles.sticky}>
         <p className={styles.text}>
-          {words.map((word, i) => {
-            const start = i / words.length;
-            const end = start + 1 / words.length;
-            return (
-              <Word key={i} progress={scrollYProgress} range={[start, end]}>
-                {word}
-              </Word>
-            );
-          })}
+          {lines.map((line, li) => (
+            <Fragment key={li}>
+              {li > 0 && <span className={styles.break} aria-hidden="true" />}
+              {line.split(/\s+/).map((word) => {
+                const i = idx++;
+                const start = i / total;
+                const end = start + 1 / total;
+                return (
+                  <Word key={i} progress={scrollYProgress} range={[start, end]}>
+                    {word}
+                  </Word>
+                );
+              })}
+            </Fragment>
+          ))}
         </p>
       </div>
     </div>

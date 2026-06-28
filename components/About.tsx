@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   motion,
+  useInView,
   useReducedMotion,
   useScroll,
   useTransform,
@@ -29,6 +30,44 @@ const PRINCIPLES = [
   },
 ];
 
+/* 제목 "FILM NOUVELLE" — 뷰포트 진입 시 한 글자씩 타이핑 (1회) */
+function TypeTitle() {
+  const ref = useRef<HTMLHeadingElement | null>(null);
+  const inView = useInView(ref, { once: true, margin: "-10% 0px" });
+  const reduce = useReducedMotion();
+
+  const SOLID = "FILM ";
+  const OUTLINE = "NOUVELLE";
+  const full = SOLID.length + OUTLINE.length;
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    if (reduce) {
+      setCount(full);
+      return;
+    }
+    let c = 0;
+    const id = setInterval(() => {
+      c += 1;
+      setCount(c);
+      if (c >= full) clearInterval(id);
+    }, 90);
+    return () => clearInterval(id);
+  }, [inView, reduce, full]);
+
+  const solidShown = SOLID.slice(0, Math.min(count, SOLID.length));
+  const outlineShown = OUTLINE.slice(0, Math.max(0, count - SOLID.length));
+
+  return (
+    <h2 ref={ref} className={styles.title} aria-label="FILM NOUVELLE">
+      <span aria-hidden="true">{solidShown}</span>
+      <em aria-hidden="true">{outlineShown}</em>
+      <span className={styles.caret} aria-hidden="true" />
+    </h2>
+  );
+}
+
 export default function About() {
   const ref = useRef<HTMLElement | null>(null);
   const reduce = useReducedMotion();
@@ -44,14 +83,14 @@ export default function About() {
     ["#26262a", "#060607"]
   );
 
-  // 인용문이 끝난 뒤(아래쪽) 등장하는 그룹: 좌측·위에서부터 순차 cascade
+  // 인용문이 끝난 뒤(아래쪽) 등장하는 그룹: 위/좌측에서부터 순차 cascade
   const group: Variants = {
     hidden: {},
     show: { transition: { staggerChildren: 0.18, delayChildren: 0.15 } },
   };
   const innerGroup: Variants = {
     hidden: {},
-    show: { transition: { staggerChildren: 0.14 } },
+    show: { transition: { staggerChildren: 0.18 } },
   };
   const item: Variants = {
     hidden: { opacity: 0, y: reduce ? 0 : 44 },
@@ -69,8 +108,10 @@ export default function About() {
       className={`${styles.section} ${styles.about}`}
       style={{ backgroundColor }}
     >
-      {/* 1) 인용문 — 가장 먼저 등장하는 word-by-word reveal */}
-      <TextReveal text="좋은 영화는 사라지지 않는다. 다만 옮겨질 곳을 기다릴 뿐이다." />
+      {/* 1) 인용문 — 가장 먼저 등장하는 word-by-word reveal (2줄·중앙정렬) */}
+      <TextReveal
+        text={["좋은 영화는 사라지지 않는다.", "다만 옮겨질 곳을 기다릴 뿐이다."]}
+      />
 
       {/* 2) 텀(공백)을 두고 이어서 나머지 텍스트들이 순차로 등장 */}
       <motion.div
@@ -83,9 +124,7 @@ export default function About() {
         <motion.header className={styles.head} variants={item}>
           <div>
             <span className={styles.eyebrow}>About — 배급사 소개</span>
-            <h2 className={styles.title}>
-              FILM <em>NOUVELLE</em>
-            </h2>
+            <TypeTitle />
           </div>
           <span className={styles.index}>Since 2014 · Seoul</span>
         </motion.header>
