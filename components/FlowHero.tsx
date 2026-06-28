@@ -4,16 +4,6 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 import styles from "./FlowHero.module.css";
 
-const NAV: { label: string; href: string }[] = [
-  { label: "HOME", href: "#home" },
-  { label: "LINEUP", href: "#lineup" },
-  { label: "FILMMAKERS", href: "#filmmakers" },
-  { label: "FESTIVALS", href: "#festivals" },
-  { label: "JOURNAL", href: "#journal" },
-  { label: "ABOUT", href: "#about" },
-  { label: "CONTACT", href: "#contact" },
-];
-
 export type FlowCard = { label: string; caption: string; img: string };
 
 const CARDS: FlowCard[] = [
@@ -113,17 +103,6 @@ export default function FlowHero() {
 
   return (
     <section className={styles.stage} id="home">
-      <header className={styles.nav}>
-        <span className={styles.nav__brand}>FILMNOUVELLE</span>
-        <nav className={styles.nav__links}>
-          {NAV.map((l) => (
-            <a key={l.label} href={l.href}>
-              {l.label}
-            </a>
-          ))}
-        </nav>
-      </header>
-
       <p className={styles.outline} aria-hidden="true">
         REEL
       </p>

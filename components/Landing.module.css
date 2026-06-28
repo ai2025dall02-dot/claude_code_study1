@@ -14,6 +14,7 @@
 /* shared shell + section rhythm */
 .section {
   padding-block: clamp(4.5rem, 11vh, 9rem);
+  scroll-margin-top: 72px;
 }
 .inner {
   max-width: 1280px;

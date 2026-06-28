@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { films } from "@/data/films";
+import { TextReveal } from "@/components/TextReveal";
 import styles from "./Landing.module.css";
 
 /* 라인업 작품에 사진 포스터 매핑 (public/posters-photo) */
@@ -47,11 +48,47 @@ const PRINCIPLES = [
   },
 ];
 
-const FOOTER_NAV = ["LINEUP", "FILMMAKERS", "FESTIVALS", "JOURNAL", "ABOUT", "CONTACT"];
+const FOOTER_NAV = ["ABOUT", "LINEUP", "FILMMAKERS", "FESTIVALS", "JOURNAL", "CONTACT"];
 
 export default function Landing() {
   return (
     <div className={styles.land}>
+      {/* ── ABOUT (black band, scroll text-reveal) ─ */}
+      <section className={`${styles.section} ${styles.about}`} id="about">
+        <div className={styles.inner}>
+          <header className={styles.head}>
+            <div>
+              <span className={styles.eyebrow}>About — 배급사 소개</span>
+              <h2 className={styles.title}>
+                FILM <em>NOUVELLE</em>
+              </h2>
+            </div>
+            <span className={styles.index}>Since 2014 · Seoul</span>
+          </header>
+        </div>
+
+        <TextReveal text="좋은 영화는 사라지지 않는다. 다만 옮겨질 곳을 기다릴 뿐이다." />
+
+        <div className={styles.inner}>
+          <p className={styles.aboutBody}>
+            필름 누벨은 2014년, 극장에서 사라져 가던 독립·예술영화를 다시 스크린에
+            올리기 위해 시작했습니다. 우리는 한 해에 단 몇 편만을 고릅니다. 적게
+            고르는 대신, 한 편의 영화가 관객을 만나는 모든 길 — 개봉, 기획전, 공동체
+            상영, 아카이브 — 을 끝까지 동행합니다.
+          </p>
+
+          <div className={styles.principles}>
+            {PRINCIPLES.map((pr) => (
+              <div key={pr.title}>
+                <span className={styles.principle__label}>원칙 / {pr.label}</span>
+                <h3 className={styles.principle__title}>{pr.title}</h3>
+                <p className={styles.principle__text}>{pr.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── LINEUP ─────────────────────────────── */}
       <section className={`${styles.section} ${styles.lineup}`} id="lineup">
         <div className={styles.inner}>
@@ -185,42 +222,6 @@ export default function Landing() {
                 </span>
                 <span className={styles.post__more}>READ →</span>
               </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── ABOUT (black band) ─────────────────── */}
-      <section className={`${styles.section} ${styles.about}`} id="about">
-        <div className={styles.inner}>
-          <header className={styles.head}>
-            <div>
-              <span className={styles.eyebrow}>About — 배급사 소개</span>
-              <h2 className={styles.title}>
-                FILM <em>NOUVELLE</em>
-              </h2>
-            </div>
-            <span className={styles.index}>Since 2014 · Seoul</span>
-          </header>
-
-          <blockquote className={styles.quote}>
-            좋은 영화는 사라지지 않는다. <em>다만 옮겨질 곳을 기다릴 뿐이다.</em>
-          </blockquote>
-
-          <p className={styles.aboutBody}>
-            필름 누벨은 2014년, 극장에서 사라져 가던 독립·예술영화를 다시 스크린에
-            올리기 위해 시작했습니다. 우리는 한 해에 단 몇 편만을 고릅니다. 적게
-            고르는 대신, 한 편의 영화가 관객을 만나는 모든 길 — 개봉, 기획전, 공동체
-            상영, 아카이브 — 을 끝까지 동행합니다.
-          </p>
-
-          <div className={styles.principles}>
-            {PRINCIPLES.map((pr) => (
-              <div key={pr.title}>
-                <span className={styles.principle__label}>원칙 / {pr.label}</span>
-                <h3 className={styles.principle__title}>{pr.title}</h3>
-                <p className={styles.principle__text}>{pr.text}</p>
-              </div>
             ))}
           </div>
         </div>

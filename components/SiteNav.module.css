@@ -1,0 +1,50 @@
+/* Fixed site navigation — overlays the white hero, gains a light bar on scroll. */
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem clamp(1.4rem, 4vw, 3rem);
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition: background 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+    border-color 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+    padding 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.nav[data-scrolled="true"] {
+  background: rgba(248, 248, 248, 0.82);
+  backdrop-filter: blur(12px) saturate(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-block: 0.85rem;
+}
+
+.brand {
+  font-family: "Arial Black", Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: clamp(15px, 1.7vw, 20px);
+  letter-spacing: -0.02em;
+  color: #0c0c0c;
+  transition: opacity 0.2s;
+}
+.brand:hover { opacity: 0.5; }
+
+.links {
+  display: flex;
+  gap: clamp(1rem, 2.4vw, 2.6rem);
+}
+.links a {
+  font-family: "Arial Black", Helvetica, sans-serif;
+  font-weight: 800;
+  font-size: clamp(11px, 1vw, 13px);
+  letter-spacing: 0.04em;
+  color: #0c0c0c;
+  transition: opacity 0.2s;
+}
+.links a:hover { opacity: 0.45; }
+
+@media (max-width: 880px) {
+  .links { display: none; }
+}
