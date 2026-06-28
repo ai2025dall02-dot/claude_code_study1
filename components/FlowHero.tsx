@@ -24,7 +24,7 @@ const CW = 212;
 const CH = 300;
 const COUNT = DECK.length;
 const STEP = 360 / COUNT;
-const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.075) + 120;
+const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.075) + 20;
 const SPEED = 7; // deg/sec
 const FULL_DEG = 42; // ±이 범위 안은 opacity 1 (STEP=36 → 가운데+양옆 3장)
 const FADE_BAND = 30; // 그 바깥에서 1→0 으로 페이드되는 폭(deg)
