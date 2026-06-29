@@ -86,6 +86,7 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  align-items: start; /* 카드별 높이/오프셋 제각각(masonry 풍) */
   gap: clamp(1.6rem, 3vw, 2.6rem) clamp(1.4rem, 2.4vw, 2rem);
 }
 .card {
