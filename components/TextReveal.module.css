@@ -42,6 +42,19 @@
 .ghost {
   color: rgba(250, 250, 250, 0.16);
 }
+/* 글자 단위 — hover 시 인덱스 기반 staggered 웨이브(꿈틀거림) */
+.char {
+  display: inline-block;
+  will-change: transform;
+}
+.text:hover .char {
+  animation: charWiggle 0.9s ease-in-out infinite;
+  animation-delay: calc(var(--ci, 0) * 0.045s);
+}
+@keyframes charWiggle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-0.18em); }
+}
 .fill {
   position: absolute;
   left: 0;
@@ -55,4 +68,5 @@
   .sticky { height: auto; padding-block: clamp(3rem, 9vh, 6rem); }
   .fill { position: static; opacity: 1 !important; }
   .ghost { display: none; }
+  .text:hover .char { animation: none; }
 }

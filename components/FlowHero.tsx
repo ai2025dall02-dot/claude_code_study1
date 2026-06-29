@@ -7,10 +7,10 @@ import styles from "./FlowHero.module.css";
 
 export type FlowCard = { label: string; caption: string; img: string };
 
-// 필름 릴 구멍 좌표 (viewBox 100×100, 중심 50,50 / 반지름 27 / 6개)
-const REEL_HOLES: [number, number][] = [0, 60, 120, 180, 240, 300].map((deg) => {
+// 필름 릴 구멍 좌표 (viewBox 100×100, 중심 50,50 / 반지름 26 / 5개 펜타곤)
+const REEL5: [number, number][] = [90, 162, 234, 306, 18].map((deg) => {
   const a = (deg * Math.PI) / 180;
-  return [50 + 27 * Math.cos(a), 50 + 27 * Math.sin(a)];
+  return [50 + 26 * Math.cos(a), 50 - 26 * Math.sin(a)];
 });
 
 const CARDS: FlowCard[] = [
@@ -111,9 +111,23 @@ export default function FlowHero() {
 
   return (
     <section className={styles.stage} id="home" data-revealed={revealed}>
-      <p className={styles.outline} aria-hidden="true">
-        REEL
-      </p>
+      {/* REEL — 라인(outline) 유지 + 기하 모노라인 워드마크 */}
+      <div className={styles.outline} aria-hidden="true">
+        <svg className={styles.reelOutlineMark} viewBox="0 0 244 132">
+          <g
+            fill="none"
+            stroke="#c9c7c2"
+            strokeWidth="7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M10 122 V14 H36 A26 26 0 0 1 36 66 H10 M36 66 L58 122" />
+            <path d="M112 14 H72 V122 H112 M72 66 H104" />
+            <path d="M172 14 H132 V122 H172 M132 66 H164" />
+            <path d="M192 14 V122 H232" />
+          </g>
+        </svg>
+      </div>
 
       {/* FILM — 바우하우스 기하 워드마크 (원·반원·파이·세로 줄무늬) */}
       <h1 className={styles.bigword} aria-label="FILM">
@@ -157,40 +171,18 @@ export default function FlowHero() {
         </text>
       </svg>
 
-      {/* 입체(3D) 회전 필름 릴 — 기울임 + 축 회전 + 앞/뒤 면·테두리 두께 */}
+      {/* 회전하는 필름 릴 — 라인아트(reel.png 스타일): 이중 외곽링 + 5개 구멍 + 중심 */}
       <div className={styles.reelWrap} aria-hidden="true">
-        <div className={styles.reelTilt}>
-          <div className={styles.reelSpin}>
-            {/* 옆면(두께) */}
-            <span className={styles.reelEdge} />
-            {/* 뒷면 */}
-            <svg className={`${styles.reelFace} ${styles.reelBack}`} viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="47" fill="#0e0e11" />
-              <circle cx="50" cy="50" r="9.5" fill="#1c1c20" />
-            </svg>
-            {/* 앞면 — 구멍은 마스크로 뚫어 안쪽이 비치게 */}
-            <svg className={`${styles.reelFace} ${styles.reelFront}`} viewBox="0 0 100 100">
-              <defs>
-                <radialGradient id="reelGrad" cx="36%" cy="28%" r="82%">
-                  <stop offset="0%" stopColor="#46464f" />
-                  <stop offset="100%" stopColor="#0b0b0d" />
-                </radialGradient>
-                <mask id="reelMask">
-                  <circle cx="50" cy="50" r="47" fill="#fff" />
-                  {REEL_HOLES.map(([cx, cy], i) => (
-                    <circle key={i} cx={cx} cy={cy} r="8.6" fill="#000" />
-                  ))}
-                </mask>
-              </defs>
-              <g mask="url(#reelMask)">
-                <circle cx="50" cy="50" r="47" fill="url(#reelGrad)" stroke="rgba(0,0,0,0.55)" strokeWidth="1" />
-                <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="2" />
-              </g>
-              <circle cx="50" cy="50" r="10" fill="#17171b" stroke="rgba(255,255,255,0.14)" strokeWidth="1" />
-              <circle cx="50" cy="50" r="3.4" fill="#0a0a0b" />
-            </svg>
-          </div>
-        </div>
+        <svg className={styles.reel} viewBox="0 0 100 100">
+          <g fill="none" stroke="#0b0b0c" strokeWidth="2.2">
+            <circle cx="50" cy="50" r="48" />
+            <circle cx="50" cy="50" r="43.5" />
+            {REEL5.map(([cx, cy], i) => (
+              <circle key={i} cx={cx} cy={cy} r="12" />
+            ))}
+            <circle cx="50" cy="50" r="5.2" />
+          </g>
+        </svg>
       </div>
 
       {/* 원통형 3D 카드 덱 — 바깥=고정 기울기, 안쪽=rAF rotateY */}

@@ -349,10 +349,10 @@
 }
 .aboutBody {
   margin-top: 2.4rem;
-  max-width: 70ch;
+  max-width: none; /* 영역(.inner) 전체 폭을 채움 */
   color: #b9b9b4;
-  font-size: 1.05rem;
-  line-height: 1.85;
+  font-size: clamp(1.05rem, 1.9vw, 1.5rem);
+  line-height: 1.7;
 }
 /* 제목 타이핑 커서 */
 .caret {

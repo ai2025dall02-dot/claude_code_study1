@@ -103,22 +103,19 @@
   height: auto;
 }
 
-/* ── 우측 아웃라인 대형 글자 ── */
+/* ── 우측 REEL — 기하 모노라인(아웃라인) 워드마크 ── */
 .outline {
   position: absolute;
   right: -1.5%;
   bottom: 1%;
   z-index: 1;
   margin: 0;
-  font-family: "Arial Black", Helvetica, sans-serif;
-  font-weight: 900;
-  font-size: clamp(140px, 26vw, 380px);
-  line-height: 0.8;
-  letter-spacing: -0.03em;
-  color: transparent;
-  -webkit-text-stroke: 1.4px #c9c7c2;
-  white-space: nowrap;
   user-select: none;
+}
+.reelOutlineMark {
+  display: block;
+  width: min(58vw, 760px);
+  height: auto;
 }
 
 /* ── 원형 회전 텍스트 ── */
@@ -141,49 +138,23 @@
 }
 @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
 
-/* ── 입체(3D) 회전 필름 릴 ── */
+/* ── 회전하는 필름 릴 — 라인아트(reel.png 스타일) ── */
 .reelWrap {
   position: absolute;
   left: 7%;
   bottom: 15%;
   z-index: 4;
-  width: 172px;
-  height: 172px;
-  perspective: 820px;
+  width: 158px;
+  height: 158px;
 }
-.reelTilt {
-  position: relative;
+.reel {
   width: 100%;
   height: 100%;
-  transform: rotateX(58deg) rotateZ(-6deg);
-  transform-style: preserve-3d;
-  filter: drop-shadow(0 24px 18px rgba(0, 0, 0, 0.32));
-}
-.reelSpin {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  animation: reelspin 8s linear infinite;
-}
-.reelFace {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-.reelFront { transform: translateZ(9px); }
-.reelBack { transform: translateZ(-9px); }
-/* 옆면(두께) — 앞/뒤 면 사이를 메우는 원기둥 측면 느낌 */
-.reelEdge {
-  position: absolute;
-  inset: 1%;
-  border-radius: 50%;
-  background: linear-gradient(180deg, #2c2c33, #08080a);
-  transform: translateZ(0);
+  transform-origin: 50% 50%;
+  animation: reelspin 11s linear infinite;
 }
 @keyframes reelspin {
-  from { transform: rotateZ(0deg); }
-  to { transform: rotateZ(360deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* ── 원통형(3D 실린더) 카드 덱 ── */
@@ -314,5 +285,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ringText, .reelSpin { animation: none; }
+  .ringText, .reel { animation: none; }
 }
