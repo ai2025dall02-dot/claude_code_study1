@@ -102,23 +102,34 @@ export function TextReveal({
       <svg className={styles.defs} aria-hidden="true">
         <filter
           id="filmRefract"
-          x="-15%"
-          y="-15%"
-          width="130%"
-          height="130%"
+          x="-30%"
+          y="-30%"
+          width="160%"
+          height="160%"
           colorInterpolationFilters="sRGB"
         >
           <feTurbulence
             type="fractalNoise"
-            baseFrequency="0.02 0.03"
+            baseFrequency="0.018 0.024"
             numOctaves="2"
             seed="11"
             result="n"
-          />
+          >
+            {/* 노이즈를 천천히 왕복시켜 물결처럼 계속 일렁이게 */}
+            <animate
+              attributeName="baseFrequency"
+              dur="9s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keyTimes="0;0.5;1"
+              keySplines="0.45 0 0.55 1;0.45 0 0.55 1"
+              values="0.018 0.024;0.026 0.018;0.018 0.024"
+            />
+          </feTurbulence>
           <feDisplacementMap
             in="SourceGraphic"
             in2="n"
-            scale="12"
+            scale="9"
             xChannelSelector="R"
             yChannelSelector="G"
           />

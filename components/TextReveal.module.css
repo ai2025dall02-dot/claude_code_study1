@@ -62,21 +62,21 @@
 }
 /* 굴절 오버레이 — 평소엔 숨김, 커서 원형 영역에서만 표시 */
 .textRefract {
-  filter: url(#filmRefract);
+  filter: url(#filmRefract) brightness(1.1);
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.2s ease;
   -webkit-mask-image: radial-gradient(
-    circle 135px at var(--mx, -300px) var(--my, -300px),
+    circle 150px at var(--mx, -400px) var(--my, -400px),
     #000 0%,
-    #000 45%,
-    transparent 85%
+    #000 38%,
+    transparent 100%
   );
   mask-image: radial-gradient(
-    circle 135px at var(--mx, -300px) var(--my, -300px),
+    circle 150px at var(--mx, -400px) var(--my, -400px),
     #000 0%,
-    #000 45%,
-    transparent 85%
+    #000 38%,
+    transparent 100%
   );
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
@@ -85,19 +85,23 @@
 .lensOn .textRefract {
   opacity: 1;
 }
+/* 굴절 오버레이 글자는 순백 (컬러 글로우 없음) */
+.textRefract .fill {
+  color: #fff !important;
+}
 /* 커서 원형 영역에서 base 를 비워 굴절본만 보이게 (이중상 방지) */
 .lensOn .textBase {
   -webkit-mask-image: radial-gradient(
-    circle 135px at var(--mx, -300px) var(--my, -300px),
+    circle 150px at var(--mx, -400px) var(--my, -400px),
     transparent 0%,
-    transparent 45%,
-    #000 85%
+    transparent 38%,
+    #000 100%
   );
   mask-image: radial-gradient(
-    circle 135px at var(--mx, -300px) var(--my, -300px),
+    circle 150px at var(--mx, -400px) var(--my, -400px),
     transparent 0%,
-    transparent 45%,
-    #000 85%
+    transparent 38%,
+    #000 100%
   );
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
