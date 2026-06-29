@@ -96,19 +96,11 @@
   white-space: nowrap;
   user-select: none;
 }
-/* 두 겹 모두 단일 마스크만 사용(mask-composite 미사용 → 전 브라우저 동일).
-   .left = 왼쪽 솔리드(오른쪽으로 페이드), .stripes = 줄무늬(전폭).
-   두 겹을 겹쳐 합집합 → 왼쪽 솔리드 + 오른쪽 줄무늬 디졸브 (원본과 동일 룩). */
-.bigword span { display: block; }
-.bigword__left {
-  -webkit-mask-image: linear-gradient(90deg, #000 0 30%, transparent 72%);
-  mask-image: linear-gradient(90deg, #000 0 30%, transparent 72%);
-}
-.bigword__stripes {
-  position: absolute;
-  inset: 0;
-  -webkit-mask-image: repeating-linear-gradient(90deg, #000 0 0.08em, transparent 0.08em 0.16em);
-  mask-image: repeating-linear-gradient(90deg, #000 0 0.08em, transparent 0.08em 0.16em);
+/* FILM 기하 워드마크 */
+.filmMark {
+  display: block;
+  width: min(90vw, 1040px);
+  height: auto;
 }
 
 /* ── 우측 아웃라인 대형 글자 ── */
@@ -149,24 +141,49 @@
 }
 @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
 
-/* ── 회전하는 영화 필름 릴 ── */
+/* ── 입체(3D) 회전 필름 릴 ── */
 .reelWrap {
   position: absolute;
   left: 7%;
-  bottom: 16%;
+  bottom: 15%;
   z-index: 4;
-  width: 150px;
-  height: 150px;
-  filter: drop-shadow(0 26px 26px rgba(0, 0, 0, 0.28));
+  width: 172px;
+  height: 172px;
+  perspective: 820px;
 }
-.reel {
+.reelTilt {
+  position: relative;
   width: 100%;
   height: 100%;
-  transform-origin: 50% 50%;
-  animation: reelspin 9s linear infinite;
+  transform: rotateX(58deg) rotateZ(-6deg);
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 24px 18px rgba(0, 0, 0, 0.32));
+}
+.reelSpin {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: reelspin 8s linear infinite;
+}
+.reelFace {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.reelFront { transform: translateZ(9px); }
+.reelBack { transform: translateZ(-9px); }
+/* 옆면(두께) — 앞/뒤 면 사이를 메우는 원기둥 측면 느낌 */
+.reelEdge {
+  position: absolute;
+  inset: 1%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #2c2c33, #08080a);
+  transform: translateZ(0);
 }
 @keyframes reelspin {
-  to { transform: rotate(360deg); }
+  from { transform: rotateZ(0deg); }
+  to { transform: rotateZ(360deg); }
 }
 
 /* ── 원통형(3D 실린더) 카드 덱 ── */
@@ -297,5 +314,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ringText, .reel { animation: none; }
+  .ringText, .reelSpin { animation: none; }
 }

@@ -115,15 +115,35 @@ export default function FlowHero() {
         REEL
       </p>
 
-      {/* 줄무늬 디졸브 대형 글자 — mask-composite(브라우저 호환 취약) 대신
-          단일 마스크 2겹을 겹쳐(합집합) 왼쪽 솔리드 + 오른쪽 줄무늬 디졸브 */}
-      <h1 className={styles.bigword} aria-label="MOVIE">
-        <span className={styles.bigword__left} aria-hidden="true">
-          MOVIE
-        </span>
-        <span className={styles.bigword__stripes} aria-hidden="true">
-          MOVIE
-        </span>
+      {/* FILM — 바우하우스 기하 워드마크 (원·반원·파이·세로 줄무늬) */}
+      <h1 className={styles.bigword} aria-label="FILM">
+        <svg className={styles.filmMark} viewBox="0 0 452 140" aria-hidden="true">
+          <defs>
+            <pattern id="filmHatch" width="8" height="24" patternUnits="userSpaceOnUse">
+              <rect x="0" y="0" width="3.6" height="24" fill="#0b0b0c" />
+            </pattern>
+          </defs>
+          {/* F — 좌상단 1/4 라운드 */}
+          <path
+            d="M0 32 A20 20 0 0 1 20 12 L66 12 L66 35 L26 35 L26 57 L54 57 L54 80 L26 80 L26 116 L0 116 Z"
+            fill="#0b0b0c"
+          />
+          {/* I — 세로 줄무늬(해칭) 기둥 */}
+          <rect x="96" y="12" width="30" height="104" fill="url(#filmHatch)" />
+          {/* L */}
+          <path d="M150 12 L176 12 L176 93 L220 93 L220 116 L150 116 Z" fill="#0b0b0c" />
+          {/* M — 굵은 스트로크 */}
+          <path
+            d="M256 116 L256 12 L318 86 L380 12 L380 116"
+            fill="none"
+            stroke="#0b0b0c"
+            strokeWidth="26"
+            strokeLinejoin="miter"
+          />
+          {/* 액센트 — 파이(노치) + 원 */}
+          <path d="M424 40 L424 22 A18 18 0 1 1 406 40 Z" fill="#0b0b0c" />
+          <circle cx="424" cy="100" r="18" fill="#0b0b0c" />
+        </svg>
       </h1>
 
       <svg className={styles.ringText} viewBox="0 0 100 100" aria-hidden="true">
@@ -137,23 +157,40 @@ export default function FlowHero() {
         </text>
       </svg>
 
-      {/* 회전하는 영화 필름 릴 */}
+      {/* 입체(3D) 회전 필름 릴 — 기울임 + 축 회전 + 앞/뒤 면·테두리 두께 */}
       <div className={styles.reelWrap} aria-hidden="true">
-        <svg className={styles.reel} viewBox="0 0 100 100">
-          <defs>
-            <radialGradient id="reelFace" cx="38%" cy="32%" r="80%">
-              <stop offset="0%" stopColor="#3a3a42" />
-              <stop offset="100%" stopColor="#0b0b0d" />
-            </radialGradient>
-          </defs>
-          <circle cx="50" cy="50" r="47" fill="url(#reelFace)" stroke="rgba(0,0,0,0.55)" strokeWidth="1" />
-          <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="2" />
-          {REEL_HOLES.map(([cx, cy], i) => (
-            <circle key={i} cx={cx} cy={cy} r="8.4" fill="#f6f6f4" stroke="rgba(0,0,0,0.5)" strokeWidth="0.8" />
-          ))}
-          <circle cx="50" cy="50" r="9.5" fill="#16161a" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
-          <circle cx="50" cy="50" r="3.2" fill="#f6f6f4" />
-        </svg>
+        <div className={styles.reelTilt}>
+          <div className={styles.reelSpin}>
+            {/* 옆면(두께) */}
+            <span className={styles.reelEdge} />
+            {/* 뒷면 */}
+            <svg className={`${styles.reelFace} ${styles.reelBack}`} viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="47" fill="#0e0e11" />
+              <circle cx="50" cy="50" r="9.5" fill="#1c1c20" />
+            </svg>
+            {/* 앞면 — 구멍은 마스크로 뚫어 안쪽이 비치게 */}
+            <svg className={`${styles.reelFace} ${styles.reelFront}`} viewBox="0 0 100 100">
+              <defs>
+                <radialGradient id="reelGrad" cx="36%" cy="28%" r="82%">
+                  <stop offset="0%" stopColor="#46464f" />
+                  <stop offset="100%" stopColor="#0b0b0d" />
+                </radialGradient>
+                <mask id="reelMask">
+                  <circle cx="50" cy="50" r="47" fill="#fff" />
+                  {REEL_HOLES.map(([cx, cy], i) => (
+                    <circle key={i} cx={cx} cy={cy} r="8.6" fill="#000" />
+                  ))}
+                </mask>
+              </defs>
+              <g mask="url(#reelMask)">
+                <circle cx="50" cy="50" r="47" fill="url(#reelGrad)" stroke="rgba(0,0,0,0.55)" strokeWidth="1" />
+                <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="2" />
+              </g>
+              <circle cx="50" cy="50" r="10" fill="#17171b" stroke="rgba(255,255,255,0.14)" strokeWidth="1" />
+              <circle cx="50" cy="50" r="3.4" fill="#0a0a0b" />
+            </svg>
+          </div>
+        </div>
       </div>
 
       {/* 원통형 3D 카드 덱 — 바깥=고정 기울기, 안쪽=rAF rotateY */}
