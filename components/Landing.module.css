@@ -65,7 +65,24 @@
 }
 
 /* ── LINEUP ─────────────────────────────────────────── */
-.lineup { background: #f8f8f8; }
+.lineup {
+  background: #f8f8f8;
+  position: relative;
+  z-index: 1; /* ABOUT 위로 — 원형 reveal 레이어가 ABOUT 을 덮도록 */
+}
+.lineup .inner {
+  position: relative;
+  z-index: 2; /* 콘텐츠는 reveal 레이어 위 */
+}
+/* ABOUT 하단~LINEUP 진입에서 차오르는 밝은 원형 레이어 (뷰포트 고정) */
+.lineupReveal {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: #f8f8f8;
+  pointer-events: none;
+  will-change: clip-path, opacity;
+}
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -330,6 +347,7 @@
   background-color: transparent;
   color: #f4f4f2;
   position: relative;
+  isolation: isolate; /* 스포트라이트 등 내부 레이어를 ABOUT 안에 가둠 */
 }
 /* 마우스 따라다니는 옅은 흰 스포트라이트 (screen 합성, 텍스트 위 은은하게) */
 .spotlight {

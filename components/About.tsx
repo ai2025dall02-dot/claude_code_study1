@@ -38,11 +38,11 @@ export default function About() {
     target: ref,
     offset: ["start end", "end start"],
   });
-  // 진입: 흰→검정(0~0.2) · 본문 구간 유지(검정) · LINEUP 으로 넘어가며 다시 밝아짐(0.85~1)
+  // 진입: 흰→검정(0~0.2), 이후 검정 유지. (LINEUP 전환은 LINEUP 의 원형 reveal 이 담당)
   const backgroundColor = useTransform(
     scrollYProgress,
-    [0, 0.2, 0.85, 1],
-    ["#f8f8f8", "#0b0b0c", "#0b0b0c", "#f8f8f8"]
+    [0, 0.2],
+    ["#f8f8f8", "#0b0b0c"]
   );
   // 인용문 글자색: 밝은 배경에선 어둡게, 어두워지면 밝게 (대비 유지)
   const quoteFill = useTransform(scrollYProgress, [0, 0.2], ["#1a1a1a", "#f4f4f2"]);
