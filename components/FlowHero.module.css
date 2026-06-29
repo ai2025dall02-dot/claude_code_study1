@@ -103,19 +103,22 @@
   height: auto;
 }
 
-/* ── 우측 REEL — 기하 모노라인(아웃라인) 워드마크 ── */
+/* ── 우측 REEL — 각진 아웃라인(라인) 대형 글자 ── */
 .outline {
   position: absolute;
   right: -1.5%;
   bottom: 1%;
   z-index: 1;
   margin: 0;
+  font-family: "Arial Black", Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: clamp(140px, 26vw, 380px);
+  line-height: 0.8;
+  letter-spacing: -0.03em;
+  color: transparent;
+  -webkit-text-stroke: 1.4px #c9c7c2;
+  white-space: nowrap;
   user-select: none;
-}
-.reelOutlineMark {
-  display: block;
-  width: min(58vw, 760px);
-  height: auto;
 }
 
 /* ── 원형 회전 텍스트 ── */

@@ -111,23 +111,10 @@ export default function FlowHero() {
 
   return (
     <section className={styles.stage} id="home" data-revealed={revealed}>
-      {/* REEL — 라인(outline) 유지 + 기하 모노라인 워드마크 */}
-      <div className={styles.outline} aria-hidden="true">
-        <svg className={styles.reelOutlineMark} viewBox="0 0 244 132">
-          <g
-            fill="none"
-            stroke="#c9c7c2"
-            strokeWidth="7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M10 122 V14 H36 A26 26 0 0 1 36 66 H10 M36 66 L58 122" />
-            <path d="M112 14 H72 V122 H112 M72 66 H104" />
-            <path d="M172 14 H132 V122 H172 M132 66 H164" />
-            <path d="M192 14 V122 H232" />
-          </g>
-        </svg>
-      </div>
+      {/* REEL — 각진 아웃라인(라인) 대형 글자 (FILM과 동일 톤) */}
+      <p className={styles.outline} aria-hidden="true">
+        REEL
+      </p>
 
       {/* FILM — 바우하우스 기하 워드마크 (원·반원·파이·세로 줄무늬) */}
       <h1 className={styles.bigword} aria-label="FILM">

@@ -42,18 +42,30 @@
 .ghost {
   color: rgba(250, 250, 250, 0.16);
 }
-/* 글자 단위 — hover 시 인덱스 기반 staggered 웨이브(꿈틀거림) */
+/* 글자 단위 — hover 시 인덱스 기반 staggered 글로우(네온/소프트 블러) */
 .char {
   display: inline-block;
-  will-change: transform;
 }
 .text:hover .char {
-  animation: charWiggle 0.9s ease-in-out infinite;
-  animation-delay: calc(var(--ci, 0) * 0.045s);
+  animation: charGlow 1.8s ease-in-out infinite;
+  animation-delay: calc(var(--ci, 0) * 0.07s);
 }
-@keyframes charWiggle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-0.18em); }
+@keyframes charGlow {
+  0%, 100% {
+    text-shadow:
+      0 0 3px rgba(255, 228, 188, 0.4),
+      0 0 14px rgba(130, 205, 255, 0.4),
+      0 0 30px rgba(130, 205, 255, 0.26);
+    filter: blur(0.2px);
+  }
+  50% {
+    text-shadow:
+      0 0 5px rgba(255, 228, 188, 0.72),
+      0 0 18px rgba(255, 190, 120, 0.5),
+      0 0 32px rgba(130, 205, 255, 0.8),
+      0 0 64px rgba(130, 205, 255, 0.55);
+    filter: blur(0.5px);
+  }
 }
 .fill {
   position: absolute;
