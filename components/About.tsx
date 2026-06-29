@@ -78,21 +78,23 @@ export default function About() {
     target: ref,
     offset: ["start end", "end start"],
   });
+  // 인용문이 화면 중앙에 오기 전(섹션 진입 초반)에 어두워짐이 끝나도록 구간을
+  // 앞당김. 0.3 지점에서 이미 검정이며, 이후는 clamp 되어 계속 어두운 상태 유지.
   const backgroundColor = useTransform(
     scrollYProgress,
-    [0, 0.6],
+    [0, 0.2],
     ["#f8f8f8", "#0b0b0c"]
   );
-  // 인용문 글자색: 밝은 배경에선 어둡게, 배경이 어두워지면 밝게 (대비 유지)
+  // 인용문 글자색도 같은 구간에서 어두운→밝은으로 전환 (밝은 배경 대비 유지)
   const quoteFill = useTransform(
     scrollYProgress,
-    [0.12, 0.45],
-    ["#0c0c0c", "#f4f4f2"]
+    [0, 0.2],
+    ["#1a1a1a", "#f4f4f2"]
   );
   const quoteGhost = useTransform(
     scrollYProgress,
-    [0.12, 0.45],
-    ["rgba(12,12,12,0.22)", "rgba(244,244,242,0.16)"]
+    [0, 0.2],
+    ["rgba(26,26,26,0.22)", "rgba(244,244,242,0.16)"]
   );
 
   // 인용문이 끝난 뒤(아래쪽) 등장하는 그룹: 위/좌측에서부터 순차 cascade
