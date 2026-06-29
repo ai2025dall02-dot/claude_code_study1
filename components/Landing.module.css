@@ -323,6 +323,29 @@
      JS 미동작 시 폴백으로만 어두운 톤 유지. */
   background-color: transparent;
   color: #f4f4f2;
+  position: relative;
+}
+/* 마우스 따라다니는 옅은 흰 스포트라이트 (screen 합성, 텍스트 위 은은하게) */
+.spotlight {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  background: radial-gradient(
+    circle 300px at var(--mx, -600px) var(--my, -600px),
+    rgba(255, 255, 255, 0.07),
+    rgba(255, 255, 255, 0.025) 42%,
+    transparent 70%
+  );
+}
+.spotOn .spotlight {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .spotlight { display: none; }
 }
 .about .head { border-bottom-color: rgba(255, 255, 255, 0.16); }
 .about .eyebrow { color: #8a8a86; }

@@ -97,6 +97,38 @@ export default function About() {
     ["rgba(26,26,26,0.22)", "rgba(244,244,242,0.16)"]
   );
 
+  // 마우스 따라다니는 옅은 흰 스포트라이트 (rAF throttle)
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    let nx = 0;
+    let ny = 0;
+    const apply = () => {
+      raf = 0;
+      el.style.setProperty("--mx", `${nx}px`);
+      el.style.setProperty("--my", `${ny}px`);
+    };
+    const onMove = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect();
+      nx = e.clientX - r.left;
+      ny = e.clientY - r.top;
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+    const onEnter = () => el.classList.add(styles.spotOn);
+    const onLeave = () => el.classList.remove(styles.spotOn);
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerenter", onEnter);
+    el.addEventListener("pointerleave", onLeave);
+    return () => {
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerenter", onEnter);
+      el.removeEventListener("pointerleave", onLeave);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
   // 인용문이 끝난 뒤(아래쪽) 등장하는 그룹: 위/좌측에서부터 순차 cascade
   const group: Variants = {
     hidden: {},
@@ -135,7 +167,7 @@ export default function About() {
         variants={group}
         initial="hidden"
         whileInView="show"
-        viewport={{ once: true, margin: "-15% 0px" }}
+        viewport={{ once: true, margin: "-40% 0px" }}
       >
         <motion.header className={styles.head} variants={item}>
           <div>
@@ -162,6 +194,9 @@ export default function About() {
           ))}
         </motion.div>
       </motion.div>
+
+      {/* 마우스 따라다니는 옅은 흰 스포트라이트 */}
+      <div className={styles.spotlight} aria-hidden="true" />
     </motion.section>
   );
 }
