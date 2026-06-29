@@ -1,5 +1,5 @@
 /* Tall wrapper drives scroll progress; inner block stays pinned while words
-   fill in. Tuned for the black ABOUT band (light text on near-black). */
+   fill in. base 텍스트와 굴절 오버레이를 정확히 겹쳐, 커서 주변만 굴절. */
 .wrap {
   position: relative;
   z-index: 0;
@@ -8,27 +8,31 @@
 .sticky {
   position: sticky;
   top: 0;
-  display: flex;
   height: 100vh;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
   max-width: 1100px;
   margin: 0 auto;
-  padding: 0 clamp(1.4rem, 4vw, 3rem);
 }
+
+/* base + overlay 공통 레이아웃 — 절대배치로 동일 위치에 겹침 */
 .text {
+  position: absolute;
+  inset: 0;
+  margin: 0;
   display: flex;
   flex-wrap: wrap;
+  align-content: center;
+  align-items: center;
   justify-content: center;
   text-align: center;
+  padding: 0 clamp(1.4rem, 4vw, 3rem);
   font-family: "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
-  font-size: clamp(1.7rem, 4.6vw, 3.6rem);
-  line-height: 1.24;
+  font-size: clamp(2.2rem, 6vw, 4.8rem);
+  line-height: 1.18;
   letter-spacing: -0.02em;
-  margin: 0;
 }
-/* 줄바꿈용 flex 강제 줄넘김 (justify-content:center 로 각 줄 가운데 정렬) */
+
 .break {
   flex-basis: 100%;
   width: 100%;
@@ -42,39 +46,6 @@
 .ghost {
   color: rgba(250, 250, 250, 0.16);
 }
-/* 글자 단위 — hover 시 인덱스 기반 staggered 굴절(refraction) 일렁임.
-   컬러 글로우 없이, 다크 음영 + skew/translate + 미세 blur 로
-   유리 너머 일렁이는 굴절감. */
-.char {
-  display: inline-block;
-  will-change: transform, filter;
-}
-.text:hover .char {
-  animation: charRefract 1.4s ease-in-out infinite;
-  animation-delay: calc(var(--ci, 0) * 0.06s);
-}
-@keyframes charRefract {
-  0%, 100% {
-    transform: skewX(0deg) translateX(0);
-    filter: blur(0);
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
-  }
-  25% {
-    transform: skewX(2deg) translateX(1px);
-    filter: blur(0.3px);
-    text-shadow: -1px 1px 1px rgba(0, 0, 0, 0.48);
-  }
-  50% {
-    transform: skewX(0deg) translateX(0);
-    filter: blur(0.4px);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.52);
-  }
-  75% {
-    transform: skewX(-2deg) translateX(-1px);
-    filter: blur(0.3px);
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.48);
-  }
-}
 .fill {
   position: absolute;
   left: 0;
@@ -82,11 +53,62 @@
   color: #fafafa;
 }
 
+/* ── 굴절 렌즈 ── */
+.defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+/* 굴절 오버레이 — 평소엔 숨김, 커서 원형 영역에서만 표시 */
+.textRefract {
+  filter: url(#filmRefract);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  -webkit-mask-image: radial-gradient(
+    circle 135px at var(--mx, -300px) var(--my, -300px),
+    #000 0%,
+    #000 32%,
+    transparent 70%
+  );
+  mask-image: radial-gradient(
+    circle 135px at var(--mx, -300px) var(--my, -300px),
+    #000 0%,
+    #000 32%,
+    transparent 70%
+  );
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  will-change: transform;
+}
+.lensOn .textRefract {
+  opacity: 1;
+}
+/* 커서 원형 영역에서 base 를 비워 굴절본만 보이게 (이중상 방지) */
+.lensOn .textBase {
+  -webkit-mask-image: radial-gradient(
+    circle 135px at var(--mx, -300px) var(--my, -300px),
+    transparent 0%,
+    transparent 30%,
+    #000 68%
+  );
+  mask-image: radial-gradient(
+    circle 135px at var(--mx, -300px) var(--my, -300px),
+    transparent 0%,
+    transparent 30%,
+    #000 68%
+  );
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  /* keep the statement fully legible without scroll choreography */
+  /* 스크롤 연출/렌즈 없이 문장만 또렷하게 */
   .wrap { height: auto; }
-  .sticky { height: auto; padding-block: clamp(3rem, 9vh, 6rem); }
+  .sticky { height: auto; position: static; padding-block: clamp(3rem, 9vh, 6rem); }
+  .text { position: static; }
+  .textRefract { display: none; }
   .fill { position: static; opacity: 1 !important; }
   .ghost { display: none; }
-  .text:hover .char { animation: none; }
 }
