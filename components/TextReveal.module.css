@@ -28,7 +28,7 @@
   padding: 0 clamp(1.4rem, 4vw, 3rem);
   font-family: "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
-  font-size: clamp(2.2rem, 6vw, 4.8rem);
+  font-size: clamp(1.9rem, 5vw, 4rem);
   line-height: 1.18;
   letter-spacing: -0.02em;
 }
@@ -69,14 +69,14 @@
   -webkit-mask-image: radial-gradient(
     circle 135px at var(--mx, -300px) var(--my, -300px),
     #000 0%,
-    #000 32%,
-    transparent 70%
+    #000 45%,
+    transparent 85%
   );
   mask-image: radial-gradient(
     circle 135px at var(--mx, -300px) var(--my, -300px),
     #000 0%,
-    #000 32%,
-    transparent 70%
+    #000 45%,
+    transparent 85%
   );
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
@@ -90,14 +90,14 @@
   -webkit-mask-image: radial-gradient(
     circle 135px at var(--mx, -300px) var(--my, -300px),
     transparent 0%,
-    transparent 30%,
-    #000 68%
+    transparent 45%,
+    #000 85%
   );
   mask-image: radial-gradient(
     circle 135px at var(--mx, -300px) var(--my, -300px),
     transparent 0%,
-    transparent 30%,
-    #000 68%
+    transparent 45%,
+    #000 85%
   );
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;

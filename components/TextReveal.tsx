@@ -110,7 +110,7 @@ export function TextReveal({
         >
           <feTurbulence
             type="fractalNoise"
-            baseFrequency="0.012 0.02"
+            baseFrequency="0.02 0.03"
             numOctaves="2"
             seed="11"
             result="n"
@@ -118,7 +118,7 @@ export function TextReveal({
           <feDisplacementMap
             in="SourceGraphic"
             in2="n"
-            scale="22"
+            scale="12"
             xChannelSelector="R"
             yChannelSelector="G"
           />
