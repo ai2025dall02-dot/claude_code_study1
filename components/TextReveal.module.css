@@ -42,29 +42,37 @@
 .ghost {
   color: rgba(250, 250, 250, 0.16);
 }
-/* 글자 단위 — hover 시 인덱스 기반 staggered 글로우(네온/소프트 블러) */
+/* 글자 단위 — hover 시 인덱스 기반 staggered 굴절(refraction) 일렁임.
+   컬러 글로우 없이, 다크 음영 + skew/translate + 미세 blur 로
+   유리 너머 일렁이는 굴절감. */
 .char {
   display: inline-block;
+  will-change: transform, filter;
 }
 .text:hover .char {
-  animation: charGlow 1.8s ease-in-out infinite;
-  animation-delay: calc(var(--ci, 0) * 0.07s);
+  animation: charRefract 1.4s ease-in-out infinite;
+  animation-delay: calc(var(--ci, 0) * 0.06s);
 }
-@keyframes charGlow {
+@keyframes charRefract {
   0%, 100% {
-    text-shadow:
-      0 0 3px rgba(255, 228, 188, 0.4),
-      0 0 14px rgba(130, 205, 255, 0.4),
-      0 0 30px rgba(130, 205, 255, 0.26);
-    filter: blur(0.2px);
+    transform: skewX(0deg) translateX(0);
+    filter: blur(0);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+  }
+  25% {
+    transform: skewX(2deg) translateX(1px);
+    filter: blur(0.3px);
+    text-shadow: -1px 1px 1px rgba(0, 0, 0, 0.48);
   }
   50% {
-    text-shadow:
-      0 0 5px rgba(255, 228, 188, 0.72),
-      0 0 18px rgba(255, 190, 120, 0.5),
-      0 0 32px rgba(130, 205, 255, 0.8),
-      0 0 64px rgba(130, 205, 255, 0.55);
-    filter: blur(0.5px);
+    transform: skewX(0deg) translateX(0);
+    filter: blur(0.4px);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.52);
+  }
+  75% {
+    transform: skewX(-2deg) translateX(-1px);
+    filter: blur(0.3px);
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.48);
   }
 }
 .fill {
