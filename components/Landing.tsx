@@ -1,17 +1,7 @@
-import Image from "next/image";
 import { films } from "@/data/films";
 import About from "@/components/About";
+import Lineup from "@/components/Lineup";
 import styles from "./Landing.module.css";
-
-/* 라인업 작품에 사진 포스터 매핑 (public/posters-photo) */
-const FILM_PHOTO: Record<string, string> = {
-  afterimage: "/posters-photo/m1.jpg",
-  north: "/posters-photo/m4.jpg",
-  exile: "/posters-photo/m3.jpg",
-  salt: "/posters-photo/m8.jpg",
-  winter: "/posters-photo/m6.jpg",
-  reel: "/posters-photo/m2.jpg",
-};
 
 /* 영화제 초청·수상 (데모용 가상 정보) */
 const FESTIVALS = [
@@ -38,44 +28,8 @@ export default function Landing() {
       {/* ── ABOUT (scroll-darkening bg, fade-up, text-reveal) ─ */}
       <About />
 
-      {/* ── LINEUP ─────────────────────────────── */}
-      <section className={`${styles.section} ${styles.lineup}`} id="lineup">
-        <div className={styles.inner}>
-          <header className={styles.head}>
-            <div>
-              <span className={styles.eyebrow}>The Programme</span>
-              <h2 className={styles.title}>
-                LINE<em>UP</em>
-              </h2>
-            </div>
-            <span className={styles.index}>현재 배급 · 2024–2025 / 전 {films.length}편</span>
-          </header>
-
-          <div className={styles.grid}>
-            {films.map((f) => (
-              <a key={f.id} className={styles.card} href="#contact">
-                <div className={styles.card__media}>
-                  <Image
-                    src={FILM_PHOTO[f.id] ?? "/posters-photo/m1.jpg"}
-                    alt={`${f.title} 스틸`}
-                    fill
-                    sizes="(max-width: 600px) 50vw, (max-width: 980px) 50vw, 33vw"
-                  />
-                  <span className={styles.card__idx}>{f.index}</span>
-                  <span className={styles.card__status}>{f.status}</span>
-                </div>
-                <div className={styles.card__body}>
-                  <span className={styles.card__title}>{f.title}</span>
-                  <span className={styles.card__en}>{f.titleEn}</span>
-                  <span className={styles.card__meta}>
-                    {f.director} · {f.country} {f.year} · {f.format} · {f.genre}
-                  </span>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ── LINEUP (타이핑 제목 + 스크롤 리빌 이미지) ─ */}
+      <Lineup />
 
       {/* ── FILMMAKERS ─────────────────────────── */}
       <section className={`${styles.section} ${styles.makers}`} id="filmmakers">

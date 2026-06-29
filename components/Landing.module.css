@@ -84,6 +84,12 @@
   background: #e7e7e4;
   border: 1px solid rgba(0, 0, 0, 0.08);
 }
+/* 스크롤 리빌용 스케일 래퍼 (clip 은 .card__media, scale 은 inner) */
+.card__mediaInner {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
 .card__media :global(img) {
   object-fit: cover;
   transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
@@ -355,6 +361,10 @@
 /* 인용문 reveal 이후 — 나머지 그룹이 등장하기 전 felt 한 텀(공백) */
 .aboutAfter {
   margin-top: clamp(11rem, 32vh, 26rem);
+}
+/* ABOUT 하단 여백(넓힘) — 이 구간을 지나며 배경이 LINEUP 으로 밝아짐 */
+.aboutTail {
+  height: clamp(20rem, 55vh, 42rem);
 }
 .quote {
   font-family: "Arial Black", Helvetica, sans-serif;

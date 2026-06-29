@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   motion,
-  useInView,
   useReducedMotion,
   useScroll,
   useTransform,
   type Variants,
 } from "framer-motion";
 import { TextReveal } from "./TextReveal";
+import TypeTitle from "./TypeTitle";
 import styles from "./Landing.module.css";
 
 const PRINCIPLES = [
@@ -30,67 +30,22 @@ const PRINCIPLES = [
   },
 ];
 
-/* 제목 "FILM NOUVELLE" — 뷰포트 진입 시 한 글자씩 타이핑 (1회) */
-function TypeTitle() {
-  const ref = useRef<HTMLHeadingElement | null>(null);
-  const inView = useInView(ref, { once: true, margin: "-10% 0px" });
-  const reduce = useReducedMotion();
-
-  const SOLID = "FILM ";
-  const OUTLINE = "NOUVELLE";
-  const full = SOLID.length + OUTLINE.length;
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!inView) return;
-    if (reduce) {
-      setCount(full);
-      return;
-    }
-    let c = 0;
-    const id = setInterval(() => {
-      c += 1;
-      setCount(c);
-      if (c >= full) clearInterval(id);
-    }, 90);
-    return () => clearInterval(id);
-  }, [inView, reduce, full]);
-
-  const solidShown = SOLID.slice(0, Math.min(count, SOLID.length));
-  const outlineShown = OUTLINE.slice(0, Math.max(0, count - SOLID.length));
-
-  return (
-    <h2 ref={ref} className={styles.title} aria-label="FILM NOUVELLE">
-      <span aria-hidden="true">{solidShown}</span>
-      <em aria-hidden="true">{outlineShown}</em>
-      <span className={styles.caret} aria-hidden="true" />
-    </h2>
-  );
-}
-
 export default function About() {
   const ref = useRef<HTMLElement | null>(null);
   const reduce = useReducedMotion();
 
-  // 섹션을 지나는 동안 배경이 흰색(히어로와 연결) → 검정으로 또렷하게 어두워짐.
-  // 입력 구간을 [0,0.6]으로 좁혀 진입~중반에 변화가 집중되게 한다.
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
   });
-  // 인용문이 화면 중앙에 오기 전(섹션 진입 초반)에 어두워짐이 끝나도록 구간을
-  // 앞당김. 0.3 지점에서 이미 검정이며, 이후는 clamp 되어 계속 어두운 상태 유지.
+  // 진입: 흰→검정(0~0.2) · 본문 구간 유지(검정) · LINEUP 으로 넘어가며 다시 밝아짐(0.85~1)
   const backgroundColor = useTransform(
     scrollYProgress,
-    [0, 0.2],
-    ["#f8f8f8", "#0b0b0c"]
+    [0, 0.2, 0.85, 1],
+    ["#f8f8f8", "#0b0b0c", "#0b0b0c", "#f8f8f8"]
   );
-  // 인용문 글자색도 같은 구간에서 어두운→밝은으로 전환 (밝은 배경 대비 유지)
-  const quoteFill = useTransform(
-    scrollYProgress,
-    [0, 0.2],
-    ["#1a1a1a", "#f4f4f2"]
-  );
+  // 인용문 글자색: 밝은 배경에선 어둡게, 어두워지면 밝게 (대비 유지)
+  const quoteFill = useTransform(scrollYProgress, [0, 0.2], ["#1a1a1a", "#f4f4f2"]);
   const quoteGhost = useTransform(
     scrollYProgress,
     [0, 0.2],
@@ -129,7 +84,6 @@ export default function About() {
     };
   }, []);
 
-  // 인용문이 끝난 뒤(아래쪽) 등장하는 그룹: 위/좌측에서부터 순차 cascade
   const group: Variants = {
     hidden: {},
     show: { transition: { staggerChildren: 0.18, delayChildren: 0.15 } },
@@ -154,14 +108,12 @@ export default function About() {
       className={`${styles.section} ${styles.about}`}
       style={{ backgroundColor }}
     >
-      {/* 1) 인용문 — 가장 먼저 등장하는 word-by-word reveal (2줄·중앙정렬) */}
       <TextReveal
         text={["좋은 영화는 사라지지 않는다.", "다만 옮겨질 곳을 기다릴 뿐이다."]}
         fillColor={quoteFill}
         ghostColor={quoteGhost}
       />
 
-      {/* 2) 텀(공백)을 두고 이어서 나머지 텍스트들이 순차로 등장 */}
       <motion.div
         className={`${styles.inner} ${styles.aboutAfter}`}
         variants={group}
@@ -172,7 +124,7 @@ export default function About() {
         <motion.header className={styles.head} variants={item}>
           <div>
             <span className={styles.eyebrow}>About — 배급사 소개</span>
-            <TypeTitle />
+            <TypeTitle solid="FILM " outline="NOUVELLE" />
           </div>
           <span className={styles.index}>Since 2014 · Seoul</span>
         </motion.header>
@@ -194,6 +146,9 @@ export default function About() {
           ))}
         </motion.div>
       </motion.div>
+
+      {/* 하단 여백(넓힘) — 이 구간을 지나며 배경이 LINEUP 으로 밝아짐 */}
+      <div className={styles.aboutTail} aria-hidden="true" />
 
       {/* 마우스 따라다니는 옅은 흰 스포트라이트 */}
       <div className={styles.spotlight} aria-hidden="true" />
