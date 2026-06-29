@@ -72,15 +72,27 @@ export default function About() {
   const ref = useRef<HTMLElement | null>(null);
   const reduce = useReducedMotion();
 
-  // 섹션을 지나는 동안 배경이 점점 더 어두워짐
+  // 섹션을 지나는 동안 배경이 흰색(히어로와 연결) → 검정으로 또렷하게 어두워짐.
+  // 입력 구간을 [0,0.6]으로 좁혀 진입~중반에 변화가 집중되게 한다.
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
   });
   const backgroundColor = useTransform(
     scrollYProgress,
-    [0, 1],
-    ["#26262a", "#060607"]
+    [0, 0.6],
+    ["#f8f8f8", "#0b0b0c"]
+  );
+  // 인용문 글자색: 밝은 배경에선 어둡게, 배경이 어두워지면 밝게 (대비 유지)
+  const quoteFill = useTransform(
+    scrollYProgress,
+    [0.12, 0.45],
+    ["#0c0c0c", "#f4f4f2"]
+  );
+  const quoteGhost = useTransform(
+    scrollYProgress,
+    [0.12, 0.45],
+    ["rgba(12,12,12,0.22)", "rgba(244,244,242,0.16)"]
   );
 
   // 인용문이 끝난 뒤(아래쪽) 등장하는 그룹: 위/좌측에서부터 순차 cascade
@@ -111,6 +123,8 @@ export default function About() {
       {/* 1) 인용문 — 가장 먼저 등장하는 word-by-word reveal (2줄·중앙정렬) */}
       <TextReveal
         text={["좋은 영화는 사라지지 않는다.", "다만 옮겨질 곳을 기다릴 뿐이다."]}
+        fillColor={quoteFill}
+        ghostColor={quoteGhost}
       />
 
       {/* 2) 텀(공백)을 두고 이어서 나머지 텍스트들이 순차로 등장 */}

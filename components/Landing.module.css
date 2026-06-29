@@ -319,7 +319,9 @@
 
 /* ── ABOUT (black inversion band) ───────────────────── */
 .about {
-  background: #0b0b0c;
+  /* 배경은 About.tsx 의 motion backgroundColor(흰→검정)가 제어.
+     JS 미동작 시 폴백으로만 어두운 톤 유지. */
+  background-color: transparent;
   color: #f4f4f2;
 }
 .about .head { border-bottom-color: rgba(255, 255, 255, 0.16); }

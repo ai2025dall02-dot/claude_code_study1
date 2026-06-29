@@ -4,18 +4,24 @@ import { Fragment, ReactNode, useRef } from "react";
 import { motion, MotionValue, useScroll, useTransform } from "framer-motion";
 import styles from "./TextReveal.module.css";
 
+type ColorProp = string | MotionValue<string>;
+
 /**
  * Scroll-driven word-by-word reveal.
  * `text` accepts a string ("\n" = 줄바꿈) or an array of lines.
- * 각 줄은 flex 줄바꿈으로 분리되고 가운데 정렬되며, 단어 reveal 진행도는
- * 줄을 넘어 연속(0→1)으로 이어진다. (원본의 ref 이중 할당 버그도 수정)
+ * fillColor/ghostColor 로 글자 색을 (모션값 포함) 외부에서 제어할 수 있다 —
+ * 배경이 밝다가 어두워질 때 대비를 유지하기 위해 사용.
  */
 export function TextReveal({
   text,
   className,
+  fillColor,
+  ghostColor,
 }: {
   text: string | string[];
   className?: string;
+  fillColor?: ColorProp;
+  ghostColor?: ColorProp;
 }) {
   const targetRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress } = useScroll({ target: targetRef });
@@ -38,7 +44,13 @@ export function TextReveal({
                 const start = i / total;
                 const end = start + 1 / total;
                 return (
-                  <Word key={i} progress={scrollYProgress} range={[start, end]}>
+                  <Word
+                    key={i}
+                    progress={scrollYProgress}
+                    range={[start, end]}
+                    fillColor={fillColor}
+                    ghostColor={ghostColor}
+                  >
                     {word}
                   </Word>
                 );
@@ -55,16 +67,28 @@ function Word({
   children,
   progress,
   range,
+  fillColor,
+  ghostColor,
 }: {
   children: ReactNode;
   progress: MotionValue<number>;
   range: [number, number];
+  fillColor?: ColorProp;
+  ghostColor?: ColorProp;
 }) {
   const opacity = useTransform(progress, range, [0, 1]);
   return (
     <span className={styles.word}>
-      <span className={styles.ghost}>{children}</span>
-      <motion.span style={{ opacity }} className={styles.fill}>
+      <motion.span
+        className={styles.ghost}
+        style={ghostColor ? { color: ghostColor } : undefined}
+      >
+        {children}
+      </motion.span>
+      <motion.span
+        className={styles.fill}
+        style={fillColor ? { opacity, color: fillColor } : { opacity }}
+      >
         {children}
       </motion.span>
     </span>
