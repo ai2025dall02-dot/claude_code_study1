@@ -22,15 +22,15 @@ const FILM_PHOTO: Record<string, string> = {
   reel: "/posters-photo/m2.jpg",
 };
 
-/* 카드별 불규칙 배치/패럴랙스 설정
-   mt: 세로 오프셋(masonry), x: 가로 미세 오프셋, ar: 높이(aspect), mag: 패럴랙스 세기(px) */
+/* 카드별 불규칙 배치/패럴랙스 설정 (가로는 정렬 — 세로 오프셋/높이만 제각각)
+   mt: 세로 오프셋(masonry), ar: 높이(aspect), mag: 패럴랙스 세기(px) */
 const CONF = [
-  { mt: 0, x: -14, ar: "3 / 4.2", mag: 70 },
-  { mt: 74, x: 12, ar: "3 / 3.6", mag: 150 },
-  { mt: 28, x: -8, ar: "3 / 4.6", mag: 100 },
-  { mt: 98, x: 18, ar: "3 / 3.8", mag: 58 },
-  { mt: 14, x: -20, ar: "3 / 4.4", mag: 132 },
-  { mt: 58, x: 8, ar: "3 / 4.0", mag: 92 },
+  { mt: 0, ar: "3 / 4.2", mag: 120 },
+  { mt: 74, ar: "3 / 3.6", mag: 220 },
+  { mt: 28, ar: "3 / 4.6", mag: 170 },
+  { mt: 98, ar: "3 / 3.8", mag: 96 },
+  { mt: 14, ar: "3 / 4.4", mag: 200 },
+  { mt: 58, ar: "3 / 4.0", mag: 150 },
 ];
 
 export default function Lineup() {
@@ -81,7 +81,7 @@ function LineupCard({
   reduce,
 }: {
   film: Film;
-  conf: { mt: number; x: number; ar: string; mag: number };
+  conf: { mt: number; ar: string; mag: number };
   reduce: boolean;
 }) {
   const ref = useRef<HTMLAnchorElement | null>(null);
@@ -93,9 +93,9 @@ function LineupCard({
   const yRaw = useTransform(scrollYProgress, [0, 1], [0, -conf.mag]); // 카드마다 다른 속도로 위로 흐름
   const opRaw = useTransform(
     scrollYProgress,
-    [0.1, 0.28, 0.7, 0.95],
+    [0, 0.25, 0.75, 1],
     [0, 1, 1, 0]
-  ); // 중앙에서 1, 위로 갈수록 0 (하단 진입 시 페이드인)
+  ); // 하단 진입 시 페이드인 → 중앙 1 → 상단 이탈 시 페이드아웃 (또렷하게)
 
   const y = reduce ? 0 : yRaw;
   const opacity = reduce ? 1 : opRaw;
@@ -105,7 +105,7 @@ function LineupCard({
       ref={ref}
       className={styles.card}
       href="#contact"
-      style={{ marginTop: conf.mt, x: conf.x, y, opacity }}
+      style={{ marginTop: conf.mt, y, opacity }}
     >
       <div className={styles.card__media} style={{ aspectRatio: conf.ar }}>
         <Image

@@ -74,6 +74,9 @@
   position: relative;
   z-index: 2; /* 콘텐츠는 reveal 레이어 위 */
 }
+.lineup .head {
+  border-bottom: none; /* LINEUP 제목 아래 가로 라인 제거 (다른 섹션은 유지) */
+}
 /* ABOUT 하단~LINEUP 진입에서 차오르는 밝은 원형 레이어 (뷰포트 고정) */
 .lineupReveal {
   position: fixed;
