@@ -78,6 +78,10 @@ export default function Filmmakers() {
   // 타이핑이 끝난 뒤 스크롤해야 카드가 흐르기 시작
   const x = useTransform(scrollYProgress, [0.28, 1], [m.start, m.end]);
 
+  // [1] 타이핑 구간(0~0.28)에는 트랙 전체를 숨김 → 0.28 부근에서 fade-in (타이핑 먼저 노출)
+  const trackGate = useTransform(scrollYProgress, [0.24, 0.3], [0, 1]);
+  const trackOpacity = reduce ? 1 : trackGate;
+
   return (
     <section ref={sectionRef} className={styles.fm} id="filmmakers">
       <div ref={viewportRef} className={styles.fmViewport}>
@@ -89,7 +93,7 @@ export default function Filmmakers() {
         </div>
 
         {/* 가로 트랙 — x 만 연동. 카드별 강조/블러는 각 FmCard 가 중앙거리로 개별 처리 */}
-        <motion.div ref={trackRef} className={styles.fmTrack} style={{ x }}>
+        <motion.div ref={trackRef} className={styles.fmTrack} style={{ x, opacity: trackOpacity }}>
           {MAKERS.map((mk, i) => (
             <FmCard key={mk.id} maker={mk} index={i} trackX={x} metrics={m} reduce={!!reduce} />
           ))}
@@ -122,21 +126,40 @@ function FmCard({
   const signed = useTransform(trackX, (tx) => tx + index * pitch + half - center);
   const dist = useTransform(signed, (s) => Math.abs(s));
 
-  // 거리 → 스타일 매핑 (중앙=또렷/확대, 멀수록 흐림/축소/투명) — 좌우 대칭 자동
-  // 중앙 부근에서 확실히 blur 0 으로 또렷하게, 멀어질수록 빠르게 흐려짐
-  const opacity = useTransform(dist, [0, pitch * 0.5, pitch * 0.9], [1, 0.4, 0]);
+  // [2] 거리 → 스타일 매핑. 중앙 부근(~0.12p)에 'blur 0 / opacity 1 데드존'을 둬서
+  // 약간 흔들려도 중앙 카드는 확실히 또렷하게 유지
+  const opacity = useTransform(
+    dist,
+    [0, pitch * 0.12, pitch * 0.5, pitch * 0.9],
+    [1, 1, 0.4, 0]
+  );
   const scale = useTransform(dist, [0, pitch], [1.1, 0.78]);
-  const blurN = useTransform(dist, [0, pitch * 0.45, pitch], [0, 4, 14]);
+  const blurN = useTransform(
+    dist,
+    [0, pitch * 0.12, pitch * 0.5, pitch],
+    [0, 0, 5, 14]
+  );
   const blur = useMotionTemplate`blur(${blurN}px)`;
 
   // 곡선 궤적: 양옆은 위로 떠오르고(-90), 중앙에 가까울수록 기준선(0)으로 가라앉는 아치
   const y = useTransform(dist, [0, pitch], [0, -90]);
   // 도는 느낌: 중앙 기준 좌우로 기울어짐 (왼쪽 +8°, 오른쪽 -8°)
   const rotate = useTransform(signed, [-pitch, 0, pitch], [8, 0, -8]);
+  // [3] 뒤→앞 깊이감: 멀수록 뒤로 물러나고(z) 좌우로 비스듬히(rotateY) → 텍스트 뒤에서 앞으로 나오는 느낌
+  const z = useTransform(dist, [0, pitch], [0, -180]);
+  const rotateY = useTransform(signed, [-pitch, 0, pitch], [20, 0, -20]);
 
   const style = reduce
     ? undefined
-    : { opacity, scale, y, rotate, filter: blur as unknown as string };
+    : {
+        opacity,
+        scale,
+        y,
+        z,
+        rotate,
+        rotateY,
+        filter: blur as unknown as string,
+      };
 
   return (
     <motion.article className={styles.fmCard} style={style}>

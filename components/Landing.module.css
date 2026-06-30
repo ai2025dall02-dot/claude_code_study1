@@ -298,6 +298,8 @@
   gap: clamp(140px, 28vw, 560px);
   width: max-content;
   will-change: transform;
+  perspective: 1600px; /* 카드 rotateY/z 깊이감 (뒤→앞) */
+  transform-style: preserve-3d;
 }
 .fmCard {
   flex: 0 0 auto;
