@@ -25,18 +25,18 @@ const FILM_PHOTO: Record<string, string> = {
 /* 카드별 불규칙 배치/패럴랙스 설정 (가로는 정렬 — 세로 오프셋/높이만 제각각)
    mt: 세로 오프셋(masonry), ar: 높이(aspect), mag: 패럴랙스 세기(px) */
 const CONF = [
-  { mt: 0, ar: "3 / 4.2", mag: 120 },
-  { mt: 90, ar: "3 / 3.6", mag: 220 },
-  { mt: 36, ar: "3 / 4.6", mag: 150 },
-  { mt: 120, ar: "3 / 3.8", mag: 96 },
-  { mt: 18, ar: "3 / 4.4", mag: 200 },
-  { mt: 70, ar: "3 / 4.0", mag: 150 },
-  { mt: 48, ar: "3 / 3.9", mag: 180 },
-  { mt: 10, ar: "3 / 4.5", mag: 110 },
-  { mt: 104, ar: "3 / 3.7", mag: 240 },
-  { mt: 30, ar: "3 / 4.3", mag: 132 },
-  { mt: 82, ar: "3 / 4.1", mag: 170 },
-  { mt: 56, ar: "3 / 3.6", mag: 210 },
+  { mt: 0, ar: "3 / 4.2", mag: 210 },
+  { mt: 90, ar: "3 / 3.6", mag: 335 },
+  { mt: 36, ar: "3 / 4.6", mag: 250 },
+  { mt: 120, ar: "3 / 3.8", mag: 180 },
+  { mt: 18, ar: "3 / 4.4", mag: 310 },
+  { mt: 70, ar: "3 / 4.0", mag: 245 },
+  { mt: 48, ar: "3 / 3.9", mag: 285 },
+  { mt: 10, ar: "3 / 4.5", mag: 200 },
+  { mt: 104, ar: "3 / 3.7", mag: 360 },
+  { mt: 30, ar: "3 / 4.3", mag: 225 },
+  { mt: 82, ar: "3 / 4.1", mag: 275 },
+  { mt: 56, ar: "3 / 3.6", mag: 320 },
 ];
 
 /* 6편 데이터를 2회 반복해 12개로 노출 (key 충돌 방지 위해 인덱스 suffix) */
@@ -99,12 +99,12 @@ function LineupCard({
     target: ref,
     offset: ["start end", "end start"],
   });
-  const yRaw = useTransform(scrollYProgress, [0, 1], [0, -conf.mag]); // 카드마다 다른 속도로 위로 흐름
+  const yRaw = useTransform(scrollYProgress, [0, 1], [conf.mag, -conf.mag]); // 아래에서 올라와 위로 빨려나감 (이동 폭 2배)
   const opRaw = useTransform(
     scrollYProgress,
-    [0.2, 0.45, 0.55, 0.8],
+    [0.12, 0.35, 0.65, 0.88],
     [0, 1, 1, 0]
-  ); // 화면 정중앙 부근(0.5)에서만 또렷(1), 위·아래로 갈수록 빠르게 사라짐
+  ); // 0.35~0.65 구간을 또렷(1)하게 넓혀 더 오래 보이고, 페이드는 완만하게
 
   const y = reduce ? 0 : yRaw;
   const opacity = reduce ? 1 : opRaw;

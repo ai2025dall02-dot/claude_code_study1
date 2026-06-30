@@ -43,15 +43,6 @@ html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
 }
-/* 섹션 스크롤 스냅: hero-flow 페이지(.land[data-flow-snap])에서만 적용.
-   proximity(비강제) + 고정 내비 높이만큼 스냅 오프셋(scroll-padding-top). */
-html:has([data-flow-snap]) {
-  scroll-snap-type: y proximity;
-  scroll-padding-top: 72px;
-}
-@media (prefers-reduced-motion: reduce) {
-  html:has([data-flow-snap]) { scroll-snap-type: none; }
-}
 
 body {
   margin: 0;
