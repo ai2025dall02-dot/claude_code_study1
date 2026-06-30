@@ -26,12 +26,21 @@ const FILM_PHOTO: Record<string, string> = {
    mt: 세로 오프셋(masonry), ar: 높이(aspect), mag: 패럴랙스 세기(px) */
 const CONF = [
   { mt: 0, ar: "3 / 4.2", mag: 120 },
-  { mt: 74, ar: "3 / 3.6", mag: 220 },
-  { mt: 28, ar: "3 / 4.6", mag: 170 },
-  { mt: 98, ar: "3 / 3.8", mag: 96 },
-  { mt: 14, ar: "3 / 4.4", mag: 200 },
-  { mt: 58, ar: "3 / 4.0", mag: 150 },
+  { mt: 90, ar: "3 / 3.6", mag: 220 },
+  { mt: 36, ar: "3 / 4.6", mag: 150 },
+  { mt: 120, ar: "3 / 3.8", mag: 96 },
+  { mt: 18, ar: "3 / 4.4", mag: 200 },
+  { mt: 70, ar: "3 / 4.0", mag: 150 },
+  { mt: 48, ar: "3 / 3.9", mag: 180 },
+  { mt: 10, ar: "3 / 4.5", mag: 110 },
+  { mt: 104, ar: "3 / 3.7", mag: 240 },
+  { mt: 30, ar: "3 / 4.3", mag: 132 },
+  { mt: 82, ar: "3 / 4.1", mag: 170 },
+  { mt: 56, ar: "3 / 3.6", mag: 210 },
 ];
+
+/* 6편 데이터를 2회 반복해 12개로 노출 (key 충돌 방지 위해 인덱스 suffix) */
+const ITEMS = [...films, ...films];
 
 export default function Lineup() {
   const reduce = useReducedMotion();
@@ -62,12 +71,12 @@ export default function Lineup() {
             <span className={styles.eyebrow}>The Programme</span>
             <TypeTitle solid="LINE" outline="UP" />
           </div>
-          <span className={styles.index}>현재 배급 · 2024–2025 / 전 {films.length}편</span>
+          <span className={styles.index}>현재 배급 · 2024–2025 / 전 {ITEMS.length}편</span>
         </header>
 
         <div className={styles.grid}>
-          {films.map((f, i) => (
-            <LineupCard key={f.id} film={f} conf={CONF[i % CONF.length]} reduce={!!reduce} />
+          {ITEMS.map((f, i) => (
+            <LineupCard key={`${f.id}-${i}`} film={f} conf={CONF[i % CONF.length]} reduce={!!reduce} />
           ))}
         </div>
       </div>
@@ -93,9 +102,9 @@ function LineupCard({
   const yRaw = useTransform(scrollYProgress, [0, 1], [0, -conf.mag]); // 카드마다 다른 속도로 위로 흐름
   const opRaw = useTransform(
     scrollYProgress,
-    [0, 0.25, 0.75, 1],
+    [0.2, 0.45, 0.55, 0.8],
     [0, 1, 1, 0]
-  ); // 하단 진입 시 페이드인 → 중앙 1 → 상단 이탈 시 페이드아웃 (또렷하게)
+  ); // 화면 정중앙 부근(0.5)에서만 또렷(1), 위·아래로 갈수록 빠르게 사라짐
 
   const y = reduce ? 0 : yRaw;
   const opacity = reduce ? 1 : opRaw;
