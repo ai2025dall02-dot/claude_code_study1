@@ -8,6 +8,7 @@ import {
   useReducedMotion,
   useScroll,
   useTransform,
+  type MotionValue,
 } from "framer-motion";
 import { films } from "@/data/films";
 import TypeTitle from "./TypeTitle";
@@ -36,6 +37,8 @@ const MAKERS = films.map((f) => ({
   photo: MAKER_PHOTO[f.id] ?? "/posters-photo/m1.jpg",
 }));
 
+type Metrics = { start: number; end: number; pitch: number; cardW: number; vw: number };
+
 export default function Filmmakers() {
   const reduce = useReducedMotion();
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -48,39 +51,31 @@ export default function Filmmakers() {
     offset: ["start start", "end end"],
   });
 
-  // 첫 카드가 화면 중앙에서 시작 → 마지막 카드가 화면 중앙에서 끝나도록 x 범위 계산
-  const [range, setRange] = useState({ start: 0, end: 0 });
+  // 카드 폭/간격/뷰포트폭 측정 → x 범위 + 카드별 중앙거리 계산에 사용
+  const [m, setM] = useState<Metrics>({ start: 0, end: 0, pitch: 0, cardW: 0, vw: 0 });
   useEffect(() => {
     const measure = () => {
       const vp = viewportRef.current;
       const track = trackRef.current;
-      if (!vp || !track) return;
-      const cards = track.children;
-      if (cards.length === 0) return;
-      const first = cards[0] as HTMLElement;
+      if (!vp || !track || track.children.length === 0) return;
+      const first = track.children[0] as HTMLElement;
       const cardW = first.offsetWidth;
       const pitch =
-        cards.length > 1
-          ? (cards[1] as HTMLElement).offsetLeft - first.offsetLeft
+        track.children.length > 1
+          ? (track.children[1] as HTMLElement).offsetLeft - first.offsetLeft
           : cardW;
-      const start = (vp.clientWidth - cardW) / 2; // 첫 카드 중앙 정렬
-      const travel = (cards.length - 1) * pitch; // 마지막 카드까지 이동량
-      setRange({ start, end: start - travel });
+      const vw = vp.clientWidth;
+      const start = (vw - cardW) / 2; // 첫 카드 중앙 정렬
+      const travel = (track.children.length - 1) * pitch;
+      setM({ start, end: start - travel, pitch, cardW, vw });
     };
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
   }, []);
 
-  // [2] 카드 가로 이동을 0.2 이후로 미룸 — 0~0.2 는 제목 타이핑 노출 구간 (카드는 첫 위치 고정)
-  const x = useTransform(scrollYProgress, [0.2, 1], [range.start, range.end]);
-
-  // [3] 타이핑 구간(0~0.2)에는 카드가 살짝 흐릿하게 대기 → 0.2 부터 또렷
-  const waitBlurN = useTransform(scrollYProgress, [0.12, 0.2], [5, 0]);
-  const waitBlur = useMotionTemplate`blur(${waitBlurN}px)`;
-  const waitOpacity = useTransform(scrollYProgress, [0, 0.2], [0.5, 1]);
-  const trackFilter = reduce ? "none" : waitBlur;
-  const trackOpacity = reduce ? 1 : waitOpacity;
+  // [2단계] 카드 가로 이동을 0.2 이후로 — 0~0.2 는 제목 타이핑 노출 구간(카드 첫 위치 고정)
+  const x = useTransform(scrollYProgress, [0.2, 1], [m.start, m.end]);
 
   return (
     <section ref={sectionRef} className={styles.fm} id="filmmakers">
@@ -88,44 +83,78 @@ export default function Filmmakers() {
         {/* 배경에 고정된 큰 FILMMAKERS 텍스트 (카드가 그 앞을 지나감) */}
         <div className={styles.fmBg} aria-hidden="true">
           <span className={styles.eyebrow}>Directors &amp; Authors</span>
-          {/* [1] sticky 로 화면에 들어오는 즉시 타이핑 발동 (이른 트리거) */}
           <TypeTitle solid="FILM" outline="MAKERS" inViewMargin="0px" />
           <span className={styles.fmHeadSub}>우리가 동행하는 작가들</span>
         </div>
 
-        {/* 가로 트랙 — 0.2 이후부터 x 연동, 그 전엔 첫 위치 고정 */}
-        <motion.div
-          ref={trackRef}
-          className={styles.fmTrack}
-          style={{ x, filter: trackFilter, opacity: trackOpacity }}
-        >
-          {MAKERS.map((m) => (
-            <article key={m.id} className={styles.fmCard}>
-              <div className={styles.fmCard__photo}>
-                <Image
-                  src={m.photo}
-                  alt={`${m.name} 감독`}
-                  fill
-                  sizes="(max-width: 600px) 80vw, 360px"
-                />
-                <span className={styles.fmCard__idx}>{m.index}</span>
-              </div>
-              <div className={styles.fmCard__info}>
-                <h3 className={styles.fmCard__name}>
-                  {m.name}
-                  <span>Director</span>
-                </h3>
-                <p className={styles.fmCard__meta}>
-                  {m.country} · {m.year} · {m.genre}
-                </p>
-                <p className={styles.fmCard__film}>
-                  <b>{m.film}</b> · {m.filmEn}
-                </p>
-              </div>
-            </article>
+        {/* 가로 트랙 — x 만 연동. 카드별 강조/블러는 각 FmCard 가 중앙거리로 개별 처리 */}
+        <motion.div ref={trackRef} className={styles.fmTrack} style={{ x }}>
+          {MAKERS.map((mk, i) => (
+            <FmCard key={mk.id} maker={mk} index={i} trackX={x} metrics={m} reduce={!!reduce} />
           ))}
         </motion.div>
       </div>
     </section>
+  );
+}
+
+/* 카드 1장 — 트랙 x 를 구독해 '화면 중앙으로부터의 거리'에 따라 opacity/scale/blur 개별 적용 */
+function FmCard({
+  maker: mk,
+  index,
+  trackX,
+  metrics,
+  reduce,
+}: {
+  maker: (typeof MAKERS)[number];
+  index: number;
+  trackX: MotionValue<number>;
+  metrics: Metrics;
+  reduce: boolean;
+}) {
+  const pitch = metrics.pitch || 1; // 측정 전 0 방어
+  const half = metrics.cardW / 2;
+  const center = metrics.vw / 2;
+
+  // 카드 화면 중심 x = 트랙 translateX + 카드 레이아웃 위치(index×pitch) + 카드 반폭
+  // 화면 중앙(center)과의 절대거리
+  const dist = useTransform(trackX, (tx) =>
+    Math.abs(tx + index * pitch + half - center)
+  );
+
+  // 거리 → 스타일 매핑 (중앙=또렷/확대, 멀수록 흐림/축소/투명) — 좌우 대칭 자동
+  const opacity = useTransform(dist, [0, pitch * 0.4, pitch], [1, 0.5, 0]);
+  const scale = useTransform(dist, [0, pitch], [1.05, 0.8]);
+  const blurN = useTransform(dist, [0, pitch], [0, 10]);
+  const blur = useMotionTemplate`blur(${blurN}px)`;
+
+  const style = reduce
+    ? undefined
+    : { opacity, scale, filter: blur as unknown as string };
+
+  return (
+    <motion.article className={styles.fmCard} style={style}>
+      <div className={styles.fmCard__photo}>
+        <Image
+          src={mk.photo}
+          alt={`${mk.name} 감독`}
+          fill
+          sizes="(max-width: 600px) 80vw, 360px"
+        />
+        <span className={styles.fmCard__idx}>{mk.index}</span>
+      </div>
+      <div className={styles.fmCard__info}>
+        <h3 className={styles.fmCard__name}>
+          {mk.name}
+          <span>Director</span>
+        </h3>
+        <p className={styles.fmCard__meta}>
+          {mk.country} · {mk.year} · {mk.genre}
+        </p>
+        <p className={styles.fmCard__film}>
+          <b>{mk.film}</b> · {mk.filmEn}
+        </p>
+      </div>
+    </motion.article>
   );
 }
