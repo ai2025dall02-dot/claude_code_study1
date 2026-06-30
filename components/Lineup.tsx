@@ -22,25 +22,29 @@ const FILM_PHOTO: Record<string, string> = {
   reel: "/posters-photo/m2.jpg",
 };
 
-/* 카드별 불규칙 배치/패럴랙스 설정 (가로는 정렬 — 세로 오프셋/높이만 제각각)
-   mt: 세로 오프셋(masonry), ar: 높이(aspect), mag: 패럴랙스 세기(px) */
+/* 카드별 배치/패럴랙스 설정 (세로 오프셋·높이·패럴랙스 제각각)
+   mt: 카드별 추가 세로 여백(촘촘하게 0~60), ar: 높이(aspect), mag: 패럴랙스 세기(px) */
 const CONF = [
-  { mt: 0, ar: "3 / 4.2", mag: 210 },
-  { mt: 90, ar: "3 / 3.6", mag: 335 },
-  { mt: 36, ar: "3 / 4.6", mag: 250 },
-  { mt: 120, ar: "3 / 3.8", mag: 180 },
-  { mt: 18, ar: "3 / 4.4", mag: 310 },
-  { mt: 70, ar: "3 / 4.0", mag: 245 },
-  { mt: 48, ar: "3 / 3.9", mag: 285 },
-  { mt: 10, ar: "3 / 4.5", mag: 200 },
-  { mt: 104, ar: "3 / 3.7", mag: 360 },
-  { mt: 30, ar: "3 / 4.3", mag: 225 },
-  { mt: 82, ar: "3 / 4.1", mag: 275 },
-  { mt: 56, ar: "3 / 3.6", mag: 320 },
+  { mt: 0, ar: "3 / 4.2", mag: 160 },
+  { mt: 28, ar: "3 / 3.6", mag: 240 },
+  { mt: 14, ar: "3 / 4.6", mag: 130 },
+  { mt: 44, ar: "3 / 3.8", mag: 200 },
+  { mt: 8, ar: "3 / 4.4", mag: 260 },
+  { mt: 36, ar: "3 / 4.0", mag: 150 },
+  { mt: 20, ar: "3 / 3.9", mag: 220 },
+  { mt: 52, ar: "3 / 4.5", mag: 120 },
+  { mt: 6, ar: "3 / 3.7", mag: 250 },
+  { mt: 32, ar: "3 / 4.3", mag: 175 },
+  { mt: 48, ar: "3 / 4.1", mag: 200 },
+  { mt: 16, ar: "3 / 3.6", mag: 235 },
 ];
 
 /* 6편 데이터를 2회 반복해 12개로 노출 (key 충돌 방지 위해 인덱스 suffix) */
 const ITEMS = [...films, ...films];
+
+/* 세로 흐름 masonry: 3개 열로 라운드로빈 분배 (각 열이 세로로 이어지고 높낮이 제각각) */
+const COLS = 3;
+const COL_CLASS = ["", "col1", "col2"] as const;
 
 export default function Lineup() {
   const reduce = useReducedMotion();
@@ -75,8 +79,14 @@ export default function Lineup() {
         </header>
 
         <div className={styles.grid}>
-          {ITEMS.map((f, i) => (
-            <LineupCard key={`${f.id}-${i}`} film={f} conf={CONF[i % CONF.length]} reduce={!!reduce} />
+          {Array.from({ length: COLS }, (_, c) => (
+            <div key={c} className={`${styles.col} ${styles[COL_CLASS[c]] ?? ""}`}>
+              {ITEMS.map((f, i) => ({ f, i }))
+                .filter(({ i }) => i % COLS === c)
+                .map(({ f, i }) => (
+                  <LineupCard key={`${f.id}-${i}`} film={f} conf={CONF[i % CONF.length]} reduce={!!reduce} />
+                ))}
+            </div>
           ))}
         </div>
       </div>
@@ -105,16 +115,23 @@ function LineupCard({
     [0.12, 0.35, 0.65, 0.88],
     [0, 1, 1, 0]
   ); // 0.35~0.65 구간을 또렷(1)하게 넓혀 더 오래 보이고, 페이드는 완만하게
+  // 화면 중앙(0.5)에서 살짝 커지며 '제자리에 끌려 들어와 자리잡는' 스냅 느낌
+  const scaleRaw = useTransform(
+    scrollYProgress,
+    [0.12, 0.5, 0.88],
+    [0.94, 1, 0.94]
+  );
 
   const y = reduce ? 0 : yRaw;
   const opacity = reduce ? 1 : opRaw;
+  const scale = reduce ? 1 : scaleRaw;
 
   return (
     <motion.a
       ref={ref}
       className={styles.card}
       href="#contact"
-      style={{ marginTop: conf.mt, y, opacity }}
+      style={{ marginTop: conf.mt, y, opacity, scale }}
     >
       <div className={styles.card__media} style={{ aspectRatio: conf.ar }}>
         <Image
