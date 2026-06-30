@@ -78,7 +78,7 @@ export default function Lineup() {
           <span className={styles.index}>현재 배급 · 2024–2025 / 전 {ITEMS.length}편</span>
         </header>
 
-        <div className={styles.grid}>
+        <div className={styles.grid} data-lineup-snap>
           {Array.from({ length: COLS }, (_, c) => (
             <div key={c} className={`${styles.col} ${styles[COL_CLASS[c]] ?? ""}`}>
               {ITEMS.map((f, i) => ({ f, i }))
@@ -115,23 +115,17 @@ function LineupCard({
     [0.12, 0.35, 0.65, 0.88],
     [0, 1, 1, 0]
   ); // 0.35~0.65 구간을 또렷(1)하게 넓혀 더 오래 보이고, 페이드는 완만하게
-  // 화면 중앙(0.5)에서 살짝 커지며 '제자리에 끌려 들어와 자리잡는' 스냅 느낌
-  const scaleRaw = useTransform(
-    scrollYProgress,
-    [0.12, 0.5, 0.88],
-    [0.94, 1, 0.94]
-  );
+  // 스냅 느낌은 CSS scroll-snap 으로만 처리 (scale 변형 제거 → 폭/마진 항상 고정)
 
   const y = reduce ? 0 : yRaw;
   const opacity = reduce ? 1 : opRaw;
-  const scale = reduce ? 1 : scaleRaw;
 
   return (
     <motion.a
       ref={ref}
       className={styles.card}
       href="#contact"
-      style={{ marginTop: conf.mt, y, opacity, scale }}
+      style={{ marginTop: conf.mt, y, opacity }}
     >
       <div className={styles.card__media} style={{ aspectRatio: conf.ar }}>
         <Image

@@ -43,6 +43,15 @@ html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
 }
+/* LINEUP 카드 스냅: scroll-snap-type 은 실제 스크롤러(문서)에 있어야 동작하므로,
+   LINEUP 그리드(.grid[data-lineup-snap])가 있는 페이지의 문서 스크롤러에 약하게(proximity) 건다.
+   스냅 대상은 각 카드(.card scroll-snap-align: center) — 패럴랙스(y)와 충돌 시 튐 최소화 위해 proximity. */
+html:has([data-lineup-snap]) {
+  scroll-snap-type: y proximity;
+}
+@media (prefers-reduced-motion: reduce) {
+  html:has([data-lineup-snap]) { scroll-snap-type: none; }
+}
 
 body {
   margin: 0;
