@@ -239,26 +239,45 @@
   color: #fff;
 }
 
-/* ── FILMMAKERS — sunty.ae 풍 가로 카드 캐러셀 ───────── */
+/* ── FILMMAKERS — sunty.ae 풍 sticky 가로 카드 캐러셀 ─── */
+/* 2단계: 섹션을 길게 만들고 내부 뷰포트를 sticky 로 고정 → 세로 스크롤이 가로 이동으로 */
 .fm {
+  position: relative;
+  height: 300vh; /* 세로 스크롤 길이 = 가로 이동 거리 확보 */
   background: #fff;
   border-block: 1px solid rgba(0, 0, 0, 0.08);
-  overflow: hidden;
 }
-/* 가운데 크게 배치되는 제목 (TypeTitle 재사용) */
-.fmHead {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding-inline: clamp(1.4rem, 4vw, 3rem);
-  text-align: center;
+.fmViewport {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden; /* 가로 트랙 클립 */
+  display: flex;
+  align-items: center; /* 카드 세로 중앙 */
 }
-.fmHead .eyebrow {
-  margin-bottom: 1.1rem;
-}
-.fmHead .title {
-  font-size: clamp(2.8rem, 9vw, 6.4rem);
-  line-height: 0.94;
+/* 배경 고정 대형 타이틀 (카드가 앞을 지나감) */
+.fmBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+.fmBg .eyebrow {
+  margin-bottom: 1rem;
+}
+.fmBg .title {
+  font-size: clamp(3.4rem, 15vw, 13rem);
+  line-height: 0.9;
+  justify-content: center;
+  color: #ededeb; /* 옅게 — 카드가 앞에서 또렷하게 읽히도록 */
+}
+.fmBg .title em {
+  -webkit-text-stroke-color: #d7d7d4;
 }
 .fmHeadSub {
   display: block;
@@ -267,20 +286,16 @@
   font-size: 12px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #9a9a96;
+  color: #c3c3bf;
 }
-/* 1단계: 가로 정적 나열 (스크롤로 둘러보기 가능) — 이후 단계에서 스크롤 연동으로 교체 */
-.fmViewport {
-  margin-top: clamp(2.6rem, 5vw, 4.4rem);
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-inline: clamp(1.4rem, 4vw, 3rem);
-  padding-block: 0.5rem 1.5rem;
-}
+/* 가로 트랙 — 세로 스크롤 진행도에 x 연동 (좌우 패딩 없이 JS 로 중앙 정렬) */
 .fmTrack {
+  position: relative;
+  z-index: 1;
   display: flex;
   gap: clamp(1.3rem, 2.4vw, 2.2rem);
   width: max-content;
+  will-change: transform;
 }
 .fmCard {
   flex: 0 0 auto;

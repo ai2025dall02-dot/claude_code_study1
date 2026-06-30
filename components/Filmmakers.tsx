@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { films } from "@/data/films";
 import TypeTitle from "./TypeTitle";
 import styles from "./Landing.module.css";
@@ -31,18 +32,53 @@ const MAKERS = films.map((f) => ({
 
 export default function Filmmakers() {
   const sectionRef = useRef<HTMLElement | null>(null);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const trackRef = useRef<HTMLDivElement | null>(null);
+
+  // 세로 스크롤 진행도 (섹션 상단 도달 ~ 섹션 하단 도달)
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end end"],
+  });
+
+  // 첫 카드가 화면 중앙에서 시작 → 마지막 카드가 화면 중앙에서 끝나도록 x 범위 계산
+  const [range, setRange] = useState({ start: 0, end: 0 });
+  useEffect(() => {
+    const measure = () => {
+      const vp = viewportRef.current;
+      const track = trackRef.current;
+      if (!vp || !track) return;
+      const cards = track.children;
+      if (cards.length === 0) return;
+      const first = cards[0] as HTMLElement;
+      const cardW = first.offsetWidth;
+      const pitch =
+        cards.length > 1
+          ? (cards[1] as HTMLElement).offsetLeft - first.offsetLeft
+          : cardW;
+      const start = (vp.clientWidth - cardW) / 2; // 첫 카드 중앙 정렬
+      const travel = (cards.length - 1) * pitch; // 마지막 카드까지 이동량
+      setRange({ start, end: start - travel });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  const x = useTransform(scrollYProgress, [0, 1], [range.start, range.end]);
 
   return (
-    <section ref={sectionRef} className={`${styles.section} ${styles.fm}`} id="filmmakers">
-      <div className={styles.fmHead}>
-        <span className={styles.eyebrow}>Directors &amp; Authors</span>
-        <TypeTitle solid="FILM" outline="MAKERS" />
-        <span className={styles.fmHeadSub}>우리가 동행하는 작가들</span>
-      </div>
+    <section ref={sectionRef} className={styles.fm} id="filmmakers">
+      <div ref={viewportRef} className={styles.fmViewport}>
+        {/* 배경에 고정된 큰 FILMMAKERS 텍스트 (카드가 그 앞을 지나감) */}
+        <div className={styles.fmBg} aria-hidden="true">
+          <span className={styles.eyebrow}>Directors &amp; Authors</span>
+          <TypeTitle solid="FILM" outline="MAKERS" />
+          <span className={styles.fmHeadSub}>우리가 동행하는 작가들</span>
+        </div>
 
-      {/* 1단계: 가로로 정적 나열 (애니메이션 없음) — 카드 UI 확정용 */}
-      <div className={styles.fmViewport}>
-        <div className={styles.fmTrack}>
+        {/* 가로 트랙 — 세로 스크롤 진행도에 x 연동 */}
+        <motion.div ref={trackRef} className={styles.fmTrack} style={{ x }}>
           {MAKERS.map((m) => (
             <article key={m.id} className={styles.fmCard}>
               <div className={styles.fmCard__photo}>
@@ -68,7 +104,7 @@ export default function Filmmakers() {
               </div>
             </article>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
