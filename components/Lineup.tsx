@@ -47,10 +47,11 @@ const ITEMS = [...films, ...films];
 /* 세로 흐름 masonry: 3개 열로 라운드로빈 분배 (각 열이 세로로 이어짐) */
 const COLS = 3;
 const COL_CLASS = ["", "col1", "col2"] as const;
-/* 열별 속도 계수 (음수=위로 흐름, 절댓값 클수록 빠름) — 옆 열끼리 속도차로 어긋나며 미끄러짐 */
-const COL_SPEED = [-0.18, -0.32, -0.1];
+/* 열별 속도 계수 (음수=위로 흐름, 절댓값 클수록 빠름) — 속도 격차를 크게 벌려 어긋남 강조
+   (가운데 열은 빠르게 -0.55, 마지막 열은 거의 정지 -0.05) */
+const COL_SPEED = [-0.25, -0.55, -0.05];
 /* 패럴랙스 기준 이동 폭(px). 계수 × 이 값 = 열의 (반)이동량 — 크게 잡아 '슉' 미끄러지게 */
-const PARALLAX_DISTANCE = 1200;
+const PARALLAX_DISTANCE = 2200;
 
 export default function Lineup() {
   const reduce = useReducedMotion();
@@ -102,7 +103,7 @@ export default function Lineup() {
               {ITEMS.map((f, i) => ({ f, i }))
                 .filter(({ i }) => i % COLS === c)
                 .map(({ f, i }) => (
-                  <LineupCard key={`${f.id}-${i}`} film={f} conf={CONF[i % CONF.length]} />
+                  <LineupCard key={`${f.id}-${i}`} film={f} conf={CONF[i % CONF.length]} reduce={!!reduce} />
                 ))}
             </ParallaxColumn>
           ))}
@@ -142,12 +143,28 @@ function ParallaxColumn({
 function LineupCard({
   film: f,
   conf,
+  reduce,
 }: {
   film: Film;
   conf: { mt: number; ar: string };
+  reduce: boolean;
 }) {
+  const ref = useRef<HTMLAnchorElement | null>(null);
+  // 카드가 화면을 지나는 동안의 진행도 (0: 하단 진입 ~ 1: 상단 이탈)
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+  // 화면 중앙(0.35~0.65)에서 또렷, 위아래로 페이드
+  const opRaw = useTransform(
+    scrollYProgress,
+    [0.12, 0.35, 0.65, 0.88],
+    [0, 1, 1, 0]
+  );
+  const opacity = reduce ? 1 : opRaw;
+
   return (
-    <a className={styles.card} href="#contact" style={{ marginTop: conf.mt }}>
+    <motion.a ref={ref} className={styles.card} href="#contact" style={{ marginTop: conf.mt, opacity }}>
       <div className={styles.card__media} style={{ aspectRatio: conf.ar }}>
         <Image
           src={FILM_PHOTO[f.id] ?? "/posters-photo/m1.jpg"}
@@ -165,6 +182,6 @@ function LineupCard({
           {f.director} · {f.country} {f.year} · {f.format} · {f.genre}
         </span>
       </div>
-    </a>
+    </motion.a>
   );
 }
