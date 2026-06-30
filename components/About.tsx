@@ -100,6 +100,14 @@ export default function About() {
       transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
     },
   };
+  // 가로 라인: 좌측을 기준으로 우측으로 길어짐 (scaleX 0→1)
+  const line: Variants = {
+    hidden: { scaleX: reduce ? 1 : 0 },
+    show: {
+      scaleX: 1,
+      transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] },
+    },
+  };
 
   return (
     <motion.section
@@ -129,12 +137,24 @@ export default function About() {
           <span className={styles.index}>Since 2014 · Seoul</span>
         </motion.header>
 
+        <motion.div
+          className={`${styles.aboutLine} ${styles.aboutLineHead}`}
+          variants={line}
+          aria-hidden="true"
+        />
+
         <motion.p className={styles.aboutBody} variants={item}>
           필름 누벨은 2014년, 극장에서 사라져 가던 독립·예술영화를 다시 스크린에
           올리기 위해 시작했습니다. 우리는 한 해에 단 몇 편만을 고릅니다. 적게
           고르는 대신, 한 편의 영화가 관객을 만나는 모든 길 — 개봉, 기획전, 공동체
           상영, 아카이브 — 을 끝까지 동행합니다.
         </motion.p>
+
+        <motion.div
+          className={`${styles.aboutLine} ${styles.aboutLinePrin}`}
+          variants={line}
+          aria-hidden="true"
+        />
 
         <motion.div className={styles.principles} variants={innerGroup}>
           {PRINCIPLES.map((pr) => (

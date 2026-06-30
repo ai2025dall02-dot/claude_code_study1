@@ -375,7 +375,22 @@
 @media (prefers-reduced-motion: reduce) {
   .spotlight { display: none; }
 }
-.about .head { border-bottom-color: rgba(255, 255, 255, 0.16); }
+/* ABOUT: 정적 가로줄 제거 — 대신 scaleX 0→1 로 우측으로 길어지는 라인(.aboutLine) 사용 */
+.about .head { border-bottom: none; margin-bottom: 0; }
+.aboutLine {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.22);
+  transform-origin: left center;
+  will-change: transform;
+}
+.aboutLineHead {
+  margin-top: 1.6rem;
+  margin-bottom: clamp(2rem, 5vw, 3.4rem);
+}
+.aboutLinePrin {
+  margin-top: clamp(3rem, 7vw, 5rem);
+  margin-bottom: 2.6rem;
+}
 .about .eyebrow { color: #8a8a86; }
 .about .title { color: #fafafa; }
 .about .title em { -webkit-text-stroke-color: #fafafa; }
@@ -427,12 +442,10 @@
   .caret { animation: none; opacity: 0.6; }
 }
 .principles {
-  margin-top: clamp(3rem, 7vw, 5rem);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: clamp(1.6rem, 4vw, 3rem);
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
-  padding-top: 2.6rem;
+  /* 위쪽 가로줄은 .aboutLinePrin (애니메이션 라인)이 대신함 */
 }
 .principle__label {
   font-family: var(--font-meta, monospace);
