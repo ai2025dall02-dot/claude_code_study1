@@ -2,7 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { motion, useScroll, useTransform } from "framer-motion";
+import {
+  motion,
+  useMotionTemplate,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 import { films } from "@/data/films";
 import TypeTitle from "./TypeTitle";
 import styles from "./Landing.module.css";
@@ -31,6 +37,7 @@ const MAKERS = films.map((f) => ({
 }));
 
 export default function Filmmakers() {
+  const reduce = useReducedMotion();
   const sectionRef = useRef<HTMLElement | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -65,7 +72,15 @@ export default function Filmmakers() {
     return () => window.removeEventListener("resize", measure);
   }, []);
 
-  const x = useTransform(scrollYProgress, [0, 1], [range.start, range.end]);
+  // [2] 카드 가로 이동을 0.2 이후로 미룸 — 0~0.2 는 제목 타이핑 노출 구간 (카드는 첫 위치 고정)
+  const x = useTransform(scrollYProgress, [0.2, 1], [range.start, range.end]);
+
+  // [3] 타이핑 구간(0~0.2)에는 카드가 살짝 흐릿하게 대기 → 0.2 부터 또렷
+  const waitBlurN = useTransform(scrollYProgress, [0.12, 0.2], [5, 0]);
+  const waitBlur = useMotionTemplate`blur(${waitBlurN}px)`;
+  const waitOpacity = useTransform(scrollYProgress, [0, 0.2], [0.5, 1]);
+  const trackFilter = reduce ? "none" : waitBlur;
+  const trackOpacity = reduce ? 1 : waitOpacity;
 
   return (
     <section ref={sectionRef} className={styles.fm} id="filmmakers">
@@ -73,12 +88,17 @@ export default function Filmmakers() {
         {/* 배경에 고정된 큰 FILMMAKERS 텍스트 (카드가 그 앞을 지나감) */}
         <div className={styles.fmBg} aria-hidden="true">
           <span className={styles.eyebrow}>Directors &amp; Authors</span>
-          <TypeTitle solid="FILM" outline="MAKERS" />
+          {/* [1] sticky 로 화면에 들어오는 즉시 타이핑 발동 (이른 트리거) */}
+          <TypeTitle solid="FILM" outline="MAKERS" inViewMargin="0px" />
           <span className={styles.fmHeadSub}>우리가 동행하는 작가들</span>
         </div>
 
-        {/* 가로 트랙 — 세로 스크롤 진행도에 x 연동 */}
-        <motion.div ref={trackRef} className={styles.fmTrack} style={{ x }}>
+        {/* 가로 트랙 — 0.2 이후부터 x 연동, 그 전엔 첫 위치 고정 */}
+        <motion.div
+          ref={trackRef}
+          className={styles.fmTrack}
+          style={{ x, filter: trackFilter, opacity: trackOpacity }}
+        >
           {MAKERS.map((m) => (
             <article key={m.id} className={styles.fmCard}>
               <div className={styles.fmCard__photo}>

@@ -8,12 +8,18 @@ import styles from "./Landing.module.css";
 export default function TypeTitle({
   solid,
   outline,
+  inViewMargin = "-10% 0px",
 }: {
   solid: string;
   outline: string;
+  /** useInView 트리거 여백 — 더 일찍 발동시키려면 "0px" 등으로 조정 */
+  inViewMargin?: string;
 }) {
   const ref = useRef<HTMLHeadingElement | null>(null);
-  const inView = useInView(ref, { once: true, margin: "-10% 0px" });
+  const inView = useInView(ref, {
+    once: true,
+    margin: inViewMargin as never,
+  });
   const reduce = useReducedMotion();
   const full = solid.length + outline.length;
   const [count, setCount] = useState(0);
