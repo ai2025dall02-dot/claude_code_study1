@@ -239,6 +239,113 @@
   color: #fff;
 }
 
+/* ── FILMMAKERS — sunty.ae 풍 가로 카드 캐러셀 ───────── */
+.fm {
+  background: #fff;
+  border-block: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+/* 가운데 크게 배치되는 제목 (TypeTitle 재사용) */
+.fmHead {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-inline: clamp(1.4rem, 4vw, 3rem);
+  text-align: center;
+}
+.fmHead .eyebrow {
+  margin-bottom: 1.1rem;
+}
+.fmHead .title {
+  font-size: clamp(2.8rem, 9vw, 6.4rem);
+  line-height: 0.94;
+  justify-content: center;
+}
+.fmHeadSub {
+  display: block;
+  margin-top: 1.2rem;
+  font-family: var(--font-meta, monospace);
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #9a9a96;
+}
+/* 1단계: 가로 정적 나열 (스크롤로 둘러보기 가능) — 이후 단계에서 스크롤 연동으로 교체 */
+.fmViewport {
+  margin-top: clamp(2.6rem, 5vw, 4.4rem);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-inline: clamp(1.4rem, 4vw, 3rem);
+  padding-block: 0.5rem 1.5rem;
+}
+.fmTrack {
+  display: flex;
+  gap: clamp(1.3rem, 2.4vw, 2.2rem);
+  width: max-content;
+}
+.fmCard {
+  flex: 0 0 auto;
+  width: clamp(258px, 26vw, 348px);
+}
+.fmCard__photo {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #e7e7e4;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+.fmCard__photo :global(img) {
+  object-fit: cover;
+}
+.fmCard__idx {
+  position: absolute;
+  top: 0.7rem;
+  left: 0.8rem;
+  font-family: var(--font-meta, monospace);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: #fff;
+  mix-blend-mode: difference;
+}
+.fmCard__info {
+  padding-top: 1.1rem;
+}
+.fmCard__name {
+  margin: 0;
+  font-family: "Arial Black", Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+  letter-spacing: -0.02em;
+  line-height: 1.04;
+  color: #0c0c0c;
+}
+.fmCard__name span {
+  display: block;
+  font-family: var(--font-meta, monospace);
+  font-weight: 400;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #9a9a96;
+  margin-top: 0.5rem;
+}
+.fmCard__meta {
+  margin: 0.8rem 0 0;
+  font-family: var(--font-meta, monospace);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: #6a6a68;
+}
+.fmCard__film {
+  margin: 0.35rem 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4a4a48;
+}
+.fmCard__film b {
+  font-weight: 600;
+  color: #0c0c0c;
+}
+
 /* ── FESTIVALS ──────────────────────────────────────── */
 .fests { background: #f8f8f8; }
 .festsGrid {

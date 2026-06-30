@@ -1,6 +1,6 @@
-import { films } from "@/data/films";
 import About from "@/components/About";
 import Lineup from "@/components/Lineup";
+import Filmmakers from "@/components/Filmmakers";
 import styles from "./Landing.module.css";
 
 /* 영화제 초청·수상 (데모용 가상 정보) */
@@ -31,38 +31,8 @@ export default function Landing() {
       {/* ── LINEUP (타이핑 제목 + 스크롤 리빌 이미지) ─ */}
       <Lineup />
 
-      {/* ── FILMMAKERS ─────────────────────────── */}
-      <section className={`${styles.section} ${styles.makers}`} id="filmmakers">
-        <div className={styles.inner}>
-          <header className={styles.head}>
-            <div>
-              <span className={styles.eyebrow}>Directors &amp; Authors</span>
-              <h2 className={styles.title}>
-                FILM<em>MAKERS</em>
-              </h2>
-            </div>
-            <span className={styles.index}>우리가 동행하는 작가들</span>
-          </header>
-
-          {films.map((f) => (
-            <a key={f.id} className={styles.maker} href="#contact">
-              <span className={styles.maker__idx}>{f.index}</span>
-              <span className={styles.maker__name}>
-                {f.director}
-                <span>{f.country}</span>
-              </span>
-              <span className={styles.maker__film}>
-                <b>{f.title}</b> · {f.titleEn}
-              </span>
-              <span className={styles.maker__arrow} aria-hidden="true">
-                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                  <path d="M3 10L10 3M10 3H4M10 3v6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-            </a>
-          ))}
-        </div>
-      </section>
+      {/* ── FILMMAKERS (sunty.ae 풍 가로 카드 캐러셀) ─ */}
+      <Filmmakers />
 
       {/* ── FESTIVALS ──────────────────────────── */}
       <section className={`${styles.section} ${styles.fests}`} id="festivals">
