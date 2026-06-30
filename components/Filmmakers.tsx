@@ -65,8 +65,10 @@ export default function Filmmakers() {
           ? (track.children[1] as HTMLElement).offsetLeft - first.offsetLeft
           : cardW;
       const vw = vp.clientWidth;
-      const start = (vw - cardW) / 2; // 첫 카드 중앙 정렬
-      const travel = (track.children.length - 1) * pitch;
+      // 첫 카드를 '중앙 정렬'이 아니라 화면 우측 바깥(한 칸 오른쪽)에서 출발시켜
+      // 모든 카드가 동일하게 '우측 진입 → 곡선 회전 → 중앙 → 좌측 이탈' 궤적을 거치게 함
+      const start = (vw - cardW) / 2 + pitch;
+      const travel = track.children.length * pitch; // 기존 (length-1) → length (한 칸 추가)
       setM({ start, end: start - travel, pitch, cardW, vw });
     };
     measure();
