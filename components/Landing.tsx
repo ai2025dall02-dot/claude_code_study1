@@ -24,7 +24,7 @@ const FOOTER_NAV = ["ABOUT", "LINEUP", "FILMMAKERS", "FESTIVALS", "JOURNAL", "CO
 
 export default function Landing() {
   return (
-    <div className={styles.land}>
+    <div className={styles.land} data-flow-snap>
       {/* ── ABOUT (scroll-darkening bg, fade-up, text-reveal) ─ */}
       <About />
 

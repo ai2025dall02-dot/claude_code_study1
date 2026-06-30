@@ -15,6 +15,12 @@
 .section {
   padding-block: clamp(4.5rem, 11vh, 9rem);
   scroll-margin-top: 72px;
+  scroll-snap-align: start;
+}
+/* 스크롤 연동 애니메이션 섹션은 스냅 제외 (ABOUT 인용문 reveal · LINEUP 패럴랙스/원형 reveal 와 충돌 방지) */
+.about,
+.lineup {
+  scroll-snap-align: none;
 }
 .inner {
   max-width: 1280px;
