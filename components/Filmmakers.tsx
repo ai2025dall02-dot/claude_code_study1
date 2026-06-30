@@ -74,8 +74,9 @@ export default function Filmmakers() {
     return () => window.removeEventListener("resize", measure);
   }, []);
 
-  // [2단계] 카드 가로 이동을 0.2 이후로 — 0~0.2 는 제목 타이핑 노출 구간(카드 첫 위치 고정)
-  const x = useTransform(scrollYProgress, [0.2, 1], [m.start, m.end]);
+  // 카드 가로 이동을 0.28 이후로 — 0~0.28 은 제목 타이핑 노출 구간(카드 첫 위치 고정)
+  // 타이핑이 끝난 뒤 스크롤해야 카드가 흐르기 시작
+  const x = useTransform(scrollYProgress, [0.28, 1], [m.start, m.end]);
 
   return (
     <section ref={sectionRef} className={styles.fm} id="filmmakers">
@@ -117,10 +118,9 @@ function FmCard({
   const center = metrics.vw / 2;
 
   // 카드 화면 중심 x = 트랙 translateX + 카드 레이아웃 위치(index×pitch) + 카드 반폭
-  // 화면 중앙(center)과의 절대거리
-  const dist = useTransform(trackX, (tx) =>
-    Math.abs(tx + index * pitch + half - center)
-  );
+  // 화면 중앙(center) 기준 부호 있는 거리(signed)와 절대거리(dist)
+  const signed = useTransform(trackX, (tx) => tx + index * pitch + half - center);
+  const dist = useTransform(signed, (s) => Math.abs(s));
 
   // 거리 → 스타일 매핑 (중앙=또렷/확대, 멀수록 흐림/축소/투명) — 좌우 대칭 자동
   // 중앙 부근에서 확실히 blur 0 으로 또렷하게, 멀어질수록 빠르게 흐려짐
@@ -129,9 +129,14 @@ function FmCard({
   const blurN = useTransform(dist, [0, pitch * 0.45, pitch], [0, 4, 14]);
   const blur = useMotionTemplate`blur(${blurN}px)`;
 
+  // 곡선 궤적: 양옆은 위로 떠오르고(-90), 중앙에 가까울수록 기준선(0)으로 가라앉는 아치
+  const y = useTransform(dist, [0, pitch], [0, -90]);
+  // 도는 느낌: 중앙 기준 좌우로 기울어짐 (왼쪽 +8°, 오른쪽 -8°)
+  const rotate = useTransform(signed, [-pitch, 0, pitch], [8, 0, -8]);
+
   const style = reduce
     ? undefined
-    : { opacity, scale, filter: blur as unknown as string };
+    : { opacity, scale, y, rotate, filter: blur as unknown as string };
 
   return (
     <motion.article className={styles.fmCard} style={style}>
