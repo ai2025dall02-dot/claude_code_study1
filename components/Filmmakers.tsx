@@ -123,9 +123,10 @@ function FmCard({
   );
 
   // 거리 → 스타일 매핑 (중앙=또렷/확대, 멀수록 흐림/축소/투명) — 좌우 대칭 자동
-  const opacity = useTransform(dist, [0, pitch * 0.4, pitch], [1, 0.5, 0]);
-  const scale = useTransform(dist, [0, pitch], [1.05, 0.8]);
-  const blurN = useTransform(dist, [0, pitch], [0, 10]);
+  // 중앙 부근에서 확실히 blur 0 으로 또렷하게, 멀어질수록 빠르게 흐려짐
+  const opacity = useTransform(dist, [0, pitch * 0.5, pitch * 0.9], [1, 0.4, 0]);
+  const scale = useTransform(dist, [0, pitch], [1.1, 0.78]);
+  const blurN = useTransform(dist, [0, pitch * 0.45, pitch], [0, 4, 14]);
   const blur = useMotionTemplate`blur(${blurN}px)`;
 
   const style = reduce

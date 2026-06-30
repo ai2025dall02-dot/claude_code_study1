@@ -243,7 +243,7 @@
 /* 2단계: 섹션을 길게 만들고 내부 뷰포트를 sticky 로 고정 → 세로 스크롤이 가로 이동으로 */
 .fm {
   position: relative;
-  height: 300vh; /* 세로 스크롤 길이 = 가로 이동 거리 확보 */
+  height: 450vh; /* 세로 스크롤 길이 — pitch 가 커진 만큼 스크롤 여유 확보 */
   background: #fff;
   border-block: 1px solid rgba(0, 0, 0, 0.08);
 }
@@ -251,7 +251,8 @@
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow: hidden; /* 가로 트랙 클립 */
+  /* 좌우 카드는 화면 가장자리에서 자연스럽게 잘려 '살짝 넘쳐 보이게' — 중앙 카드는 항상 온전 */
+  overflow: hidden;
   display: flex;
   align-items: center; /* 카드 세로 중앙 */
 }
@@ -288,18 +289,19 @@
   text-transform: uppercase;
   color: #9a9a96;
 }
-/* 가로 트랙 — 세로 스크롤 진행도에 x 연동 (좌우 패딩 없이 JS 로 중앙 정렬) */
+/* 가로 트랙 — 세로 스크롤 진행도에 x 연동 (좌우 패딩 없이 JS 로 중앙 정렬)
+   gap 을 크게 벌려 pitch(카드 간격)를 뷰포트 폭에 가깝게 → 중앙 1 + 좌우 1씩만 보이게 */
 .fmTrack {
   position: relative;
   z-index: 1;
   display: flex;
-  gap: clamp(1.3rem, 2.4vw, 2.2rem);
+  gap: clamp(140px, 28vw, 560px);
   width: max-content;
   will-change: transform;
 }
 .fmCard {
   flex: 0 0 auto;
-  width: clamp(258px, 26vw, 348px);
+  width: clamp(300px, 30vw, 460px);
 }
 .fmCard__photo {
   position: relative;
