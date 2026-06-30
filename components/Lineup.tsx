@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useRef } from "react";
 import Image from "next/image";
 import {
@@ -7,6 +8,7 @@ import {
   useReducedMotion,
   useScroll,
   useTransform,
+  type MotionValue,
 } from "framer-motion";
 import { films, type Film } from "@/data/films";
 import TypeTitle from "./TypeTitle";
@@ -22,42 +24,52 @@ const FILM_PHOTO: Record<string, string> = {
   reel: "/posters-photo/m2.jpg",
 };
 
-/* 카드별 배치/패럴랙스 설정 (세로 오프셋·높이·패럴랙스 제각각)
-   mt: 카드별 추가 세로 여백(촘촘하게 0~60), ar: 높이(aspect), mag: 패럴랙스 세기(px) */
+/* 카드별 배치 설정 — mt: 카드별 추가 세로 여백(촘촘하게 0~60), ar: 높이(aspect)
+   (패럴랙스 속도는 더 이상 카드별이 아니라 '열 단위'로 묶임 → COL_SPEED) */
 const CONF = [
-  { mt: 0, ar: "3 / 4.2", mag: 160 },
-  { mt: 28, ar: "3 / 3.6", mag: 240 },
-  { mt: 14, ar: "3 / 4.6", mag: 130 },
-  { mt: 44, ar: "3 / 3.8", mag: 200 },
-  { mt: 8, ar: "3 / 4.4", mag: 260 },
-  { mt: 36, ar: "3 / 4.0", mag: 150 },
-  { mt: 20, ar: "3 / 3.9", mag: 220 },
-  { mt: 52, ar: "3 / 4.5", mag: 120 },
-  { mt: 6, ar: "3 / 3.7", mag: 250 },
-  { mt: 32, ar: "3 / 4.3", mag: 175 },
-  { mt: 48, ar: "3 / 4.1", mag: 200 },
-  { mt: 16, ar: "3 / 3.6", mag: 235 },
+  { mt: 0, ar: "3 / 4.2" },
+  { mt: 28, ar: "3 / 3.6" },
+  { mt: 14, ar: "3 / 4.6" },
+  { mt: 44, ar: "3 / 3.8" },
+  { mt: 8, ar: "3 / 4.4" },
+  { mt: 36, ar: "3 / 4.0" },
+  { mt: 20, ar: "3 / 3.9" },
+  { mt: 52, ar: "3 / 4.5" },
+  { mt: 6, ar: "3 / 3.7" },
+  { mt: 32, ar: "3 / 4.3" },
+  { mt: 48, ar: "3 / 4.1" },
+  { mt: 16, ar: "3 / 3.6" },
 ];
 
 /* 6편 데이터를 2회 반복해 12개로 노출 (key 충돌 방지 위해 인덱스 suffix) */
 const ITEMS = [...films, ...films];
 
-/* 세로 흐름 masonry: 3개 열로 라운드로빈 분배 (각 열이 세로로 이어지고 높낮이 제각각) */
+/* 세로 흐름 masonry: 3개 열로 라운드로빈 분배 (각 열이 세로로 이어짐) */
 const COLS = 3;
 const COL_CLASS = ["", "col1", "col2"] as const;
+/* 열별 속도 계수 (음수=위로 흐름, 절댓값 클수록 빠름) — 옆 열끼리 속도차로 어긋나며 미끄러짐 */
+const COL_SPEED = [-0.18, -0.32, -0.1];
+/* 패럴랙스 기준 이동 폭(px). 계수 × 이 값 = 열의 (반)이동량 — 크게 잡아 '슉' 미끄러지게 */
+const PARALLAX_DISTANCE = 1200;
 
 export default function Lineup() {
   const reduce = useReducedMotion();
   const sectionRef = useRef<HTMLElement | null>(null);
 
   // ABOUT 하단~LINEUP 진입에서 원이 화면 정중앙에서 커지며 밝은 배경이 차오름
-  const { scrollYProgress } = useScroll({
+  const { scrollYProgress: revealProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "start start"],
   });
-  const radius = useTransform(scrollYProgress, [0, 1], [0, 150]);
+  const radius = useTransform(revealProgress, [0, 1], [0, 150]);
   const clipPath = useTransform(radius, (v) => `circle(${v}% at 50% 50%)`);
-  const revealOpacity = useTransform(scrollYProgress, [0, 0.96, 1], [1, 1, 0]);
+  const revealOpacity = useTransform(revealProgress, [0, 0.96, 1], [1, 1, 0]);
+
+  // 패럴랙스용 — 섹션이 화면을 지나는 전체 진행도 (0: 하단 진입 ~ 1: 상단 이탈)
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
 
   return (
     <section ref={sectionRef} className={`${styles.section} ${styles.lineup}`} id="lineup">
@@ -78,15 +90,21 @@ export default function Lineup() {
           <span className={styles.index}>현재 배급 · 2024–2025 / 전 {ITEMS.length}편</span>
         </header>
 
-        <div className={styles.grid} data-lineup-snap>
+        <div className={styles.grid}>
           {Array.from({ length: COLS }, (_, c) => (
-            <div key={c} className={`${styles.col} ${styles[COL_CLASS[c]] ?? ""}`}>
+            <ParallaxColumn
+              key={c}
+              className={`${styles.col} ${styles[COL_CLASS[c]] ?? ""}`}
+              progress={scrollYProgress}
+              speed={COL_SPEED[c]}
+              reduce={!!reduce}
+            >
               {ITEMS.map((f, i) => ({ f, i }))
                 .filter(({ i }) => i % COLS === c)
                 .map(({ f, i }) => (
-                  <LineupCard key={`${f.id}-${i}`} film={f} conf={CONF[i % CONF.length]} reduce={!!reduce} />
+                  <LineupCard key={`${f.id}-${i}`} film={f} conf={CONF[i % CONF.length]} />
                 ))}
-            </div>
+            </ParallaxColumn>
           ))}
         </div>
       </div>
@@ -94,39 +112,42 @@ export default function Lineup() {
   );
 }
 
+/* 한 열 전체를 묶어 섹션 진행도 × 열 계수로 선형(scrub) 이동 — 스프링/딜레이 없이 즉각 반응 */
+function ParallaxColumn({
+  progress,
+  speed,
+  reduce,
+  className,
+  children,
+}: {
+  progress: MotionValue<number>;
+  speed: number;
+  reduce: boolean;
+  className: string;
+  children: ReactNode;
+}) {
+  const yRaw = useTransform(
+    progress,
+    [0, 1],
+    [-speed * PARALLAX_DISTANCE, speed * PARALLAX_DISTANCE]
+  );
+  const y = reduce ? 0 : yRaw;
+  return (
+    <motion.div className={className} style={{ y, willChange: "transform" }}>
+      {children}
+    </motion.div>
+  );
+}
+
 function LineupCard({
   film: f,
   conf,
-  reduce,
 }: {
   film: Film;
-  conf: { mt: number; ar: string; mag: number };
-  reduce: boolean;
+  conf: { mt: number; ar: string };
 }) {
-  const ref = useRef<HTMLAnchorElement | null>(null);
-  // 카드가 화면을 지나는 동안의 진행도 (0: 하단 진입 ~ 1: 상단 이탈)
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"],
-  });
-  const yRaw = useTransform(scrollYProgress, [0, 1], [conf.mag, -conf.mag]); // 아래에서 올라와 위로 빨려나감 (이동 폭 2배)
-  const opRaw = useTransform(
-    scrollYProgress,
-    [0.12, 0.35, 0.65, 0.88],
-    [0, 1, 1, 0]
-  ); // 0.35~0.65 구간을 또렷(1)하게 넓혀 더 오래 보이고, 페이드는 완만하게
-  // 스냅 느낌은 CSS scroll-snap 으로만 처리 (scale 변형 제거 → 폭/마진 항상 고정)
-
-  const y = reduce ? 0 : yRaw;
-  const opacity = reduce ? 1 : opRaw;
-
   return (
-    <motion.a
-      ref={ref}
-      className={styles.card}
-      href="#contact"
-      style={{ marginTop: conf.mt, y, opacity }}
-    >
+    <a className={styles.card} href="#contact" style={{ marginTop: conf.mt }}>
       <div className={styles.card__media} style={{ aspectRatio: conf.ar }}>
         <Image
           src={FILM_PHOTO[f.id] ?? "/posters-photo/m1.jpg"}
@@ -144,6 +165,6 @@ function LineupCard({
           {f.director} · {f.country} {f.year} · {f.format} · {f.genre}
         </span>
       </div>
-    </motion.a>
+    </a>
   );
 }

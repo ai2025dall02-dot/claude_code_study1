@@ -106,7 +106,6 @@
   flex-direction: column;
   text-decoration: none;
   color: inherit;
-  scroll-snap-align: center; /* 카드가 화면 중앙으로 약하게 스냅 (스냅타입은 문서 스크롤러에) */
 }
 .card__media {
   position: relative;
