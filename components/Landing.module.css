@@ -98,10 +98,32 @@
 .lineupReveal {
   position: absolute; /* sticky 무대(100vh)를 채움 → 고정 중엔 화면 전체 */
   inset: 0;
-  z-index: 5; /* 본문 텍스트 위 — 원이 텍스트를 덮으며 커짐 */
+  z-index: 5; /* 원본 텍스트 위 — 원 안을 밝은 배경으로 채움 */
   background: #f8f8f8; /* LINEUP 과 동일한 밝은 원 */
   pointer-events: none;
   will-change: clip-path;
+}
+/* 반전 텍스트 레이어 — 원본과 동일 위치(세로 중앙)에 겹치고, 원과 같은 clip 으로 원 안쪽만 표시 */
+.aboutInvert {
+  position: absolute;
+  inset: 0;
+  z-index: 6; /* 밝은 원(z5) 위 → 원 안에서 어두운 글자가 밝은 배경 위에 보임 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* 원본 .inner 과 동일하게 세로 중앙 */
+  pointer-events: none;
+  will-change: clip-path;
+}
+/* 반전색: 모든 글자 어둡게 (밝은 원 위에서 대비). !important 로 기존 .about .title 등 우선순위 상회 */
+.aboutInvert :is(h2, h3, p, span, b) {
+  color: #0b0b0c !important;
+}
+.aboutInvert .title em {
+  color: transparent !important;
+  -webkit-text-stroke-color: #0b0b0c !important; /* 아웃라인 제목도 어둡게 */
+}
+.aboutInvert .aboutLine {
+  background: rgba(0, 0, 0, 0.28) !important; /* 가로줄도 어둡게 (밝은 배경 대비) */
 }
 /* reduce: pin 해제 → 본문을 일반 흐름으로 표시 (원 미렌더) */
 @media (prefers-reduced-motion: reduce) {

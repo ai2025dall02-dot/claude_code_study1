@@ -185,13 +185,57 @@ export default function About() {
             </motion.div>
           </motion.div>
 
-          {/* 본문 위 레이어 — 화면 정중앙에서 원이 0→최대로 커지며 텍스트를 덮음 */}
+          {/* 본문 위 레이어 — 화면 정중앙에서 원이 0→최대로 커지며 밝은 배경을 채움 */}
           {!reduce && (
             <motion.div
               className={styles.lineupReveal}
               aria-hidden="true"
               style={{ clipPath: revealClip }}
             />
+          )}
+
+          {/* 반전 텍스트 레이어 — 본문·원칙 복제(반전색). 원과 '동일한' revealClip 을 공유해
+              원 안쪽에서만 보임 → 원 안: 밝은 배경 + 어두운 글자, 원 밖: 원래(어두운 배경 + 밝은 글자) */}
+          {!reduce && (
+            <motion.div
+              className={styles.aboutInvert}
+              aria-hidden="true"
+              style={{ clipPath: revealClip }}
+            >
+              <div className={styles.inner}>
+              <header className={styles.head}>
+                <div>
+                  <span className={styles.eyebrow}>About — 배급사 소개</span>
+                  <h2 className={styles.title}>
+                    <span>FILM </span>
+                    <em>NOUVELLE</em>
+                  </h2>
+                </div>
+                <span className={styles.index}>Since 2014 · Seoul</span>
+              </header>
+
+              <div className={`${styles.aboutLine} ${styles.aboutLineHead}`} />
+
+              <p className={styles.aboutBody}>
+                필름 누벨은 2014년, 극장에서 사라져 가던 독립·예술영화를 다시 스크린에
+                올리기 위해 시작했습니다. 우리는 한 해에 단 몇 편만을 고릅니다. 적게
+                고르는 대신, 한 편의 영화가 관객을 만나는 모든 길 — 개봉, 기획전, 공동체
+                상영, 아카이브 — 을 끝까지 동행합니다.
+              </p>
+
+              <div className={`${styles.aboutLine} ${styles.aboutLinePrin}`} />
+
+              <div className={styles.principles}>
+                {PRINCIPLES.map((pr) => (
+                  <div key={pr.title}>
+                    <span className={styles.principle__label}>원칙 / {pr.label}</span>
+                    <h3 className={styles.principle__title}>{pr.title}</h3>
+                    <p className={styles.principle__text}>{pr.text}</p>
+                  </div>
+                ))}
+              </div>
+              </div>
+            </motion.div>
           )}
         </div>
       </div>
