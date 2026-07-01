@@ -60,9 +60,9 @@ export default function About() {
     target: pinRef,
     offset: ["start start", "end start"],
   });
-  // sticky(100vh)는 pin 래퍼(200vh)의 앞 절반 동안 고정 → 그 구간(0~0.5)에 원이 최대(170)까지 커진 뒤
-  // 뒤 절반에서 고정이 풀리며 밝은 원째로 스크롤업 → LINEUP 진입 (검은 띠 없이 이어짐).
-  const revealRadius = useTransform(growProgress, [0, 0.5], [0, 170]);
+  // sticky(100vh)는 pin 래퍼(200vh)의 앞 절반 동안 고정. 0~0.2 는 '텍스트 감상+정지' 구간(원 반경 0 유지),
+  // 0.2 부터 원이 커지기 시작해 0.6 에 최대(170) → 텍스트 fade-up 이 끝난 뒤에 원이 시작됨.
+  const revealRadius = useTransform(growProgress, [0.2, 0.6], [0, 170]);
   const revealClip = useTransform(revealRadius, (v) => `circle(${v}% at 50% 50%)`);
 
   // 마우스 따라다니는 옅은 흰 스포트라이트 (rAF throttle)
