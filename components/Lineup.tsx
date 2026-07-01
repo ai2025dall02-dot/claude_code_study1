@@ -50,8 +50,9 @@ const COL_CLASS = ["", "col1", "col2"] as const;
 /* 열별 속도 계수 (음수=위로 흐름, 절댓값 클수록 빠름) — 속도 격차를 크게 벌려 어긋남 강조
    (가운데 열은 빠르게 -0.55, 마지막 열은 거의 정지 -0.05) */
 const COL_SPEED = [-0.25, -0.55, -0.05];
-/* 패럴랙스 기준 이동 폭(px). 계수 × 이 값 = 열의 (반)이동량 — 크게 잡아 '슉' 미끄러지게 */
-const PARALLAX_DISTANCE = 2200;
+/* 패럴랙스 기준 이동 폭(px). 계수 × 이 값 = 열의 (반)이동량.
+   낮추면 첫 진입 시 이미지가 덜 아래에서 시작해 상단 여백이 줄어듦 */
+const PARALLAX_DISTANCE = 1700;
 
 export default function Lineup() {
   const reduce = useReducedMotion();
@@ -140,10 +141,11 @@ function LineupCard({
     target: ref,
     offset: ["start end", "end start"],
   });
-  // 화면 중앙(0.35~0.65)에서 또렷, 위아래로 페이드
+  // 또렷(opacity 1) 구간을 0.25~0.75 로 넓혀 화면 지나는 대부분에서 보이고,
+  // 페이드아웃을 0.92 로 늦춰 화면 상단에 거의 닿을 때 사라지게 (체류 시간 확대)
   const opRaw = useTransform(
     scrollYProgress,
-    [0.12, 0.35, 0.65, 0.88],
+    [0.08, 0.25, 0.75, 0.92],
     [0, 1, 1, 0]
   );
   const opacity = reduce ? 1 : opRaw;
