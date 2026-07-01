@@ -60,15 +60,19 @@ export default function About() {
   const tailRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress: growProgress } = useScroll({
     target: contentRef,
-    offset: ["start center", "end start"],
+    // 시작 늦춤: 본문·원칙(contentRef) 하단이 화면 중앙에 올 때(end center)부터 원이 커지기 시작
+    // = 본문·원칙이 거의 다 지나간 뒤. 끝(end start)에서 원이 최대.
+    offset: ["end center", "end start"],
   });
   const { scrollYProgress: fadeProgress } = useScroll({
     target: tailRef,
     offset: ["start start", "end start"],
   });
-  const revealRadius = useTransform(growProgress, [0, 1], [0, 150]);
+  // 최대 반경 170 — 화면 모서리까지 확실히 덮어 상단 검은 띠 방지
+  const revealRadius = useTransform(growProgress, [0, 1], [0, 170]);
   const revealClip = useTransform(revealRadius, (v) => `circle(${v}% at 50% 50%)`);
-  const revealOpacity = useTransform(fadeProgress, [0.85, 1], [1, 0]);
+  // 페이드는 LINEUP 진입 '직전'에 짧게 — 그 전까지 밝은 원이 검은 배경을 덮어 틈이 안 생기게
+  const revealOpacity = useTransform(fadeProgress, [0.94, 1], [1, 0]);
 
   // 마우스 따라다니는 옅은 흰 스포트라이트 (rAF throttle)
   useEffect(() => {

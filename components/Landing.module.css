@@ -539,7 +539,7 @@
 }
 /* ABOUT 하단 여백(넓힘) — 이 구간을 지나며 배경이 LINEUP 으로 밝아짐 */
 .aboutTail {
-  height: clamp(20rem, 55vh, 42rem);
+  height: clamp(13rem, 35vh, 27rem); /* 하단 여백 약 35% 축소 — 스크롤 늘어짐 완화 */
 }
 .quote {
   font-family: "Arial Black", Helvetica, sans-serif;
