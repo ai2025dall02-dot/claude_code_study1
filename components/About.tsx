@@ -135,63 +135,66 @@ export default function About() {
         ghostColor={quoteGhost}
       />
 
-      <motion.div
-        className={`${styles.inner} ${styles.aboutAfter}`}
-        variants={group}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-40% 0px" }}
-      >
-        <motion.header className={styles.head} variants={item}>
-          <div>
-            <span className={styles.eyebrow}>About — 배급사 소개</span>
-            <TypeTitle solid="FILM " outline="NOUVELLE" />
-          </div>
-          <span className={styles.index}>Since 2014 · Seoul</span>
-        </motion.header>
+      {/* pin 구간: 본문·원칙을 sticky(100vh) 안에 넣어, 본문이 화면 중앙에 온 채로 고정되고
+          그 위 레이어(lineupReveal)로 원이 정중앙에서 커지며 텍스트를 덮는다.
+          (reduce 시 CSS 로 pin 해제 → 일반 흐름으로 본문 표시, 원 미렌더) */}
+      <div ref={pinRef} className={styles.aboutPin}>
+        <div className={styles.aboutPinSticky}>
+          <motion.div
+            className={styles.inner}
+            variants={group}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-40% 0px" }}
+          >
+            <motion.header className={styles.head} variants={item}>
+              <div>
+                <span className={styles.eyebrow}>About — 배급사 소개</span>
+                <TypeTitle solid="FILM " outline="NOUVELLE" />
+              </div>
+              <span className={styles.index}>Since 2014 · Seoul</span>
+            </motion.header>
 
-        <motion.div
-          className={`${styles.aboutLine} ${styles.aboutLineHead}`}
-          variants={line}
-          aria-hidden="true"
-        />
+            <motion.div
+              className={`${styles.aboutLine} ${styles.aboutLineHead}`}
+              variants={line}
+              aria-hidden="true"
+            />
 
-        <motion.p className={styles.aboutBody} variants={item}>
-          필름 누벨은 2014년, 극장에서 사라져 가던 독립·예술영화를 다시 스크린에
-          올리기 위해 시작했습니다. 우리는 한 해에 단 몇 편만을 고릅니다. 적게
-          고르는 대신, 한 편의 영화가 관객을 만나는 모든 길 — 개봉, 기획전, 공동체
-          상영, 아카이브 — 을 끝까지 동행합니다.
-        </motion.p>
+            <motion.p className={styles.aboutBody} variants={item}>
+              필름 누벨은 2014년, 극장에서 사라져 가던 독립·예술영화를 다시 스크린에
+              올리기 위해 시작했습니다. 우리는 한 해에 단 몇 편만을 고릅니다. 적게
+              고르는 대신, 한 편의 영화가 관객을 만나는 모든 길 — 개봉, 기획전, 공동체
+              상영, 아카이브 — 을 끝까지 동행합니다.
+            </motion.p>
 
-        <motion.div
-          className={`${styles.aboutLine} ${styles.aboutLinePrin}`}
-          variants={line}
-          aria-hidden="true"
-        />
+            <motion.div
+              className={`${styles.aboutLine} ${styles.aboutLinePrin}`}
+              variants={line}
+              aria-hidden="true"
+            />
 
-        <motion.div className={styles.principles} variants={innerGroup}>
-          {PRINCIPLES.map((pr) => (
-            <motion.div key={pr.title} variants={item}>
-              <span className={styles.principle__label}>원칙 / {pr.label}</span>
-              <h3 className={styles.principle__title}>{pr.title}</h3>
-              <p className={styles.principle__text}>{pr.text}</p>
+            <motion.div className={styles.principles} variants={innerGroup}>
+              {PRINCIPLES.map((pr) => (
+                <motion.div key={pr.title} variants={item}>
+                  <span className={styles.principle__label}>원칙 / {pr.label}</span>
+                  <h3 className={styles.principle__title}>{pr.title}</h3>
+                  <p className={styles.principle__text}>{pr.text}</p>
+                </motion.div>
+              ))}
             </motion.div>
-          ))}
-        </motion.div>
-      </motion.div>
+          </motion.div>
 
-      {/* pin 구간: 바깥 래퍼(200vh) 안 sticky(100vh)가 고정되고, 그 안에서 원이 성장 →
-          고정 해제되며 밝은 원째로 스크롤업해 LINEUP 으로 이어짐. (reduce 시 생략 → 바로 LINEUP) */}
-      {!reduce && (
-        <div ref={pinRef} className={styles.aboutPin} aria-hidden="true">
-          <div className={styles.aboutPinSticky}>
+          {/* 본문 위 레이어 — 화면 정중앙에서 원이 0→최대로 커지며 텍스트를 덮음 */}
+          {!reduce && (
             <motion.div
               className={styles.lineupReveal}
+              aria-hidden="true"
               style={{ clipPath: revealClip }}
             />
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* 마우스 따라다니는 옅은 흰 스포트라이트 */}
       <div className={styles.spotlight} aria-hidden="true" />

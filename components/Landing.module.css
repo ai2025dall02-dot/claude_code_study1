@@ -87,19 +87,31 @@
 .aboutPinSticky {
   position: sticky;
   top: 0;
-  height: 100vh; /* 화면에 고정되는 실제 무대 */
+  height: 100vh; /* 화면에 고정되는 실제 무대 — 본문·원칙이 이 안에서 세로 중앙 정렬 */
   width: 100%;
   overflow: hidden;
-  /* 배경 투명 — 뒤의 본문이 비쳐 보이게. 전체 어두운 톤은 About 섹션 배경(#0b0b0c)이 유지 */
-  background: transparent;
+  background: transparent; /* 뒤의 어두운 톤(.aboutPin)이 비쳐 본문이 보이게 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* 본문을 화면 세로 중앙에 */
 }
 .lineupReveal {
   position: absolute; /* sticky 무대(100vh)를 채움 → 고정 중엔 화면 전체 */
   inset: 0;
-  z-index: 5;
-  background: #f8f8f8; /* LINEUP 과 동일한 밝은 원 — 다 커지면 LINEUP 배경으로 매끄럽게 이어짐 */
+  z-index: 5; /* 본문 텍스트 위 — 원이 텍스트를 덮으며 커짐 */
+  background: #f8f8f8; /* LINEUP 과 동일한 밝은 원 */
   pointer-events: none;
   will-change: clip-path;
+}
+/* reduce: pin 해제 → 본문을 일반 흐름으로 표시 (원 미렌더) */
+@media (prefers-reduced-motion: reduce) {
+  .aboutPin { height: auto; }
+  .aboutPinSticky {
+    position: static;
+    height: auto;
+    display: block;
+    padding-block: clamp(4rem, 12vh, 8rem);
+  }
 }
 /* podium.global 풍 세로 흐름 masonry — 각 열이 세로로 이어지고 열마다 시작 높이가 다름 */
 .grid {
