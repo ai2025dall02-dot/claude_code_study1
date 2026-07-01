@@ -1,7 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   motion,
@@ -85,19 +84,8 @@ export default function Lineup() {
               progress={scrollYProgress}
               speed={COL_SPEED[c]}
               reduce={!!reduce}
-            >
-              {ITEMS.map((f, i) => ({ f, i }))
-                .filter(({ i }) => i % COLS === c)
-                .map(({ f, i }, colIdx) => (
-                  <LineupCard
-                    key={`${f.id}-${i}`}
-                    film={f}
-                    conf={CONF[i % CONF.length]}
-                    topCard={colIdx === 0}
-                    reduce={!!reduce}
-                  />
-                ))}
-            </ParallaxColumn>
+              items={ITEMS.map((f, i) => ({ f, i })).filter(({ i }) => i % COLS === c)}
+            />
           ))}
         </div>
       </div>
@@ -105,19 +93,21 @@ export default function Lineup() {
   );
 }
 
-/* 한 열 전체를 묶어 섹션 진행도 × 열 계수로 선형(scrub) 이동 — 스프링/딜레이 없이 즉각 반응 */
+/* 한 열 전체를 묶어 섹션 진행도 × 열 계수로 선형(scrub) 이동 — 스프링/딜레이 없이 즉각 반응.
+   각 카드에는 이 열의 패럴랙스 y(MotionValue)를 그대로 내려, 카드가 opacity 를
+   '실제 화면 위치(레이아웃+패럴랙스)' 기준으로 계산하게 한다. */
 function ParallaxColumn({
   progress,
   speed,
   reduce,
   className,
-  children,
+  items,
 }: {
   progress: MotionValue<number>;
   speed: number;
   reduce: boolean;
   className: string;
-  children: ReactNode;
+  items: { f: Film; i: number }[];
 }) {
   // 진입 밀림을 '완전 제거'가 아니라 '조금만 축소' — 기존 대칭 [-D, D] 에서
   // 시작값만 60%(-D*0.6)로 낮춰 진입 밀림이 약 40% 감소. 상단 여백은 적당히 줄되
@@ -130,7 +120,16 @@ function ParallaxColumn({
   const y = reduce ? 0 : yRaw;
   return (
     <motion.div className={className} style={{ y, willChange: "transform" }}>
-      {children}
+      {items.map(({ f, i }, colIdx) => (
+        <LineupCard
+          key={`${f.id}-${i}`}
+          film={f}
+          conf={CONF[i % CONF.length]}
+          topCard={colIdx === 0}
+          reduce={reduce}
+          parallaxY={reduce ? undefined : yRaw}
+        />
+      ))}
     </motion.div>
   );
 }
@@ -140,25 +139,49 @@ function LineupCard({
   conf,
   topCard,
   reduce,
+  parallaxY,
 }: {
   film: Film;
   conf: { mt: number; ar: string };
   topCard: boolean;
   reduce: boolean;
+  parallaxY?: MotionValue<number>;
 }) {
   // 각 열 '맨 위' 카드만 상단 여백 약간(75%) 축소 — [1] 패럴랙스로 이미 여백이 줄었으므로
   // 여기선 최소로만 걸어 제목 침범을 피함 (기존 절반 → 0.75 로 완화)
   const marginTop = topCard ? conf.mt * 0.75 : conf.mt;
   const ref = useRef<HTMLAnchorElement | null>(null);
-  // 카드가 화면을 지나는 동안의 진행도 (0: 하단 진입 ~ 1: 상단 이탈)
-  const { scrollYProgress } = useScroll({
+
+  // opacity 를 '카드의 실제 화면 위치(= 레이아웃 위치 + 패럴랙스 이동)' 기준으로 계산.
+  //  - framer-motion 11 의 useScroll(target) 측정(calcInset)은 offsetTop 누적이라
+  //    조상(열)의 패럴랙스 translateY 를 무시 → '레이아웃 위치' 진행도만 준다.
+  //  - 여기에 패럴랙스 y 를 보정해 '실제 보이는 위치' 진행도로 바꾼다:
+  //      layoutTop = vh - progress_layout·(vh+cardH),  visualTop = layoutTop + pY
+  //      → progress_visual = progress_layout - pY/(vh+cardH)
+  //  - progress_layout·pY 는 모두 같은 스크롤에서 파생된 MotionValue 라, 이를 합친 파생값은
+  //    패럴랙스와 '같은 프레임'에 원자적으로 갱신됨 → 정지 시에도 어긋남/지연 없음,
+  //    getBoundingClientRect 재측정(reflow)·rAF 경쟁 없음, 스크롤 방향과 무관하게 일관.
+  const { scrollYProgress: progressLayout } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
   });
-  // 또렷(opacity 1) 구간을 0.25~0.75 로 넓혀 화면 지나는 대부분에서 보이고,
-  // 페이드아웃을 0.92 로 늦춰 화면 상단에 거의 닿을 때 사라지게 (체류 시간 확대)
+  const [span, setSpan] = useState(1500); // vh + 카드 높이 (진행도 → 위치 환산 분모)
+  useEffect(() => {
+    const measure = () => {
+      const el = ref.current;
+      if (el) setSpan(window.innerHeight + el.offsetHeight);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  const progressVisual = useTransform(
+    () => progressLayout.get() - (parallaxY?.get() ?? 0) / span
+  );
+  // 또렷(opacity 1) 구간 0.25~0.75, 페이드아웃 0.92 (기존 곡선 유지)
   const opRaw = useTransform(
-    scrollYProgress,
+    progressVisual,
     [0.08, 0.25, 0.75, 0.92],
     [0, 1, 1, 0]
   );
