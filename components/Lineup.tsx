@@ -57,16 +57,8 @@ export default function Lineup() {
   const reduce = useReducedMotion();
   const sectionRef = useRef<HTMLElement | null>(null);
 
-  // ABOUT 하단~LINEUP 진입에서 원이 화면 정중앙에서 커지며 밝은 배경이 차오름
-  const { scrollYProgress: revealProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "start start"],
-  });
-  const radius = useTransform(revealProgress, [0, 1], [0, 150]);
-  const clipPath = useTransform(radius, (v) => `circle(${v}% at 50% 50%)`);
-  const revealOpacity = useTransform(revealProgress, [0, 0.96, 1], [1, 1, 0]);
-
   // 패럴랙스용 — 섹션이 화면을 지나는 전체 진행도 (0: 하단 진입 ~ 1: 상단 이탈)
+  // (원형 reveal 은 About 컴포넌트로 이동 — About 본문 기준으로 시작 시점을 잡기 위해)
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -74,13 +66,6 @@ export default function Lineup() {
 
   return (
     <section ref={sectionRef} className={`${styles.section} ${styles.lineup}`} id="lineup">
-      {!reduce && (
-        <motion.div
-          className={styles.lineupReveal}
-          aria-hidden="true"
-          style={{ clipPath, opacity: revealOpacity }}
-        />
-      )}
 
       <div className={styles.inner}>
         <header className={styles.head}>

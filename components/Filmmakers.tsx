@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import {
   motion,
   useMotionTemplate,
@@ -13,19 +14,19 @@ import { films } from "@/data/films";
 import TypeTitle from "./TypeTitle";
 import styles from "./Landing.module.css";
 
-/* 이름에서 이니셜 추출 (라틴: 단어 첫 글자 / 한글: 첫 음절) */
-function initialsOf(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
+/* 감독 카드용 사진 매핑 (public/posters-photo) — 첨부 오렌지와 같은 '선명한 정물/자연 매크로'
+   계열 4장(m1 과일·m8 사과·m3 나비·m2 개코원숭이)만 사용. 6칸이라 2장은 중복하되
+   같은 이미지가 이웃 카드에 연속되지 않게 배치. (회화 m4·만화 m6·축구 m5·도시 m7 제외) */
+const MAKER_PHOTO: Record<string, string> = {
+  afterimage: "/posters-photo/m1.jpg", // 과일 정물 (첨부 이미지)
+  north: "/posters-photo/m3.jpg", // 나비 매크로
+  exile: "/posters-photo/m8.jpg", // 사과 정물
+  salt: "/posters-photo/m2.jpg", // 개코원숭이
+  winter: "/posters-photo/m3.jpg", // 나비 매크로 (중복)
+  reel: "/posters-photo/m8.jpg", // 사과 정물 (중복)
+};
 
-/* 감독 데이터 — films 에서 파생 (이름 + 필모/정보 + 인물 placeholder 용 팔레트/이니셜)
-   public 에 인물 사진이 없어 감독별 팔레트 색 + 이니셜의 '인물 실루엣' placeholder 사용 */
+/* 감독 데이터 — films 에서 파생 (사진 + 이름 + 필모/정보) */
 const MAKERS = films.map((f) => ({
   id: f.id,
   index: f.index,
@@ -35,8 +36,7 @@ const MAKERS = films.map((f) => ({
   genre: f.genre,
   film: f.title,
   filmEn: f.titleEn,
-  palette: f.palette,
-  initials: initialsOf(f.director),
+  photo: MAKER_PHOTO[f.id] ?? "/posters-photo/m1.jpg",
 }));
 
 type Metrics = { start: number; end: number; pitch: number; cardW: number; vw: number };
@@ -78,9 +78,29 @@ export default function Filmmakers() {
     return () => window.removeEventListener("resize", measure);
   }, []);
 
-  // 카드 가로 이동을 0.28 이후로 — 0~0.28 은 제목 타이핑 노출 구간(카드 첫 위치 고정)
-  // 타이핑이 끝난 뒤 스크롤해야 카드가 흐르기 시작
-  const x = useTransform(scrollYProgress, [0.28, 1], [m.start, m.end]);
+  // 카드 가로 이동 — 선형(등속) 대신 '카드가 중앙에 올 때마다 잠시 머무는' 계단형 매핑.
+  // 각 카드 중앙 진행도(c_i) 부근에 같은 x 값을 2점(enter/leave) 둬서 평탄(머무름) 구간을 만들고,
+  // 그 사이는 빠르게 전환 → 스냅처럼 멈췄다 이어지는 느낌. (타이핑 끝나는 0.28 이후 시작)
+  const N = MAKERS.length;
+  const centerOffset = (m.vw - m.cardW) / 2; // 카드 0 이 중앙일 때의 x (= X_0)
+  const P_START = 0.28; // 카드 이동 시작 진행도
+  const C0 = 0.35; // 첫 카드가 중앙에 오는 진행도
+  const DWELL = 0.03; // 중앙에서 머무는 절반 폭(진행도) — 살짝만 머물게
+  const snapIn: number[] = [P_START];
+  const snapOut: number[] = [m.start];
+  for (let i = 0; i < N; i++) {
+    const ci = N > 1 ? C0 + (1 - C0) * (i / (N - 1)) : C0; // 카드 i 중앙 진행도 (마지막=1.0)
+    const Xi = centerOffset - i * m.pitch; // 카드 i 가 중앙일 때의 x
+    const enter = Math.max(snapIn[snapIn.length - 1] + 0.001, ci - DWELL);
+    snapIn.push(enter);
+    snapOut.push(Xi);
+    const leave = Math.min(1, ci + DWELL);
+    if (leave > snapIn[snapIn.length - 1]) {
+      snapIn.push(leave);
+      snapOut.push(Xi);
+    }
+  }
+  const x = useTransform(scrollYProgress, snapIn, snapOut);
 
   // [1] 타이핑 구간(0~0.28)에는 트랙 전체를 숨김 → 0.28 부근에서 fade-in (타이핑 먼저 노출)
   const trackGate = useTransform(scrollYProgress, [0.24, 0.3], [0, 1]);
@@ -138,10 +158,11 @@ function FmCard({
     [1, 1, 0.4, 0]
   );
   const scale = useTransform(dist, [0, pitch], [1.1, 0.78]);
+  // 중앙 근처(거리 ~0.35p 까지)는 blur 0 으로 완전히 또렷, 그 밖으로 갈수록 흐려짐
   const blurN = useTransform(
     dist,
-    [0, pitch * 0.12, pitch * 0.5, pitch],
-    [0, 0, 5, 14]
+    [0, pitch * 0.35, pitch * 0.7, pitch],
+    [0, 0, 6, 14]
   );
   const blur = useMotionTemplate`blur(${blurN}px)`;
 
@@ -168,7 +189,12 @@ function FmCard({
   return (
     <motion.article className={styles.fmCard} style={style}>
       <div className={styles.fmCard__photo}>
-        <Portrait id={mk.id} palette={mk.palette} initials={mk.initials} name={mk.name} />
+        <Image
+          src={mk.photo}
+          alt={`${mk.name} 감독`}
+          fill
+          sizes="(max-width: 600px) 80vw, 360px"
+        />
         <span className={styles.fmCard__idx}>{mk.index}</span>
       </div>
       <div className={styles.fmCard__info}>
@@ -184,55 +210,5 @@ function FmCard({
         </p>
       </div>
     </motion.article>
-  );
-}
-
-/* 인물 placeholder — 감독별 팔레트 그라데이션 위에 사람 실루엣(머리+어깨) + 이니셜 (3:4 포트레이트) */
-function Portrait({
-  id,
-  palette,
-  initials,
-  name,
-}: {
-  id: string;
-  palette: [string, string];
-  initials: string;
-  name: string;
-}) {
-  const [accent, deep] = palette;
-  const gid = `fmgrad-${id}`;
-  return (
-    <svg
-      className={styles.fmCard__portrait}
-      viewBox="0 0 300 400"
-      preserveAspectRatio="xMidYMid slice"
-      role="img"
-      aria-label={`${name} 감독`}
-    >
-      <defs>
-        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={accent} />
-          <stop offset="1" stopColor={deep} />
-        </linearGradient>
-      </defs>
-      <rect width="300" height="400" fill={`url(#${gid})`} />
-      {/* 사람 실루엣 (머리 + 어깨) */}
-      <g fill="rgba(244,244,242,0.20)">
-        <circle cx="150" cy="158" r="60" />
-        <path d="M40 400 C40 312 92 268 150 268 C208 268 260 312 260 400 Z" />
-      </g>
-      <text
-        x="150"
-        y="372"
-        textAnchor="middle"
-        fill="rgba(244,244,242,0.92)"
-        fontFamily="'Arial Black', Helvetica, sans-serif"
-        fontSize="30"
-        fontWeight="900"
-        letterSpacing="2"
-      >
-        {initials}
-      </text>
-    </svg>
   );
 }
