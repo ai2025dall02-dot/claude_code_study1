@@ -14,16 +14,16 @@ import { films } from "@/data/films";
 import TypeTitle from "./TypeTitle";
 import styles from "./Landing.module.css";
 
-/* 감독 카드용 사진 매핑 (public/posters-photo) — 첨부 오렌지와 같은 '선명한 정물/자연 매크로'
-   계열 4장(m1 과일·m8 사과·m3 나비·m2 개코원숭이)만 사용. 6칸이라 2장은 중복하되
-   같은 이미지가 이웃 카드에 연속되지 않게 배치. (회화 m4·만화 m6·축구 m5·도시 m7 제외) */
+/* 감독 카드용 사진 매핑 (public/posters-photo) — 감독별 전용 이미지 filmmaker_1~6.
+   films 순서(afterimage→reel)가 감독 1~6 순서와 1:1 로 일치.
+   ※ 확장자 주의: 1~5 는 .jpeg, 6 은 .jpg */
 const MAKER_PHOTO: Record<string, string> = {
-  afterimage: "/posters-photo/m1.jpg", // 과일 정물 (첨부 이미지)
-  north: "/posters-photo/m3.jpg", // 나비 매크로
-  exile: "/posters-photo/m8.jpg", // 사과 정물
-  salt: "/posters-photo/m2.jpg", // 개코원숭이
-  winter: "/posters-photo/m3.jpg", // 나비 매크로 (중복)
-  reel: "/posters-photo/m8.jpg", // 사과 정물 (중복)
+  afterimage: "/posters-photo/filmmaker_1.jpeg", // 감독 1 · 정하루
+  north: "/posters-photo/filmmaker_2.jpeg", // 감독 2 · Léa Marchand
+  exile: "/posters-photo/filmmaker_3.jpeg", // 감독 3 · 김도연
+  salt: "/posters-photo/filmmaker_4.jpeg", // 감독 4 · Mateo Rivas
+  winter: "/posters-photo/filmmaker_5.jpeg", // 감독 5 · 박서진
+  reel: "/posters-photo/filmmaker_6.jpg", // 감독 6 · Yuki Tanaka (.jpg)
 };
 
 /* 감독 데이터 — films 에서 파생 (사진 + 이름 + 필모/정보) */
