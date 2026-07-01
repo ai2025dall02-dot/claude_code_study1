@@ -352,30 +352,20 @@
 }
 .fmCard {
   flex: 0 0 auto;
-  width: clamp(300px, 30vw, 460px);
+  width: clamp(260px, 26vw, 400px); /* 비율(3:4) 유지하며 카드 크기 축소 (기존 300~460) */
 }
 .fmCard__photo {
   position: relative;
   aspect-ratio: 3 / 4; /* 원본 이미지(1728x2304=3:4)와 동일 → 잘림·왜곡 없이 딱 맞음 */
   overflow: hidden;
   background: #e7e7e4;
-  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 .fmCard__photo :global(img) {
   object-fit: cover;
 }
-.fmCard__idx {
-  position: absolute;
-  top: 0.7rem;
-  left: 0.8rem;
-  font-family: var(--font-meta, monospace);
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  color: #fff;
-  mix-blend-mode: difference;
-}
 .fmCard__info {
   padding-top: 1.1rem; /* 이미지가 원본 비율(3:4)로 복귀 → 사진~텍스트 간격도 원래대로 */
+  text-align: center; /* 카드 텍스트 중앙정렬 */
 }
 .fmCard__name {
   margin: 0;

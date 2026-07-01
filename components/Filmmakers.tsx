@@ -195,7 +195,6 @@ function FmCard({
           fill
           sizes="(max-width: 600px) 80vw, 360px"
         />
-        <span className={styles.fmCard__idx}>{mk.index}</span>
       </div>
       <div className={styles.fmCard__info}>
         <h3 className={styles.fmCard__name}>
