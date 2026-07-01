@@ -119,10 +119,12 @@ function ParallaxColumn({
   className: string;
   children: ReactNode;
 }) {
+  // 진입(progress 0)에서 y=0 → 열이 아래로 안 밀림(상단 여백 제거).
+  // 스크롤하며 위로만 흐름. 총 이동량은 이전(대칭)과 동일(×2)해 '슉슉' 세기 유지.
   const yRaw = useTransform(
     progress,
     [0, 1],
-    [-speed * PARALLAX_DISTANCE, speed * PARALLAX_DISTANCE]
+    [0, speed * PARALLAX_DISTANCE * 2]
   );
   const y = reduce ? 0 : yRaw;
   return (
