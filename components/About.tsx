@@ -52,27 +52,18 @@ export default function About() {
     ["rgba(26,26,26,0.22)", "rgba(244,244,242,0.16)"]
   );
 
-  // 원형 reveal — 드라이버 2개로 분리 (하단 여백 tail 이 매우 길어 하나로는 성장/페이드를 못 맞춤).
-  // ① 성장: 본문+원칙(contentRef) 기준 — 본문 top 이 화면 상단(start start, 본문·원칙 다 본 뒤)부터
-  //    원칙 bottom 이 화면 중앙(end center)에 올 때까지 원이 0→커짐. 이 구간에 텍스트가 원을 통과하며 반전.
-  // ② 페이드: 하단 여백(tailRef) 기준 — 원은 꽉 찬 상태로 유지되다가 About 끝(LINEUP 진입) 직전 페이드아웃.
-  const contentRef = useRef<HTMLDivElement | null>(null);
-  const tailRef = useRef<HTMLDivElement | null>(null);
+  // 원형 reveal — TextReveal 과 동일한 wrap+sticky pin 패턴.
+  // 본문·원칙이 다 나온 뒤 pin 래퍼(바깥 200vh)에 진입하면 안쪽 sticky(100vh)가 화면에 고정되고,
+  // 그 고정 상태에서 스크롤하는 동안 원이 그 자리에서 0→최대로 커진다. 이후 고정이 풀리며 LINEUP 으로.
+  const pinRef = useRef<HTMLDivElement | null>(null);
   const { scrollYProgress: growProgress } = useScroll({
-    target: contentRef,
-    // 시작 늦춤: 본문·원칙(contentRef) 하단이 화면 중앙에 올 때(end center)부터 원이 커지기 시작
-    // = 본문·원칙이 거의 다 지나간 뒤. 끝(end start)에서 원이 최대.
-    offset: ["end center", "end start"],
-  });
-  const { scrollYProgress: fadeProgress } = useScroll({
-    target: tailRef,
+    target: pinRef,
     offset: ["start start", "end start"],
   });
-  // 최대 반경 170 — 화면 모서리까지 확실히 덮어 상단 검은 띠 방지
-  const revealRadius = useTransform(growProgress, [0, 1], [0, 170]);
+  // sticky(100vh)는 pin 래퍼(200vh)의 앞 절반 동안 고정 → 그 구간(0~0.5)에 원이 최대(170)까지 커진 뒤
+  // 뒤 절반에서 고정이 풀리며 밝은 원째로 스크롤업 → LINEUP 진입 (검은 띠 없이 이어짐).
+  const revealRadius = useTransform(growProgress, [0, 0.5], [0, 170]);
   const revealClip = useTransform(revealRadius, (v) => `circle(${v}% at 50% 50%)`);
-  // 페이드는 LINEUP 진입 '직전'에 짧게 — 그 전까지 밝은 원이 검은 배경을 덮어 틈이 안 생기게
-  const revealOpacity = useTransform(fadeProgress, [0.94, 1], [1, 0]);
 
   // 마우스 따라다니는 옅은 흰 스포트라이트 (rAF throttle)
   useEffect(() => {
@@ -165,43 +156,41 @@ export default function About() {
           aria-hidden="true"
         />
 
-        {/* 이 래퍼(본문~원칙)가 원 '성장' 진행도의 기준 영역 */}
-        <div ref={contentRef}>
-          <motion.p className={styles.aboutBody} variants={item}>
-            필름 누벨은 2014년, 극장에서 사라져 가던 독립·예술영화를 다시 스크린에
-            올리기 위해 시작했습니다. 우리는 한 해에 단 몇 편만을 고릅니다. 적게
-            고르는 대신, 한 편의 영화가 관객을 만나는 모든 길 — 개봉, 기획전, 공동체
-            상영, 아카이브 — 을 끝까지 동행합니다.
-          </motion.p>
+        <motion.p className={styles.aboutBody} variants={item}>
+          필름 누벨은 2014년, 극장에서 사라져 가던 독립·예술영화를 다시 스크린에
+          올리기 위해 시작했습니다. 우리는 한 해에 단 몇 편만을 고릅니다. 적게
+          고르는 대신, 한 편의 영화가 관객을 만나는 모든 길 — 개봉, 기획전, 공동체
+          상영, 아카이브 — 을 끝까지 동행합니다.
+        </motion.p>
 
-          <motion.div
-            className={`${styles.aboutLine} ${styles.aboutLinePrin}`}
-            variants={line}
-            aria-hidden="true"
-          />
+        <motion.div
+          className={`${styles.aboutLine} ${styles.aboutLinePrin}`}
+          variants={line}
+          aria-hidden="true"
+        />
 
-          <motion.div className={styles.principles} variants={innerGroup}>
-            {PRINCIPLES.map((pr) => (
-              <motion.div key={pr.title} variants={item}>
-                <span className={styles.principle__label}>원칙 / {pr.label}</span>
-                <h3 className={styles.principle__title}>{pr.title}</h3>
-                <p className={styles.principle__text}>{pr.text}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
+        <motion.div className={styles.principles} variants={innerGroup}>
+          {PRINCIPLES.map((pr) => (
+            <motion.div key={pr.title} variants={item}>
+              <span className={styles.principle__label}>원칙 / {pr.label}</span>
+              <h3 className={styles.principle__title}>{pr.title}</h3>
+              <p className={styles.principle__text}>{pr.text}</p>
+            </motion.div>
+          ))}
+        </motion.div>
       </motion.div>
 
-      {/* 하단 여백 — 이 구간이 원 '페이드' 진행도의 기준 (원 유지 → LINEUP 진입에서 페이드) */}
-      <div ref={tailRef} className={styles.aboutTail} aria-hidden="true" />
-
-      {/* 원형 reveal 오버레이 (화면 정중앙에서 원이 커짐) — About 본문 기준으로 구동 */}
+      {/* pin 구간: 바깥 래퍼(200vh) 안 sticky(100vh)가 고정되고, 그 안에서 원이 성장 →
+          고정 해제되며 밝은 원째로 스크롤업해 LINEUP 으로 이어짐. (reduce 시 생략 → 바로 LINEUP) */}
       {!reduce && (
-        <motion.div
-          className={styles.lineupReveal}
-          aria-hidden="true"
-          style={{ clipPath: revealClip, opacity: revealOpacity }}
-        />
+        <div ref={pinRef} className={styles.aboutPin} aria-hidden="true">
+          <div className={styles.aboutPinSticky}>
+            <motion.div
+              className={styles.lineupReveal}
+              style={{ clipPath: revealClip }}
+            />
+          </div>
+        </div>
       )}
 
       {/* 마우스 따라다니는 옅은 흰 스포트라이트 */}

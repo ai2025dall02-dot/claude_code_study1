@@ -78,16 +78,27 @@
   border-bottom: none; /* LINEUP 제목 아래 가로 라인 제거 (다른 섹션은 유지) */
 }
 /* ABOUT 하단~LINEUP 진입에서 차오르는 밝은 원형 레이어 (뷰포트 고정) */
+/* 원형 reveal pin 구간 (TextReveal 과 동일한 wrap+sticky 패턴) */
+.aboutPin {
+  position: relative;
+  height: 200vh; /* 이 구간이 원 성장 스크롤을 만듦 (앞 절반 고정) */
+  background: #f8f8f8; /* sticky 아래 여백을 LINEUP 톤으로 → 고정 해제 후 검은 틈 방지 */
+}
+.aboutPinSticky {
+  position: sticky;
+  top: 0;
+  height: 100vh; /* 화면에 고정되는 실제 무대 */
+  width: 100%;
+  overflow: hidden;
+  background: #0b0b0c; /* 어두운 무대 — 밝은 원이 대비로 보이게 (About 배경과 동일) */
+}
 .lineupReveal {
-  position: fixed;
+  position: absolute; /* sticky 무대(100vh)를 채움 → 고정 중엔 화면 전체 */
   inset: 0;
-  z-index: 5; /* About 텍스트/스포트라이트 위에서 블렌드 */
-  background: #fff;
-  /* 원 안쪽에서 뒤(About)의 색을 반전 — 어두운 배경→밝게, 밝은 글자→어둡게.
-     .about 의 isolation:isolate 가 블렌드를 About 안에 가둬 LINEUP 엔 영향 없음 */
-  mix-blend-mode: difference;
+  z-index: 5;
+  background: #f8f8f8; /* LINEUP 과 동일한 밝은 원 — 다 커지면 LINEUP 배경으로 매끄럽게 이어짐 */
   pointer-events: none;
-  will-change: clip-path, opacity;
+  will-change: clip-path;
 }
 /* podium.global 풍 세로 흐름 masonry — 각 열이 세로로 이어지고 열마다 시작 높이가 다름 */
 .grid {
@@ -490,6 +501,7 @@
   color: #f4f4f2;
   position: relative;
   isolation: isolate; /* 스포트라이트 등 내부 레이어를 ABOUT 안에 가둠 */
+  padding-bottom: 0; /* pin 래퍼가 바로 LINEUP 과 맞닿게 — 하단 패딩(검은 틈) 제거 */
 }
 /* 마우스 따라다니는 옅은 흰 스포트라이트 (screen 합성, 텍스트 위 은은하게) */
 .spotlight {
