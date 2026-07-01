@@ -119,12 +119,13 @@ function ParallaxColumn({
   className: string;
   children: ReactNode;
 }) {
-  // 진입(progress 0)에서 y=0 → 열이 아래로 안 밀림(상단 여백 제거).
-  // 스크롤하며 위로만 흐름. 총 이동량은 이전(대칭)과 동일(×2)해 '슉슉' 세기 유지.
+  // 진입 밀림을 '완전 제거'가 아니라 '조금만 축소' — 기존 대칭 [-D, D] 에서
+  // 시작값만 60%(-D*0.6)로 낮춰 진입 밀림이 약 40% 감소. 상단 여백은 적당히 줄되
+  // LINEUP 제목을 침범하진 않음. '슉슉' 세기(총 이동폭)는 거의 유지.
   const yRaw = useTransform(
     progress,
     [0, 1],
-    [0, speed * PARALLAX_DISTANCE * 2]
+    [-speed * PARALLAX_DISTANCE * 0.6, speed * PARALLAX_DISTANCE]
   );
   const y = reduce ? 0 : yRaw;
   return (
@@ -145,8 +146,9 @@ function LineupCard({
   topCard: boolean;
   reduce: boolean;
 }) {
-  // 각 열 '맨 위' 카드만 상단 여백 절반 (첫 이미지 위 여백만 줄이고 카드 사이 간격은 유지)
-  const marginTop = topCard ? conf.mt / 2 : conf.mt;
+  // 각 열 '맨 위' 카드만 상단 여백 약간(75%) 축소 — [1] 패럴랙스로 이미 여백이 줄었으므로
+  // 여기선 최소로만 걸어 제목 침범을 피함 (기존 절반 → 0.75 로 완화)
+  const marginTop = topCard ? conf.mt * 0.75 : conf.mt;
   const ref = useRef<HTMLAnchorElement | null>(null);
   // 카드가 화면을 지나는 동안의 진행도 (0: 하단 진입 ~ 1: 상단 이탈)
   const { scrollYProgress } = useScroll({
