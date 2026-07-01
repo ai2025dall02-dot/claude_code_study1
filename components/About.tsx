@@ -52,17 +52,23 @@ export default function About() {
     ["rgba(26,26,26,0.22)", "rgba(244,244,242,0.16)"]
   );
 
-  // 원형 reveal — About 본문(aboutBody)~하단 여백(aboutTail)을 감싼 영역 기준으로 진행도 계산.
-  // 본문이 화면 중앙쯤 올 때(start center) 원이 나타나기 시작해서, About 하단이 화면 상단에
-  // 닿을 때(end start = LINEUP 진입) 원이 다 커짐. 원 중심은 화면 정중앙 고정.
-  const revealRef = useRef<HTMLDivElement | null>(null);
-  const { scrollYProgress: revealProgress } = useScroll({
-    target: revealRef,
+  // 원형 reveal — 드라이버 2개로 분리 (하단 여백 tail 이 매우 길어 하나로는 성장/페이드를 못 맞춤).
+  // ① 성장: 본문+원칙(contentRef) 기준 — 본문 top 이 화면 상단(start start, 본문·원칙 다 본 뒤)부터
+  //    원칙 bottom 이 화면 중앙(end center)에 올 때까지 원이 0→커짐. 이 구간에 텍스트가 원을 통과하며 반전.
+  // ② 페이드: 하단 여백(tailRef) 기준 — 원은 꽉 찬 상태로 유지되다가 About 끝(LINEUP 진입) 직전 페이드아웃.
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const tailRef = useRef<HTMLDivElement | null>(null);
+  const { scrollYProgress: growProgress } = useScroll({
+    target: contentRef,
     offset: ["start center", "end start"],
   });
-  const revealRadius = useTransform(revealProgress, [0, 1], [0, 150]);
+  const { scrollYProgress: fadeProgress } = useScroll({
+    target: tailRef,
+    offset: ["start start", "end start"],
+  });
+  const revealRadius = useTransform(growProgress, [0, 1], [0, 150]);
   const revealClip = useTransform(revealRadius, (v) => `circle(${v}% at 50% 50%)`);
-  const revealOpacity = useTransform(revealProgress, [0, 0.96, 1], [1, 1, 0]);
+  const revealOpacity = useTransform(fadeProgress, [0.85, 1], [1, 0]);
 
   // 마우스 따라다니는 옅은 흰 스포트라이트 (rAF throttle)
   useEffect(() => {
@@ -155,8 +161,8 @@ export default function About() {
           aria-hidden="true"
         />
 
-        {/* 이 래퍼(본문 top ~ 하단 여백 bottom)가 원형 reveal 진행도의 기준 영역 */}
-        <div ref={revealRef}>
+        {/* 이 래퍼(본문~원칙)가 원 '성장' 진행도의 기준 영역 */}
+        <div ref={contentRef}>
           <motion.p className={styles.aboutBody} variants={item}>
             필름 누벨은 2014년, 극장에서 사라져 가던 독립·예술영화를 다시 스크린에
             올리기 위해 시작했습니다. 우리는 한 해에 단 몇 편만을 고릅니다. 적게
@@ -179,11 +185,11 @@ export default function About() {
               </motion.div>
             ))}
           </motion.div>
-
-          {/* 하단 여백(넓힘) — 이 구간을 지나며 원이 커져 LINEUP 으로 전환 */}
-          <div className={styles.aboutTail} aria-hidden="true" />
         </div>
       </motion.div>
+
+      {/* 하단 여백 — 이 구간이 원 '페이드' 진행도의 기준 (원 유지 → LINEUP 진입에서 페이드) */}
+      <div ref={tailRef} className={styles.aboutTail} aria-hidden="true" />
 
       {/* 원형 reveal 오버레이 (화면 정중앙에서 원이 커짐) — About 본문 기준으로 구동 */}
       {!reduce && (

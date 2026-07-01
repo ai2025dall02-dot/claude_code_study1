@@ -81,8 +81,11 @@
 .lineupReveal {
   position: fixed;
   inset: 0;
-  z-index: 1;
-  background: #f8f8f8;
+  z-index: 5; /* About 텍스트/스포트라이트 위에서 블렌드 */
+  background: #fff;
+  /* 원 안쪽에서 뒤(About)의 색을 반전 — 어두운 배경→밝게, 밝은 글자→어둡게.
+     .about 의 isolation:isolate 가 블렌드를 About 안에 가둬 LINEUP 엔 영향 없음 */
+  mix-blend-mode: difference;
   pointer-events: none;
   will-change: clip-path, opacity;
 }
