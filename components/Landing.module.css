@@ -148,8 +148,8 @@
   flex-direction: column;
   gap: clamp(0.8rem, 1.6vw, 1.4rem); /* 세로 간격 좁힘 */
 }
-.col1 { margin-top: 28px; } /* 가운데 열 staggered 시작 (상단 여백 줄임) */
-.col2 { margin-top: 14px; }
+.col1 { margin-top: 14px; } /* 가운데 열 staggered 시작 — 상단 여백만 축소 (첫 카드 위) */
+.col2 { margin-top: 7px; }
 .card {
   display: flex;
   flex-direction: column;

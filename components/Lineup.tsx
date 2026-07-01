@@ -88,8 +88,14 @@ export default function Lineup() {
             >
               {ITEMS.map((f, i) => ({ f, i }))
                 .filter(({ i }) => i % COLS === c)
-                .map(({ f, i }) => (
-                  <LineupCard key={`${f.id}-${i}`} film={f} conf={CONF[i % CONF.length]} reduce={!!reduce} />
+                .map(({ f, i }, colIdx) => (
+                  <LineupCard
+                    key={`${f.id}-${i}`}
+                    film={f}
+                    conf={CONF[i % CONF.length]}
+                    topCard={colIdx === 0}
+                    reduce={!!reduce}
+                  />
                 ))}
             </ParallaxColumn>
           ))}
@@ -129,12 +135,16 @@ function ParallaxColumn({
 function LineupCard({
   film: f,
   conf,
+  topCard,
   reduce,
 }: {
   film: Film;
   conf: { mt: number; ar: string };
+  topCard: boolean;
   reduce: boolean;
 }) {
+  // 각 열 '맨 위' 카드만 상단 여백 절반 (첫 이미지 위 여백만 줄이고 카드 사이 간격은 유지)
+  const marginTop = topCard ? conf.mt / 2 : conf.mt;
   const ref = useRef<HTMLAnchorElement | null>(null);
   // 카드가 화면을 지나는 동안의 진행도 (0: 하단 진입 ~ 1: 상단 이탈)
   const { scrollYProgress } = useScroll({
@@ -151,7 +161,7 @@ function LineupCard({
   const opacity = reduce ? 1 : opRaw;
 
   return (
-    <motion.a ref={ref} className={styles.card} href="#contact" style={{ marginTop: conf.mt, opacity }}>
+    <motion.a ref={ref} className={styles.card} href="#contact" style={{ marginTop, opacity }}>
       <div className={styles.card__media} style={{ aspectRatio: conf.ar }}>
         <Image
           src={FILM_PHOTO[f.id] ?? "/posters-photo/m1.jpg"}
