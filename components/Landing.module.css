@@ -82,7 +82,7 @@
 .aboutPin {
   position: relative;
   height: 200vh; /* 이 구간이 원 성장 스크롤을 만듦 (앞 절반 고정) */
-  background: #f8f8f8; /* sticky 아래 여백을 LINEUP 톤으로 → 고정 해제 후 검은 틈 방지 */
+  background: #0b0b0c; /* 어두운 무대 톤 (투명 sticky 뒤로 비침) — 밝은 원이 대비로 보이게 */
 }
 .aboutPinSticky {
   position: sticky;
@@ -90,7 +90,8 @@
   height: 100vh; /* 화면에 고정되는 실제 무대 */
   width: 100%;
   overflow: hidden;
-  background: #0b0b0c; /* 어두운 무대 — 밝은 원이 대비로 보이게 (About 배경과 동일) */
+  /* 배경 투명 — 뒤의 본문이 비쳐 보이게. 전체 어두운 톤은 About 섹션 배경(#0b0b0c)이 유지 */
+  background: transparent;
 }
 .lineupReveal {
   position: absolute; /* sticky 무대(100vh)를 채움 → 고정 중엔 화면 전체 */
