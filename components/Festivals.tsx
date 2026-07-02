@@ -1,16 +1,19 @@
 "use client";
 
+import Image from "next/image";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import TypeTitle from "./TypeTitle";
 import styles from "./Landing.module.css";
 
-/* 영화제 초청·수상 (데모용 가상 정보) */
+/* 영화제 초청·수상 (데모용 가상 정보)
+   image: 호버 시 노출되는 행사 이미지 — 행사 전용 파일이 없어 posters-photo/m* 로 임시 매핑
+   (실제 사진 확보 시 이 경로만 교체하면 됨) */
 const FESTIVALS = [
-  { yr: "2024", name: "부산국제영화제", section: "한국영화의 오늘 — 비전", film: "조용한 망명" },
-  { yr: "2024", name: "전주국제영화제", section: "국제경쟁", film: "여름의 잔상" },
-  { yr: "2023", name: "로테르담 국제영화제", section: "Tiger Competition", film: "북위 48도" },
-  { yr: "2023", name: "야마가타 다큐멘터리", section: "International Competition", film: "필름의 끝" },
-  { yr: "2022", name: "산세바스티안 영화제", section: "New Directors", film: "소금사막" },
+  { yr: "2024", name: "부산국제영화제", section: "한국영화의 오늘 — 비전", film: "조용한 망명", image: "/posters-photo/m3.jpg" },
+  { yr: "2024", name: "전주국제영화제", section: "국제경쟁", film: "여름의 잔상", image: "/posters-photo/m1.jpg" },
+  { yr: "2023", name: "로테르담 국제영화제", section: "Tiger Competition", film: "북위 48도", image: "/posters-photo/m4.jpg" },
+  { yr: "2023", name: "야마가타 다큐멘터리", section: "International Competition", film: "필름의 끝", image: "/posters-photo/m6.jpg" },
+  { yr: "2022", name: "산세바스티안 영화제", section: "New Directors", film: "소금사막", image: "/posters-photo/m8.jpg" },
 ];
 
 export default function Festivals() {
@@ -87,6 +90,11 @@ export default function Festivals() {
                 <span>{fe.section}</span>
               </span>
               <span className={styles.fest__film}>{fe.film}</span>
+
+              {/* 호버 시 노출되는 기울어진 행사 이미지 (리스트 우측 고정 위치, 커서 추적 없음) */}
+              <span className={styles.fest__thumb} aria-hidden="true">
+                <Image src={fe.image} alt="" fill sizes="280px" />
+              </span>
             </motion.div>
           ))}
         </motion.div>

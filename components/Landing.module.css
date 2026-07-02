@@ -436,12 +436,40 @@
 /* 대형 리스트 */
 .festsList { width: 100%; }
 .fest {
+  position: relative; /* 호버 썸네일의 기준 (항목별로 그 옆에 뜨도록) */
   display: grid;
   grid-template-columns: 5rem 1fr auto;
   gap: 0.4rem 1.6rem;
   align-items: baseline;
   padding: clamp(1.3rem, 2.6vw, 2.1rem) 0;
   border-top: 1px solid rgba(0, 0, 0, 0.14);
+}
+/* 호버 썸네일 — 해당 항목의 우측(세로 중앙)에 고정 위치, 평소 숨김 →
+   항목 hover 시 15° 기울어지며 등장(커서 추적 없음). 살짝 확대 + 부드러운 transition. */
+.fest__thumb {
+  position: absolute;
+  top: 50%;
+  right: clamp(0.5rem, 4vw, 4.5rem);
+  z-index: 4;
+  width: clamp(190px, 20vw, 280px);
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 3px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) rotate(15deg) scale(0.9);
+  transform-origin: center;
+  transition: opacity 0.4s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.fest:hover .fest__thumb {
+  opacity: 1;
+  transform: translateY(-50%) rotate(15deg) scale(1);
+}
+.fest__thumb :global(img) { object-fit: cover; }
+@media (prefers-reduced-motion: reduce) {
+  .fest__thumb { transition: none; }
 }
 .fest:last-child { border-bottom: 1px solid rgba(0, 0, 0, 0.14); }
 .fest__yr {
