@@ -103,6 +103,11 @@ export default function Festivals() {
                 initial={{ scale: 0, rotate: 10 }}
                 animate={{ scale: 1, rotate: -15 }}
                 transition={{ type: "spring", stiffness: 260, damping: 18 }}
+                /* [3] 평소 -15° → hover 시 반대쪽 +15° 로 부드럽게 회전 */
+                whileHover={{
+                  rotate: 15,
+                  transition: { type: "tween", duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+                }}
               >
                 <Image src={act.image} alt="" fill sizes="340px" />
               </motion.div>
