@@ -7,6 +7,7 @@ import {
   useMotionValueEvent,
   useReducedMotion,
   useScroll,
+  useSpring,
   useTransform,
   type MotionValue,
   type Variants,
@@ -37,6 +38,9 @@ export default function Festivals() {
     offset: ["start start", "end end"],
   });
   const f = useTransform(scrollYProgress, [0.04, 0.96], [0, N - 1], { clamp: true });
+  // [3] 스크롤 선형 f 를 spring 으로 따라가게 → 멈추면 살짝 튕겨 정착하는 '뿅' 느낌.
+  // (트랙 이동·축제명 색이 springF 를 쓰고, 중앙 패널 교체는 f 로 즉시 반응)
+  const springF = useSpring(f, { stiffness: 300, damping: 30 });
 
   const [activeIndex, setActiveIndex] = useState(0);
   useMotionValueEvent(f, "change", (v) => {
@@ -64,7 +68,7 @@ export default function Festivals() {
     return () => window.removeEventListener("resize", measure);
   }, []);
   const trackY = useTransform(
-    f,
+    springF,
     (v) => mtr.stageH / 2 - mtr.firstCenter - v * mtr.stride
   );
 
@@ -118,7 +122,7 @@ export default function Festivals() {
                 viewport={{ once: true, margin: "-20% 0px" }}
               >
                 {FESTIVALS.map((fe, i) => (
-                  <NameRow key={fe.name} fe={fe} i={i} f={f} item={rowItem} />
+                  <NameRow key={fe.name} fe={fe} i={i} f={springF} item={rowItem} />
                 ))}
               </motion.div>
 
