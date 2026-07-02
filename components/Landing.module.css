@@ -482,10 +482,14 @@
   align-items: flex-start;
   gap: clamp(1.2rem, 3vw, 2rem);
 }
+/* 연도(왼쪽) — 영화제목(오른쪽) 을 한 줄로 가로 배치 */
 .festsPanel__meta {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.2rem;
+  width: 100%;
 }
 .festsPanel__yr {
   font-family: var(--font-meta, monospace);
@@ -494,10 +498,10 @@
   color: #9a9a96;
 }
 .festsPanel__film {
-  font-family: "Arial Black", Helvetica, sans-serif;
-  font-weight: 900;
-  font-size: clamp(1.3rem, 2.2vw, 1.9rem);
-  letter-spacing: -0.02em;
+  font-family: var(--font-sans); /* 볼드 해제 — 일반 sans */
+  font-weight: 450;
+  font-size: clamp(1.1rem, 1.8vw, 1.5rem);
+  letter-spacing: 0;
   color: #0c0c0c;
 }
 .festsPanel__img {
