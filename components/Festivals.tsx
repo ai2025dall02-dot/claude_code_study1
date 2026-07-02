@@ -9,6 +9,7 @@ import {
   useScroll,
   useSpring,
   useTransform,
+  type MotionValue,
   type Variants,
 } from "framer-motion";
 import TypeTitle from "./TypeTitle";
@@ -122,7 +123,15 @@ export default function Festivals() {
                 viewport={{ once: true, margin: "-20% 0px" }}
               >
                 {FESTIVALS.map((fe, i) => (
-                  <NameRow key={fe.name} fe={fe} active={i === activeIndex} item={rowItem} />
+                  <NameRow
+                    key={fe.name}
+                    fe={fe}
+                    i={i}
+                    active={i === activeIndex}
+                    springF={springF}
+                    item={rowItem}
+                    reduce={!!reduce}
+                  />
                 ))}
               </motion.div>
 
@@ -159,27 +168,41 @@ export default function Festivals() {
    위치 이동(trackY)은 부모의 springF 로 부드럽게. 안쪽(entrance)엔 최초 fade-up(1회). */
 function NameRow({
   fe,
+  i,
   active,
+  springF,
   item,
+  reduce,
 }: {
   fe: (typeof FESTIVALS)[number];
+  i: number;
   active: boolean;
+  springF: MotionValue<number>;
   item: Variants;
+  reduce: boolean;
 }) {
   const tr = { duration: 0.25, ease: [0.16, 1, 0.3, 1] as const };
+  // 작업3: 중앙(springF)으로부터의 거리로 opacity 페이드 — 거리 0→1, 1.2 이상→0.
+  // (springF 를 공유하므로 위치 이동과 같은 리듬으로 흐림)
+  const dist = useTransform(springF, (v) => Math.abs(v - i));
+  const distOpacity = useTransform(dist, [0, 1.2], [1, 0]);
   return (
     <div className={styles.festRow}>
-      <motion.div variants={item}>
-        <motion.span
-          className={styles.fest__name}
-          animate={{ color: active ? "#0c0c0c" : "#c2c2bd" }}
-          transition={tr}
-        >
-          {fe.name}
-          <motion.span animate={{ color: active ? "#6c6c68" : "#d0d0cb" }} transition={tr}>
-            {fe.section}
+      {/* 작업3: 거리 기반 opacity 는 진입 stagger(variants)와 충돌하지 않게 별도 wrapper 에.
+          reduce 면 페이드 끄고 항상 1. */}
+      <motion.div style={{ opacity: reduce ? 1 : distOpacity }}>
+        <motion.div variants={item}>
+          <motion.span
+            className={styles.fest__name}
+            animate={{ color: active ? "#0c0c0c" : "#c2c2bd" }}
+            transition={tr}
+          >
+            {fe.name}
+            <motion.span animate={{ color: active ? "#6c6c68" : "#d0d0cb" }} transition={tr}>
+              {fe.section}
+            </motion.span>
           </motion.span>
-        </motion.span>
+        </motion.div>
       </motion.div>
     </div>
   );

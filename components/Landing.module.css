@@ -422,10 +422,10 @@
   position: sticky;
   top: 0;
   height: 100vh;
-  box-sizing: border-box;
-  padding-top: clamp(2rem, 6vh, 4rem); /* 제목 근접 우선 — 무대를 살짝 위로 (활성 항목이 화면 중앙보다 약간 위) */
   display: flex;
-  align-items: flex-start;
+  /* 작업2: 무대를 화면 세로 정중앙에 → 활성 항목이 무대(=화면) 세로 중심에 와서 상하 여백 대칭.
+     (trackY 는 mtr.stageH/2 기준이므로 무대 중심 = 활성 항목 중심 = 이미지 세로 중심선과 일치) */
+  align-items: center;
 }
 .festsSticky .inner { width: 100%; }
 
@@ -440,7 +440,9 @@
 .festCenter {
   position: absolute;
   top: 50%;
-  left: 50%;
+  /* 작업1: left:50% → right:0. 그룹(이미지+연도/영화명) 우측 끝을 .inner 우측 경계
+     (= 헤더 .index "국내외 영화제 초청·수상" 우측 끝)에 정확히 맞춤 */
+  right: 0;
   transform: translateY(-50%);
   z-index: 2;
   display: flex;
