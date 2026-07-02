@@ -412,6 +412,17 @@
   padding-block: clamp(4.5rem, 11vh, 9rem) clamp(1rem, 3vh, 2rem);
 }
 .festsIntro .head { border-bottom: none; margin-bottom: 0; } /* head 아래 라인 제거 */
+/* 섹션 간략 설명(약 2줄) — 제목 아래, 리스트 위. 제목과 리스트 사이 간격 메움 */
+.festsDesc {
+  max-width: 48rem; /* 약 2줄로 떨어지게 (52ch 는 3줄) */
+  margin: clamp(1rem, 2.5vh, 1.6rem) 0 0;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: clamp(0.95rem, 1.5vw, 1.15rem);
+  line-height: 1.65;
+  letter-spacing: 0;
+  color: #6a6a68;
+}
 
 /* [3] pin 무대 — 300vh 래퍼 + 내부 sticky(100vh). 중앙선은 고정, 축제명 트랙만 이동 */
 .festsScroller {

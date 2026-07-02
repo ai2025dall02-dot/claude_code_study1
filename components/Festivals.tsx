@@ -104,6 +104,12 @@ export default function Festivals() {
             </div>
             <span className={styles.index}>국내외 영화제 초청 · 수상</span>
           </header>
+
+          {/* 섹션 간략 설명(약 2줄) — 제목과 리스트 사이 간격 판단용. festsIntro 안(일반 흐름)에 배치 */}
+          <p className={styles.festsDesc}>
+            우리가 배급한 작품들이 국내외 영화제에서 받은 초청과 수상의 기록입니다.
+            부산에서 로테르담까지, 작가의 첫 영화가 세계의 스크린을 먼저 통과한 순간들.
+          </p>
         </div>
       </motion.div>
 
