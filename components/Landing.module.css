@@ -406,46 +406,33 @@
 
 /* ── FESTIVALS ──────────────────────────────────────── */
 .fests { background: #f8f8f8; }
-.fests .head { border-bottom: none; margin-bottom: 0; }
+.fests .head { border-bottom: none; margin-bottom: 0; } /* head 아래 라인 제거 */
 
-/* ABOUT 식 애니메이션 라인 (밝은 배경용 어두운 선, scaleX 0→1) */
-.festsLine {
-  height: 1px;
-  background: rgba(0, 0, 0, 0.16);
-  transform-origin: left center;
-  will-change: transform;
-}
-.festsLineHead {
-  margin-top: 1.6rem;
-  margin-bottom: clamp(2rem, 5vw, 3.2rem);
-}
-
-/* 좌측정렬 리드문 (1~2줄) */
+/* 좌측정렬 리드문 — ABOUT 본문(aboutBody)과 같은 폰트 톤 (sans, 일반 weight) */
 .festsLead {
-  max-width: 64ch;
-  font-family: "Arial Black", Helvetica, sans-serif;
-  font-weight: 900;
-  font-size: clamp(1.15rem, 1.9vw, 1.6rem);
-  letter-spacing: -0.02em;
-  line-height: 1.4;
+  max-width: 62ch;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: clamp(1.05rem, 1.9vw, 1.5rem);
+  line-height: 1.7;
+  letter-spacing: 0;
   text-align: left;
-  color: #1a1a1a;
-  margin: 0 0 clamp(2.4rem, 6vw, 4rem);
+  color: #2a2a28;
+  margin: 1.6rem 0 clamp(2.4rem, 6vw, 4rem);
 }
 
-/* 대형 리스트 */
+/* 대형 리스트 — 구분 라인 없음(항목 간 여백만) */
 .festsList { width: 100%; }
 .fest {
-  position: relative; /* 호버 썸네일의 기준 (항목별로 그 옆에 뜨도록) */
+  position: relative; /* 활성 이미지의 기준 */
   display: grid;
   grid-template-columns: 5rem 1fr auto;
   gap: 0.4rem 1.6rem;
   align-items: baseline;
   padding: clamp(1.3rem, 2.6vw, 2.1rem) 0;
-  border-top: 1px solid rgba(0, 0, 0, 0.14);
 }
-/* 호버 썸네일 — 해당 항목의 우측(세로 중앙)에 고정 위치, 평소 숨김 →
-   항목 hover 시 15° 기울어지며 등장(커서 추적 없음). 살짝 확대 + 부드러운 transition. */
+/* 활성(중앙) 이미지 — 해당 항목 우측(세로 중앙)에 고정. 표시/크기는 JS(scale)가 제어.
+   그림자·페이드 없음, transform-origin center (scale 0→1 + rotate 15°). */
 .fest__thumb {
   position: absolute;
   top: 50%;
@@ -455,35 +442,22 @@
   aspect-ratio: 4 / 3;
   overflow: hidden;
   border-radius: 3px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
-  opacity: 0;
   pointer-events: none;
-  transform: translateY(-50%) rotate(15deg) scale(0.9);
   transform-origin: center;
-  transition: opacity 0.4s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
-}
-.fest:hover .fest__thumb {
-  opacity: 1;
-  transform: translateY(-50%) rotate(15deg) scale(1);
+  will-change: transform;
 }
 .fest__thumb :global(img) { object-fit: cover; }
-@media (prefers-reduced-motion: reduce) {
-  .fest__thumb { transition: none; }
-}
-.fest:last-child { border-bottom: 1px solid rgba(0, 0, 0, 0.14); }
 .fest__yr {
   font-family: var(--font-meta, monospace);
   font-size: 13px;
-  color: #9a9a96;
+  /* 색은 활성도에 따라 JS(inline)에서 제어 */
 }
 .fest__name {
   font-family: "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
-  font-size: clamp(1.6rem, 3.5vw, 2.8rem); /* 첨부 이미지처럼 대형화 (흰 배경 이미지보단 작게) */
+  font-size: clamp(1.6rem, 3.5vw, 2.8rem); /* 대형화 */
   letter-spacing: -0.02em;
   line-height: 1.05;
-  color: #0c0c0c;
 }
 .fest__name span {
   display: block;
@@ -491,14 +465,12 @@
   font-weight: 400;
   font-size: 12px;
   letter-spacing: 0.08em;
-  color: #6c6c68;
-  margin-top: 8px;
+  margin-top: 14px; /* 영화제명 ↔ 섹션명 간격 (기존 8px) */
 }
 .fest__film {
   font-family: var(--font-meta, monospace);
   font-size: 12px;
   letter-spacing: 0.04em;
-  color: #4a4a48;
   text-align: right;
   white-space: nowrap;
 }
