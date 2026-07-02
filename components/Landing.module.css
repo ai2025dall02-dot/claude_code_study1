@@ -405,34 +405,13 @@
 }
 
 /* ── FESTIVALS ──────────────────────────────────────── */
-/* FILMMAKERS 식 sticky pin: 긴 래퍼(300vh) + 내부 sticky(100vh)로 고정,
-   스크롤 진행도에 따라 활성 항목이 순차로 바뀜 */
-.festsWrap {
-  position: relative;
-  height: 300vh;
-  background: #f8f8f8;
-}
-.festsSticky {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  width: 100%;
-  box-sizing: border-box;
-  padding-top: 80px; /* 고정 내비게이션 아래에서 시작 */
-  padding-bottom: 2rem;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: center; /* 내비 아래 영역 안에서 세로 중앙 */
-}
-/* flex 안에서 margin:auto 로 폭이 콘텐츠에 맞게 줄어드는 걸 막고, 다른 섹션처럼
-   폭 100%(→ .inner 의 max-width·padding 이 그대로 적용)로 정렬/폭 일치 */
-.festsSticky .inner {
-  width: 100%;
-}
-.festsWrap .head { border-bottom: none; margin-bottom: 0; } /* head 아래 라인 제거 */
+.fests { background: #f8f8f8; }
 
-/* 좌측정렬 리드문 — ABOUT 본문(aboutBody)과 같은 폰트 톤 (sans, 일반 weight) */
+/* [5] 제목·리드문 — sticky 밖 일반 흐름 (스크롤하면 위로 흘러감) */
+.festsIntro {
+  padding-block: clamp(4.5rem, 11vh, 9rem) clamp(1rem, 3vh, 2rem);
+}
+.festsIntro .head { border-bottom: none; margin-bottom: 0; } /* head 아래 라인 제거 */
 .festsLead {
   max-width: 62ch;
   font-family: var(--font-sans);
@@ -442,21 +421,83 @@
   letter-spacing: 0;
   text-align: left;
   color: #2a2a28;
-  margin: 1.2rem 0 clamp(1.6rem, 4vw, 2.6rem);
+  margin: 1.2rem 0 0;
 }
 
-/* 본문 2단: 좌 축제명 리스트 / 우 활성 항목 단일 패널(연도·영화명·이미지) */
-.festsBody {
-  display: grid;
-  grid-template-columns: 1.35fr 1fr;
-  gap: clamp(2rem, 5vw, 5rem);
+/* [3] pin 무대 — 300vh 래퍼 + 내부 sticky(100vh). 중앙선은 고정, 축제명 트랙만 이동 */
+.festsScroller {
+  position: relative;
+  height: 300vh;
+}
+.festsSticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center; /* 무대를 화면 세로 중앙에 */
+}
+.festsSticky .inner { width: 100%; }
+
+/* 무대: 중앙선(50%) 기준으로 연도·영화명·이미지는 고정, 트랙만 위아래로 흐름 */
+.festStage {
+  position: relative;
+  height: 74vh;
+  overflow: hidden;
+}
+
+/* 중앙선 고정 요소 — 연도(좌) / 영화명(우) */
+.festCenterYr,
+.festCenterFilm {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+}
+.festCenterYr {
+  left: 0;
+  font-family: var(--font-meta, monospace);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: #9a9a96;
+}
+.festCenterFilm {
+  right: 0;
+  font-family: var(--font-sans); /* 볼드 아님 */
+  font-weight: 450;
+  font-size: clamp(1.1rem, 1.8vw, 1.5rem);
+  color: #0c0c0c;
+}
+/* 중앙 위쪽에 고정되는 이미지 (scale/rotate 는 motion 이 제어) */
+.festCenterImg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  width: clamp(200px, 22vw, 300px);
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 3px;
+  transform-origin: center;
+  will-change: transform;
+}
+.festCenterImg :global(img) { object-fit: cover; }
+
+/* 축제명 트랙 — 절대배치, translateY 로 이동. 각 행은 고정 높이(균일 stride) */
+.festTrack {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 1;
+  will-change: transform;
+}
+.festRow {
+  height: clamp(92px, 12vh, 128px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-}
-
-/* 좌: 축제명 리스트 — 구분 라인 없음(항목 간 여백만) */
-.festsNames { width: 100%; }
-.fest {
-  padding: clamp(0.5rem, 1.4vw, 1rem) 0; /* 행 간격만 */
+  text-align: center;
 }
 .fest__name {
   display: block;
@@ -472,47 +513,8 @@
   font-weight: 400;
   font-size: 12px;
   letter-spacing: 0.08em;
-  margin-top: 14px; /* 영화제명 ↔ 섹션명 간격 */
+  margin-top: 12px; /* 영화제명 ↔ 섹션명 간격 */
 }
-
-/* 우: 활성 항목만 표시하는 단일 패널 */
-.festsPanel {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: clamp(1.2rem, 3vw, 2rem);
-}
-/* 연도(왼쪽) — 영화제목(오른쪽) 을 한 줄로 가로 배치 */
-.festsPanel__meta {
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1.2rem;
-  width: 100%;
-}
-.festsPanel__yr {
-  font-family: var(--font-meta, monospace);
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  color: #9a9a96;
-}
-.festsPanel__film {
-  font-family: var(--font-sans); /* 볼드 해제 — 일반 sans */
-  font-weight: 450;
-  font-size: clamp(1.1rem, 1.8vw, 1.5rem);
-  letter-spacing: 0;
-  color: #0c0c0c;
-}
-.festsPanel__img {
-  width: clamp(220px, 24vw, 340px);
-  aspect-ratio: 4 / 3; /* 가로 긴 직사각형 */
-  overflow: hidden;
-  border-radius: 3px;
-  transform-origin: center;
-  will-change: transform;
-}
-.festsPanel__img :global(img) { object-fit: cover; }
 
 /* ── JOURNAL ────────────────────────────────────────── */
 .journal { background: #fff; border-top: 1px solid rgba(0, 0, 0, 0.08); }
