@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   motion,
+  useMotionValueEvent,
   useReducedMotion,
   useScroll,
   useTransform,
@@ -95,13 +96,19 @@ function FestItem({
     target: ref,
     offset: ["start center", "end center"],
   });
-  // 중앙 진입(0→0.12)에서 커지고, 이탈(0.88→1)에서 작아짐 → 중앙 항목만 또렷/이미지 등장.
+  // 텍스트 색은 스크롤에 부드럽게 연동(연속) — 중앙 진입/이탈에서 진해졌다 옅어짐.
   const active = useTransform(scrollYProgress, [0, 0.12, 0.88, 1], [0, 1, 1, 0]);
-
-  // 텍스트 색: 비활성(옅은 그레이) → 활성(진하게 / 축제명 검정)
   const nameColor = useTransform(active, [0, 1], ["#c2c2bd", "#0c0c0c"]);
   const metaColor = useTransform(active, [0, 1], ["#cbcbc6", "#3a3a38"]);
   const subColor = useTransform(active, [0, 1], ["#d0d0cb", "#6c6c68"]);
+
+  // 이미지는 '활성 여부(boolean)'로 판정 → 활성 전환 시 spring 으로 1회 '뿅' 등장.
+  // (스크롤 스크럽이 아니라 토글 기반이라 뻑뻑함 없이 통통 튀듯 나옴)
+  const [centered, setCentered] = useState(false);
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    const on = v > 0.02 && v < 0.98; // 중앙선이 항목 안에 있으면 활성
+    setCentered((prev) => (prev === on ? prev : on));
+  });
 
   return (
     <motion.div ref={ref} className={styles.fest} variants={item}>
@@ -116,10 +123,14 @@ function FestItem({
         {fe.film}
       </motion.span>
 
-      {/* 활성 시 이미지: scale 0→1 + rotate 15° (그림자·페이드 없음, transform-origin center) */}
+      {/* 활성 시 이미지: 반대각(+10°)에서 scale 0 → 활성 { scale:1, rotate:-15 } spring 등장.
+          비활성으로 나가면 다시 scale 0 으로 축소. (그림자·페이드 없음, transform-origin center) */}
       <motion.span
         className={styles.fest__thumb}
-        style={{ y: "-50%", scale: active, rotate: 15 }}
+        style={{ y: "-50%" }}
+        variants={THUMB_V}
+        initial="off"
+        animate={centered ? "on" : "off"}
         aria-hidden="true"
       >
         <Image src={fe.image} alt="" fill sizes="280px" />
@@ -127,3 +138,13 @@ function FestItem({
     </motion.div>
   );
 }
+
+/* 이미지 등장/퇴장 — spring 으로 '뿅' 하고 통통 튀듯, 반대각에서 -15° 로 회전하며 커짐 */
+const THUMB_V: Variants = {
+  off: { scale: 0, rotate: 10, transition: { type: "spring", stiffness: 300, damping: 26 } },
+  on: {
+    scale: 1,
+    rotate: -15,
+    transition: { type: "spring", stiffness: 260, damping: 18 },
+  },
+};
