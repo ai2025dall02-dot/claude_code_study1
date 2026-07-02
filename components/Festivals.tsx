@@ -9,7 +9,6 @@ import {
   useScroll,
   useSpring,
   useTransform,
-  type MotionValue,
   type Variants,
 } from "framer-motion";
 import TypeTitle from "./TypeTitle";
@@ -123,7 +122,7 @@ export default function Festivals() {
                 viewport={{ once: true, margin: "-20% 0px" }}
               >
                 {FESTIVALS.map((fe, i) => (
-                  <NameRow key={fe.name} fe={fe} i={i} f={springF} item={rowItem} />
+                  <NameRow key={fe.name} fe={fe} active={i === activeIndex} item={rowItem} />
                 ))}
               </motion.div>
 
@@ -156,29 +155,30 @@ export default function Festivals() {
   );
 }
 
-/* 축제명 한 줄 — 바깥(festRow)엔 거리 기반 색/투명도(스크롤), 안(entrance)엔 최초 fade-up(1회) */
+/* 축제명 한 줄 — 색은 activeIndex 기준으로 '딱' 전환(이미지 교체와 동기화, 짧은 tween),
+   위치 이동(trackY)은 부모의 springF 로 부드럽게. 안쪽(entrance)엔 최초 fade-up(1회). */
 function NameRow({
   fe,
-  i,
-  f,
+  active,
   item,
 }: {
   fe: (typeof FESTIVALS)[number];
-  i: number;
-  f: MotionValue<number>;
+  active: boolean;
   item: Variants;
 }) {
-  // [2] 사라지지 않고(항상 opacity 1) '색'만 거리로 변함 — 중앙=검정, 멀수록 회색(계속 보임)
-  const dist = useTransform(f, (v) => Math.abs(v - i));
-  const nameColor = useTransform(dist, [0, 0.6], ["#0c0c0c", "#c2c2bd"]);
-  const subColor = useTransform(dist, [0, 0.6], ["#6c6c68", "#d0d0cb"]);
-
+  const tr = { duration: 0.25, ease: [0.16, 1, 0.3, 1] as const };
   return (
     <div className={styles.festRow}>
       <motion.div variants={item}>
-        <motion.span className={styles.fest__name} style={{ color: nameColor }}>
+        <motion.span
+          className={styles.fest__name}
+          animate={{ color: active ? "#0c0c0c" : "#c2c2bd" }}
+          transition={tr}
+        >
           {fe.name}
-          <motion.span style={{ color: subColor }}>{fe.section}</motion.span>
+          <motion.span animate={{ color: active ? "#6c6c68" : "#d0d0cb" }} transition={tr}>
+            {fe.section}
+          </motion.span>
         </motion.span>
       </motion.div>
     </div>
