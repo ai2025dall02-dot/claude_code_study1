@@ -5,15 +5,17 @@ import { useEffect, useRef, useState } from "react";
 import {
   motion,
   useMotionValueEvent,
+  useReducedMotion,
   useScroll,
   useTransform,
   type MotionValue,
+  type Variants,
 } from "framer-motion";
 import TypeTitle from "./TypeTitle";
 import styles from "./Landing.module.css";
 
 /* 영화제 초청·수상 (데모용 가상 정보)
-   image: 중앙 패널에 노출되는 행사 이미지 — 임시로 posters-photo/m* 매핑 */
+   image: 중앙에 노출되는 행사 이미지 — 임시로 posters-photo/m* 매핑 */
 const FESTIVALS = [
   { yr: "2024", name: "부산국제영화제", section: "한국영화의 오늘 — 비전", film: "조용한 망명", image: "/posters-photo/m3.jpg" },
   { yr: "2024", name: "전주국제영화제", section: "국제경쟁", film: "여름의 잔상", image: "/posters-photo/m1.jpg" },
@@ -23,6 +25,7 @@ const FESTIVALS = [
 ];
 
 export default function Festivals() {
+  const reduce = useReducedMotion();
   const scrollerRef = useRef<HTMLDivElement | null>(null); // 300vh pin 컨테이너
   const stageRef = useRef<HTMLDivElement | null>(null); // 고정 무대(중앙선 기준)
   const trackRef = useRef<HTMLDivElement | null>(null); // 축제명 트랙(위아래 이동)
@@ -33,17 +36,15 @@ export default function Festivals() {
     target: scrollerRef,
     offset: ["start start", "end end"],
   });
-  // f: 0 → N-1 (연속 활성 위치). 앞뒤 약간 여유를 둬 첫/마지막 항목이 중앙에 머물게.
   const f = useTransform(scrollYProgress, [0.04, 0.96], [0, N - 1], { clamp: true });
 
-  // 중앙에 가장 가까운 정수 인덱스 → 연도·영화명·이미지 교체 기준
   const [activeIndex, setActiveIndex] = useState(0);
   useMotionValueEvent(f, "change", (v) => {
     const i = Math.min(N - 1, Math.max(0, Math.round(v)));
     setActiveIndex((prev) => (prev === i ? prev : i));
   });
 
-  // 트랙 translateY — 중앙선(stageH/2)에 항목 f 의 중심이 오도록
+  // 트랙 translateY — 항목 f 의 중심이 중앙선(stageH/2)에 오도록
   const [mtr, setMtr] = useState({ stride: 116, firstCenter: 58, stageH: 560 });
   useEffect(() => {
     const measure = () => {
@@ -67,11 +68,22 @@ export default function Festivals() {
     (v) => mtr.stageH / 2 - mtr.firstCenter - v * mtr.stride
   );
 
+  // [3] 등장 — 트랙 진입 시 각 행이 아래에서 위로 순차 fade-up (개별 행 내부 wrapper 에만 적용 →
+  // 트랙 전체 translateY(pin) 과 충돌 없음)
+  const rowContainer: Variants = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
+  };
+  const rowItem: Variants = {
+    hidden: { opacity: 0, y: reduce ? 0 : 30 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
+  };
+
   const act = FESTIVALS[activeIndex];
 
   return (
     <section className={styles.fests} id="festivals">
-      {/* [5] 제목·리드문 — sticky 밖 일반 흐름 (스크롤하면 위로 흘러감) */}
+      {/* [5] 제목 — sticky 밖 일반 흐름 + [3] 등장 fade-up (리드문은 [1] 로 제거) */}
       <motion.div
         className={styles.festsIntro}
         initial={{ opacity: 0, y: 30 }}
@@ -87,43 +99,50 @@ export default function Festivals() {
             </div>
             <span className={styles.index}>국내외 영화제 초청 · 수상</span>
           </header>
-          <p className={styles.festsLead}>
-            우리가 고른 영화는 세계의 스크린을 먼저 통과합니다. 필름 누벨의 라인업은
-            부산에서 로테르담까지, 작가의 첫 영화가 관객을 만나는 가장 먼 길을
-            함께합니다.
-          </p>
         </div>
       </motion.div>
 
-      {/* [3] pin 무대 — 중앙선(연도·영화명·이미지)은 고정, 축제명 트랙만 위아래로 흐름 */}
+      {/* pin 무대 — 중앙선(50%)에 [축제명 트랙] → [이미지] → [영화명] 가로 정렬, 트랙만 이동 */}
       <div ref={scrollerRef} className={styles.festsScroller}>
         <div className={styles.festsSticky}>
           <div className={styles.inner}>
             <div ref={stageRef} className={styles.festStage}>
-              {/* 중앙 고정: 연도(좌) · 영화명(우) · 이미지(중앙 위) */}
-              <span className={styles.festCenterYr}>{act.yr}</span>
-              <span className={styles.festCenterFilm}>{act.film}</span>
+              {/* 좌: 축제명 트랙 (오른쪽 정렬) */}
               <motion.div
-                key={`img-${activeIndex}`}
-                className={styles.festCenterImg}
-                style={{ x: "-50%", y: "-118%" }}
-                initial={{ scale: 0, rotate: 10 }}
-                animate={{ scale: 1, rotate: -15 }}
-                transition={{ type: "spring", stiffness: 260, damping: 18 }}
-                whileHover={{
-                  rotate: 0,
-                  transition: { type: "tween", duration: 0.5, ease: [0.16, 1, 0.3, 1] },
-                }}
+                ref={trackRef}
+                className={styles.festTrack}
+                style={{ y: trackY }}
+                variants={rowContainer}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: "-20% 0px" }}
               >
-                <Image src={act.image} alt="" fill sizes="340px" />
-              </motion.div>
-
-              {/* 축제명 트랙 — translateY 로 이동, 중앙선을 통과 */}
-              <motion.div ref={trackRef} className={styles.festTrack} style={{ y: trackY }}>
                 {FESTIVALS.map((fe, i) => (
-                  <NameRow key={fe.name} fe={fe} i={i} f={f} />
+                  <NameRow key={fe.name} fe={fe} i={i} f={f} item={rowItem} />
                 ))}
               </motion.div>
+
+              {/* 우: 이미지 → 영화명(연도) — 중앙선에 가로 정렬, 고정 */}
+              <div className={styles.festCenter}>
+                <motion.div
+                  key={`img-${activeIndex}`}
+                  className={styles.festCenterImg}
+                  initial={{ scale: 0, rotate: 10 }}
+                  animate={{ scale: 1, rotate: -15 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 18 }}
+                  whileHover={{
+                    rotate: 0,
+                    transition: { type: "tween", duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+                  }}
+                >
+                  <Image src={act.image} alt="" fill sizes="300px" />
+                </motion.div>
+
+                <div className={styles.festCenterMeta}>
+                  <span className={styles.festCenterYr}>{act.yr}</span>
+                  <span className={styles.festCenterFilm}>{act.film}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -132,15 +151,17 @@ export default function Festivals() {
   );
 }
 
-/* 축제명 한 줄 — 중앙선으로부터의 거리(|f-i|)로 색/투명도 (중앙=검정·또렷, 멀수록 옅은 그레이) */
+/* 축제명 한 줄 — 바깥(festRow)엔 거리 기반 색/투명도(스크롤), 안(entrance)엔 최초 fade-up(1회) */
 function NameRow({
   fe,
   i,
   f,
+  item,
 }: {
   fe: (typeof FESTIVALS)[number];
   i: number;
   f: MotionValue<number>;
+  item: Variants;
 }) {
   const dist = useTransform(f, (v) => Math.abs(v - i));
   const opacity = useTransform(dist, [0, 1, 2], [1, 0.2, 0]);
@@ -149,10 +170,12 @@ function NameRow({
 
   return (
     <motion.div className={styles.festRow} style={{ opacity }}>
-      <motion.span className={styles.fest__name} style={{ color: nameColor }}>
-        {fe.name}
-        <motion.span style={{ color: subColor }}>{fe.section}</motion.span>
-      </motion.span>
+      <motion.div variants={item}>
+        <motion.span className={styles.fest__name} style={{ color: nameColor }}>
+          {fe.name}
+          <motion.span style={{ color: subColor }}>{fe.section}</motion.span>
+        </motion.span>
+      </motion.div>
     </motion.div>
   );
 }

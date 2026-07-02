@@ -412,17 +412,6 @@
   padding-block: clamp(4.5rem, 11vh, 9rem) clamp(1rem, 3vh, 2rem);
 }
 .festsIntro .head { border-bottom: none; margin-bottom: 0; } /* head 아래 라인 제거 */
-.festsLead {
-  max-width: 62ch;
-  font-family: var(--font-sans);
-  font-weight: 400;
-  font-size: clamp(1.05rem, 1.9vw, 1.5rem);
-  line-height: 1.7;
-  letter-spacing: 0;
-  text-align: left;
-  color: #2a2a28;
-  margin: 1.2rem 0 0;
-}
 
 /* [3] pin 무대 — 300vh 래퍼 + 내부 sticky(100vh). 중앙선은 고정, 축제명 트랙만 이동 */
 .festsScroller {
@@ -438,41 +427,27 @@
 }
 .festsSticky .inner { width: 100%; }
 
-/* 무대: 중앙선(50%) 기준으로 연도·영화명·이미지는 고정, 트랙만 위아래로 흐름 */
+/* 무대: 중앙선(50%)에 [축제명 트랙] → [이미지] → [영화명] 가로 정렬. 트랙만 위아래로 흐름 */
 .festStage {
   position: relative;
   height: 74vh;
   overflow: hidden;
 }
 
-/* 중앙선 고정 요소 — 연도(좌) / 영화명(우) */
-.festCenterYr,
-.festCenterFilm {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 3;
-}
-.festCenterYr {
-  left: 0;
-  font-family: var(--font-meta, monospace);
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  color: #9a9a96;
-}
-.festCenterFilm {
-  right: 0;
-  font-family: var(--font-sans); /* 볼드 아님 */
-  font-weight: 450;
-  font-size: clamp(1.1rem, 1.8vw, 1.5rem);
-  color: #0c0c0c;
-}
-/* 중앙 위쪽에 고정되는 이미지 (scale/rotate 는 motion 이 제어) */
-.festCenterImg {
+/* 우측 고정 그룹 — 중앙선에서 [이미지] → [연도/영화명] 을 가로로. 축제명(트랙) 오른쪽에 위치 */
+.festCenter {
   position: absolute;
   top: 50%;
   left: 50%;
+  transform: translateY(-50%);
   z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: clamp(1.2rem, 2.5vw, 2.5rem);
+}
+/* 이미지 (scale/rotate 는 motion 이 제어: -15°, hover 시 0°) */
+.festCenterImg {
+  flex: none;
   width: clamp(200px, 22vw, 300px);
   aspect-ratio: 4 / 3;
   overflow: hidden;
@@ -481,12 +456,29 @@
   will-change: transform;
 }
 .festCenterImg :global(img) { object-fit: cover; }
+.festCenterMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.festCenterYr {
+  font-family: var(--font-meta, monospace);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: #9a9a96;
+}
+.festCenterFilm {
+  font-family: var(--font-sans); /* 볼드 아님 */
+  font-weight: 450;
+  font-size: clamp(1.1rem, 1.8vw, 1.5rem);
+  color: #0c0c0c;
+}
 
-/* 축제명 트랙 — 절대배치, translateY 로 이동. 각 행은 고정 높이(균일 stride) */
+/* 축제명 트랙 — 좌측 영역(오른쪽 정렬), translateY 로 이동. 각 행은 고정 높이(균일 stride) */
 .festTrack {
   position: absolute;
   left: 0;
-  right: 0;
+  width: 46%; /* 좌측 영역 — 오른쪽 끝이 중앙(이미지) 왼쪽에 옴 */
   top: 0;
   z-index: 1;
   will-change: transform;
@@ -496,8 +488,8 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
-  text-align: center;
+  align-items: flex-end; /* 오른쪽 정렬 */
+  text-align: right;
 }
 .fest__name {
   display: block;
