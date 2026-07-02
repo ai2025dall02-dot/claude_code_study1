@@ -416,16 +416,14 @@
 /* [3] pin 무대 — 300vh 래퍼 + 내부 sticky(100vh). 중앙선은 고정, 축제명 트랙만 이동 */
 .festsScroller {
   position: relative;
-  height: 300vh;
+  height: 360vh; /* [3] 300 → 360vh: 마지막 항목이 중앙에 온 뒤 잠깐 유지할 여유 */
 }
 .festsSticky {
   position: sticky;
   top: 0;
   height: 100vh;
-  box-sizing: border-box;
-  padding-top: clamp(1.5rem, 4vh, 3rem); /* 리스트를 제목 쪽으로 더 끌어올림 */
   display: flex;
-  align-items: flex-start; /* 상단 기준 (제목에 더 가깝게) */
+  align-items: center; /* [1] 무대를 화면 세로 정중앙에 (활성 항목이 화면 중앙) */
 }
 .festsSticky .inner { width: 100%; }
 
