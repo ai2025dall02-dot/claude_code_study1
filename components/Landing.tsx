@@ -1,16 +1,8 @@
 import About from "@/components/About";
 import Lineup from "@/components/Lineup";
 import Filmmakers from "@/components/Filmmakers";
+import Festivals from "@/components/Festivals";
 import styles from "./Landing.module.css";
-
-/* 영화제 초청·수상 (데모용 가상 정보) */
-const FESTIVALS = [
-  { yr: "2024", name: "부산국제영화제", section: "한국영화의 오늘 — 비전", film: "조용한 망명" },
-  { yr: "2024", name: "전주국제영화제", section: "국제경쟁", film: "여름의 잔상" },
-  { yr: "2023", name: "로테르담 국제영화제", section: "Tiger Competition", film: "북위 48도" },
-  { yr: "2023", name: "야마가타 다큐멘터리", section: "International Competition", film: "필름의 끝" },
-  { yr: "2022", name: "산세바스티안 영화제", section: "New Directors", film: "소금사막" },
-];
 
 /* 저널 / 소식 (데모용 가상 정보) */
 const JOURNAL = [
@@ -34,43 +26,8 @@ export default function Landing() {
       {/* ── FILMMAKERS (sunty.ae 풍 가로 카드 캐러셀) ─ */}
       <Filmmakers />
 
-      {/* ── FESTIVALS ──────────────────────────── */}
-      <section className={`${styles.section} ${styles.fests}`} id="festivals">
-        <div className={styles.inner}>
-          <header className={styles.head}>
-            <div>
-              <span className={styles.eyebrow}>Selections &amp; Awards</span>
-              <h2 className={styles.title}>
-                FESTI<em>VALS</em>
-              </h2>
-            </div>
-            <span className={styles.index}>국내외 영화제 초청 · 수상</span>
-          </header>
-
-          <div className={styles.festsGrid}>
-            <p className={styles.festsLead}>
-              우리가 고른 영화는 세계의 스크린을 먼저 통과합니다.
-              <small>
-                필름 누벨의 라인업은 부산에서 로테르담까지, 작가의 첫 영화가 관객을
-                만나는 가장 먼 길을 함께합니다.
-              </small>
-            </p>
-
-            <div>
-              {FESTIVALS.map((fe) => (
-                <div key={`${fe.yr}-${fe.film}`} className={styles.fest}>
-                  <span className={styles.fest__yr}>{fe.yr}</span>
-                  <span className={styles.fest__name}>
-                    {fe.name}
-                    <span>{fe.section}</span>
-                  </span>
-                  <span className={styles.fest__film}>{fe.film}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ── FESTIVALS (ABOUT 식 fade-up/line 등장 + 대형 리스트) ─ */}
+      <Festivals />
 
       {/* ── JOURNAL ────────────────────────────── */}
       <section className={`${styles.section} ${styles.journal}`} id="journal">
