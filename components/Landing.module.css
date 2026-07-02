@@ -423,9 +423,9 @@
   top: 0;
   height: 100vh;
   box-sizing: border-box;
-  padding-top: clamp(4.5rem, 11vh, 8rem); /* [2] 리스트를 위(제목 쪽)로 끌어올림 */
+  padding-top: clamp(1.5rem, 4vh, 3rem); /* 리스트를 제목 쪽으로 더 끌어올림 */
   display: flex;
-  align-items: flex-start; /* [2] 세로 중앙 → 상단 기준 (제목에 더 가깝게) */
+  align-items: flex-start; /* 상단 기준 (제목에 더 가깝게) */
 }
 .festsSticky .inner { width: 100%; }
 
@@ -486,18 +486,18 @@
   will-change: transform;
 }
 .festRow {
-  height: clamp(120px, 15vh, 168px); /* [3] 항목 간 간격 확대 (stride 는 measure 로 자동 재측정) */
+  height: clamp(150px, 18vh, 210px); /* [4] 축제명 확대에 맞춰 위아래 여백 확대 (stride 는 measure 로 자동 재측정) */
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: flex-start; /* [1] 좌측 정렬 (제목 라인과 맞춤) */
+  align-items: flex-start; /* 좌측 정렬 (제목 라인과 맞춤) */
   text-align: left;
 }
 .fest__name {
   display: block;
   font-family: "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
-  font-size: clamp(1.6rem, 3.5vw, 2.8rem); /* 대형화 */
+  font-size: clamp(2rem, 4.5vw, 3.6rem); /* [4] 대형화 */
   letter-spacing: -0.02em;
   line-height: 1.05;
 }

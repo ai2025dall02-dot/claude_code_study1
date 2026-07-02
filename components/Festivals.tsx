@@ -163,19 +163,19 @@ function NameRow({
   f: MotionValue<number>;
   item: Variants;
 }) {
+  // [2] 사라지지 않고(항상 opacity 1) '색'만 거리로 변함 — 중앙=검정, 멀수록 회색(계속 보임)
   const dist = useTransform(f, (v) => Math.abs(v - i));
-  const opacity = useTransform(dist, [0, 1, 2], [1, 0.2, 0]);
   const nameColor = useTransform(dist, [0, 0.6], ["#0c0c0c", "#c2c2bd"]);
   const subColor = useTransform(dist, [0, 0.6], ["#6c6c68", "#d0d0cb"]);
 
   return (
-    <motion.div className={styles.festRow} style={{ opacity }}>
+    <div className={styles.festRow}>
       <motion.div variants={item}>
         <motion.span className={styles.fest__name} style={{ color: nameColor }}>
           {fe.name}
           <motion.span style={{ color: subColor }}>{fe.section}</motion.span>
         </motion.span>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }
