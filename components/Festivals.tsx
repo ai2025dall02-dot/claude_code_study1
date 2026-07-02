@@ -5,17 +5,14 @@ import { useRef, useState } from "react";
 import {
   motion,
   useMotionValueEvent,
-  useReducedMotion,
   useScroll,
-  useTransform,
   type Variants,
 } from "framer-motion";
 import TypeTitle from "./TypeTitle";
 import styles from "./Landing.module.css";
 
 /* 영화제 초청·수상 (데모용 가상 정보)
-   image: 활성(중앙) 시 노출되는 행사 이미지 — 행사 전용 파일이 없어 posters-photo/m* 로 임시 매핑
-   (실제 사진 확보 시 이 경로만 교체하면 됨) */
+   image: 활성 항목에 노출되는 행사 이미지 — 임시로 posters-photo/m* 매핑 */
 const FESTIVALS = [
   { yr: "2024", name: "부산국제영화제", section: "한국영화의 오늘 — 비전", film: "조용한 망명", image: "/posters-photo/m3.jpg" },
   { yr: "2024", name: "전주국제영화제", section: "국제경쟁", film: "여름의 잔상", image: "/posters-photo/m1.jpg" },
@@ -24,122 +21,7 @@ const FESTIVALS = [
   { yr: "2022", name: "산세바스티안 영화제", section: "New Directors", film: "소금사막", image: "/posters-photo/m8.jpg" },
 ];
 
-export default function Festivals() {
-  const reduce = useReducedMotion();
-
-  // 등장 애니메이션 (ABOUT 식 fade-up 스태거). 라인(scaleX) 은 제거됨.
-  const group: Variants = {
-    hidden: {},
-    show: { transition: { staggerChildren: 0.18, delayChildren: 0.15 } },
-  };
-  const innerGroup: Variants = {
-    hidden: {},
-    show: { transition: { staggerChildren: 0.12 } },
-  };
-  const item: Variants = {
-    hidden: { opacity: 0, y: reduce ? 0 : 44 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
-    },
-  };
-
-  return (
-    <section className={`${styles.section} ${styles.fests}`} id="festivals">
-      <motion.div
-        className={styles.inner}
-        variants={group}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-20% 0px" }}
-      >
-        <motion.header className={styles.head} variants={item}>
-          <div>
-            <span className={styles.eyebrow}>Selections &amp; Awards</span>
-            <TypeTitle solid="FESTI" outline="VALS" />
-          </div>
-          <span className={styles.index}>국내외 영화제 초청 · 수상</span>
-        </motion.header>
-
-        {/* 좌측정렬 리드문 (ABOUT 본문 폰트 톤) */}
-        <motion.p className={styles.festsLead} variants={item}>
-          우리가 고른 영화는 세계의 스크린을 먼저 통과합니다. 필름 누벨의 라인업은
-          부산에서 로테르담까지, 작가의 첫 영화가 관객을 만나는 가장 먼 길을
-          함께합니다.
-        </motion.p>
-
-        {/* 대형 리스트 — 각 항목이 화면 세로 중앙에 오면 활성(강조 + 이미지 등장) */}
-        <motion.div className={styles.festsList} variants={innerGroup}>
-          {FESTIVALS.map((fe) => (
-            <FestItem key={`${fe.yr}-${fe.film}`} fe={fe} item={item} />
-          ))}
-        </motion.div>
-      </motion.div>
-    </section>
-  );
-}
-
-/* 항목 1개 — 자신의 스크롤 위치로 '화면 세로 중앙 근접' 여부를 판정해 활성도(0~1)를 만든다.
-   활성: 텍스트 강조(옅은 그레이→진하게, 축제명 검정) + 이미지 scale 0→1 + rotate 15°. */
-function FestItem({
-  fe,
-  item,
-}: {
-  fe: (typeof FESTIVALS)[number];
-  item: Variants;
-}) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  // offset ["start center","end center"]: 화면 중앙선이 항목 위(top)에 닿으면 0,
-  // 아래(bottom)에 닿으면 1. 즉 0~1 구간 = '중앙선이 항목 안에 있음'.
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start center", "end center"],
-  });
-  // 텍스트 색은 스크롤에 부드럽게 연동(연속) — 중앙 진입/이탈에서 진해졌다 옅어짐.
-  const active = useTransform(scrollYProgress, [0, 0.12, 0.88, 1], [0, 1, 1, 0]);
-  const nameColor = useTransform(active, [0, 1], ["#c2c2bd", "#0c0c0c"]);
-  const metaColor = useTransform(active, [0, 1], ["#cbcbc6", "#3a3a38"]);
-  const subColor = useTransform(active, [0, 1], ["#d0d0cb", "#6c6c68"]);
-
-  // 이미지는 '활성 여부(boolean)'로 판정 → 활성 전환 시 spring 으로 1회 '뿅' 등장.
-  // (스크롤 스크럽이 아니라 토글 기반이라 뻑뻑함 없이 통통 튀듯 나옴)
-  const [centered, setCentered] = useState(false);
-  useMotionValueEvent(scrollYProgress, "change", (v) => {
-    const on = v > 0.02 && v < 0.98; // 중앙선이 항목 안에 있으면 활성
-    setCentered((prev) => (prev === on ? prev : on));
-  });
-
-  return (
-    <motion.div ref={ref} className={styles.fest} variants={item}>
-      <motion.span className={styles.fest__yr} style={{ color: metaColor }}>
-        {fe.yr}
-      </motion.span>
-      <motion.span className={styles.fest__name} style={{ color: nameColor }}>
-        {fe.name}
-        <motion.span style={{ color: subColor }}>{fe.section}</motion.span>
-      </motion.span>
-      <motion.span className={styles.fest__film} style={{ color: metaColor }}>
-        {fe.film}
-      </motion.span>
-
-      {/* 활성 시 이미지: 반대각(+10°)에서 scale 0 → 활성 { scale:1, rotate:-15 } spring 등장.
-          비활성으로 나가면 다시 scale 0 으로 축소. (그림자·페이드 없음, transform-origin center) */}
-      <motion.span
-        className={styles.fest__thumb}
-        style={{ y: "-50%" }}
-        variants={THUMB_V}
-        initial="off"
-        animate={centered ? "on" : "off"}
-        aria-hidden="true"
-      >
-        <Image src={fe.image} alt="" fill sizes="280px" />
-      </motion.span>
-    </motion.div>
-  );
-}
-
-/* 이미지 등장/퇴장 — spring 으로 '뿅' 하고 통통 튀듯, 반대각에서 -15° 로 회전하며 커짐 */
+/* 이미지 등장/퇴장 — spring 으로 '뿅', 반대각(+10°)에서 -15° 로 회전하며 커짐 */
 const THUMB_V: Variants = {
   off: { scale: 0, rotate: 10, transition: { type: "spring", stiffness: 300, damping: 26 } },
   on: {
@@ -148,3 +30,97 @@ const THUMB_V: Variants = {
     transition: { type: "spring", stiffness: 260, damping: 18 },
   },
 };
+
+export default function Festivals() {
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const N = FESTIVALS.length;
+
+  // FILMMAKERS 식 sticky pin — 섹션(300vh) 진행도 0~1 을 항목 수로 나눠 활성 인덱스 산출.
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end end"],
+  });
+  const [activeIndex, setActiveIndex] = useState(0);
+  useMotionValueEvent(scrollYProgress, "change", (p) => {
+    const idx = Math.min(N - 1, Math.max(0, Math.floor(p * N)));
+    setActiveIndex((prev) => (prev === idx ? prev : idx));
+  });
+
+  return (
+    <section ref={sectionRef} className={styles.festsWrap} id="festivals">
+      <div className={styles.festsSticky}>
+        <motion.div
+          className={styles.inner}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-15% 0px" }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <header className={styles.head}>
+            <div>
+              <span className={styles.eyebrow}>Selections &amp; Awards</span>
+              <TypeTitle solid="FESTI" outline="VALS" />
+            </div>
+            <span className={styles.index}>국내외 영화제 초청 · 수상</span>
+          </header>
+
+          <p className={styles.festsLead}>
+            우리가 고른 영화는 세계의 스크린을 먼저 통과합니다. 필름 누벨의 라인업은
+            부산에서 로테르담까지, 작가의 첫 영화가 관객을 만나는 가장 먼 길을
+            함께합니다.
+          </p>
+
+          {/* 리스트 — sticky 로 머무는 동안 스크롤 진행도에 따라 activeIndex 가 순차 이동 */}
+          <div className={styles.festsList}>
+            {FESTIVALS.map((fe, i) => (
+              <FestItem key={fe.name} fe={fe} active={i === activeIndex} />
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+/* 항목 1개 — 활성 여부(activeIndex 기반)로 색/이미지를 제어(항목별 useScroll 제거, 일원화). */
+function FestItem({
+  fe,
+  active,
+}: {
+  fe: (typeof FESTIVALS)[number];
+  active: boolean;
+}) {
+  const nameColor = active ? "#0c0c0c" : "#c2c2bd";
+  const metaColor = active ? "#3a3a38" : "#cbcbc6";
+  const subColor = active ? "#6c6c68" : "#d0d0cb";
+  const tr = { duration: 0.35, ease: [0.16, 1, 0.3, 1] as const };
+
+  return (
+    <div className={styles.fest}>
+      <motion.span className={styles.fest__yr} animate={{ color: metaColor }} transition={tr}>
+        {fe.yr}
+      </motion.span>
+      <motion.span className={styles.fest__name} animate={{ color: nameColor }} transition={tr}>
+        {fe.name}
+        <motion.span animate={{ color: subColor }} transition={tr}>
+          {fe.section}
+        </motion.span>
+      </motion.span>
+      <motion.span className={styles.fest__film} animate={{ color: metaColor }} transition={tr}>
+        {fe.film}
+      </motion.span>
+
+      {/* 활성 항목 이미지: spring 으로 반대각에서 -15° 회전하며 scale 0→1 등장 */}
+      <motion.span
+        className={styles.fest__thumb}
+        style={{ y: "-50%" }}
+        variants={THUMB_V}
+        initial="off"
+        animate={active ? "on" : "off"}
+        aria-hidden="true"
+      >
+        <Image src={fe.image} alt="" fill sizes="260px" />
+      </motion.span>
+    </div>
+  );
+}

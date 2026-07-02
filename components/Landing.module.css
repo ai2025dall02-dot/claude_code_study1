@@ -405,8 +405,22 @@
 }
 
 /* ── FESTIVALS ──────────────────────────────────────── */
-.fests { background: #f8f8f8; }
-.fests .head { border-bottom: none; margin-bottom: 0; } /* head 아래 라인 제거 */
+/* FILMMAKERS 식 sticky pin: 긴 래퍼(300vh) + 내부 sticky(100vh)로 고정,
+   스크롤 진행도에 따라 활성 항목이 순차로 바뀜 */
+.festsWrap {
+  position: relative;
+  height: 300vh;
+  background: #f8f8f8;
+}
+.festsSticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center; /* 리스트를 화면 세로 중앙에 고정 */
+}
+.festsWrap .head { border-bottom: none; margin-bottom: 0; } /* head 아래 라인 제거 */
 
 /* 좌측정렬 리드문 — ABOUT 본문(aboutBody)과 같은 폰트 톤 (sans, 일반 weight) */
 .festsLead {
