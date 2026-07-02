@@ -417,10 +417,13 @@
   top: 0;
   height: 100vh;
   width: 100%;
+  box-sizing: border-box;
+  padding-top: 80px; /* 고정 내비게이션 아래에서 시작 */
+  padding-bottom: 2rem;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: center; /* 세로 중앙 고정 */
+  justify-content: center; /* 내비 아래 영역 안에서 세로 중앙 */
 }
 /* flex 안에서 margin:auto 로 폭이 콘텐츠에 맞게 줄어드는 걸 막고, 다른 섹션처럼
    폭 100%(→ .inner 의 max-width·padding 이 그대로 적용)로 정렬/폭 일치 */
@@ -439,41 +442,24 @@
   letter-spacing: 0;
   text-align: left;
   color: #2a2a28;
-  margin: 1.6rem 0 clamp(2.4rem, 6vw, 4rem);
+  margin: 1.2rem 0 clamp(1.6rem, 4vw, 2.6rem);
 }
 
-/* 대형 리스트 — 구분 라인 없음(항목 간 여백만) */
-.festsList { width: 100%; }
-.fest {
-  position: relative; /* 활성 이미지의 기준 */
+/* 본문 2단: 좌 축제명 리스트 / 우 활성 항목 단일 패널(연도·영화명·이미지) */
+.festsBody {
   display: grid;
-  grid-template-columns: 5rem 1fr auto;
-  gap: 0.4rem 1.6rem;
-  align-items: baseline;
-  padding: clamp(1.3rem, 2.6vw, 2.1rem) 0;
+  grid-template-columns: 1.35fr 1fr;
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: center;
 }
-/* 활성(중앙) 이미지 — 해당 항목 우측(세로 중앙)에 고정. 표시/크기는 JS(scale)가 제어.
-   그림자·페이드 없음, transform-origin center (scale 0→1 + rotate 15°). */
-.fest__thumb {
-  position: absolute;
-  top: 50%;
-  right: clamp(0.5rem, 4vw, 4.5rem);
-  z-index: 4;
-  width: clamp(220px, 24vw, 340px);
-  aspect-ratio: 4 / 3; /* 가로 긴 직사각형 */
-  overflow: hidden;
-  border-radius: 3px;
-  pointer-events: none;
-  transform-origin: center;
-  will-change: transform;
-}
-.fest__thumb :global(img) { object-fit: cover; }
-.fest__yr {
-  font-family: var(--font-meta, monospace);
-  font-size: 13px;
-  /* 색은 활성도에 따라 JS(inline)에서 제어 */
+
+/* 좌: 축제명 리스트 — 구분 라인 없음(항목 간 여백만) */
+.festsNames { width: 100%; }
+.fest {
+  padding: clamp(0.5rem, 1.4vw, 1rem) 0; /* 행 간격만 */
 }
 .fest__name {
+  display: block;
   font-family: "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
   font-size: clamp(1.6rem, 3.5vw, 2.8rem); /* 대형화 */
@@ -486,15 +472,43 @@
   font-weight: 400;
   font-size: 12px;
   letter-spacing: 0.08em;
-  margin-top: 14px; /* 영화제명 ↔ 섹션명 간격 (기존 8px) */
+  margin-top: 14px; /* 영화제명 ↔ 섹션명 간격 */
 }
-.fest__film {
+
+/* 우: 활성 항목만 표시하는 단일 패널 */
+.festsPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(1.2rem, 3vw, 2rem);
+}
+.festsPanel__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.festsPanel__yr {
   font-family: var(--font-meta, monospace);
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  text-align: right;
-  white-space: nowrap;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: #9a9a96;
 }
+.festsPanel__film {
+  font-family: "Arial Black", Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.3rem, 2.2vw, 1.9rem);
+  letter-spacing: -0.02em;
+  color: #0c0c0c;
+}
+.festsPanel__img {
+  width: clamp(220px, 24vw, 340px);
+  aspect-ratio: 4 / 3; /* 가로 긴 직사각형 */
+  overflow: hidden;
+  border-radius: 3px;
+  transform-origin: center;
+  will-change: transform;
+}
+.festsPanel__img :global(img) { object-fit: cover; }
 
 /* ── JOURNAL ────────────────────────────────────────── */
 .journal { background: #fff; border-top: 1px solid rgba(0, 0, 0, 0.08); }

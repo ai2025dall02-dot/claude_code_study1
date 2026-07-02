@@ -2,17 +2,12 @@
 
 import Image from "next/image";
 import { useRef, useState } from "react";
-import {
-  motion,
-  useMotionValueEvent,
-  useScroll,
-  type Variants,
-} from "framer-motion";
+import { motion, useMotionValueEvent, useScroll } from "framer-motion";
 import TypeTitle from "./TypeTitle";
 import styles from "./Landing.module.css";
 
 /* 영화제 초청·수상 (데모용 가상 정보)
-   image: 활성 항목에 노출되는 행사 이미지 — 임시로 posters-photo/m* 매핑 */
+   image: 우측 패널에 노출되는 행사 이미지 — 임시로 posters-photo/m* 매핑 */
 const FESTIVALS = [
   { yr: "2024", name: "부산국제영화제", section: "한국영화의 오늘 — 비전", film: "조용한 망명", image: "/posters-photo/m3.jpg" },
   { yr: "2024", name: "전주국제영화제", section: "국제경쟁", film: "여름의 잔상", image: "/posters-photo/m1.jpg" },
@@ -20,16 +15,6 @@ const FESTIVALS = [
   { yr: "2023", name: "야마가타 다큐멘터리", section: "International Competition", film: "필름의 끝", image: "/posters-photo/m6.jpg" },
   { yr: "2022", name: "산세바스티안 영화제", section: "New Directors", film: "소금사막", image: "/posters-photo/m8.jpg" },
 ];
-
-/* 이미지 등장/퇴장 — spring 으로 '뿅', 반대각(+10°)에서 -15° 로 회전하며 커짐 */
-const THUMB_V: Variants = {
-  off: { scale: 0, rotate: 10, transition: { type: "spring", stiffness: 300, damping: 26 } },
-  on: {
-    scale: 1,
-    rotate: -15,
-    transition: { type: "spring", stiffness: 260, damping: 18 },
-  },
-};
 
 export default function Festivals() {
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -45,6 +30,8 @@ export default function Festivals() {
     const idx = Math.min(N - 1, Math.max(0, Math.floor(p * N)));
     setActiveIndex((prev) => (prev === idx ? prev : idx));
   });
+
+  const act = FESTIVALS[activeIndex];
 
   return (
     <section ref={sectionRef} className={styles.festsWrap} id="festivals">
@@ -70,57 +57,59 @@ export default function Festivals() {
             함께합니다.
           </p>
 
-          {/* 리스트 — sticky 로 머무는 동안 스크롤 진행도에 따라 activeIndex 가 순차 이동 */}
-          <div className={styles.festsList}>
-            {FESTIVALS.map((fe, i) => (
-              <FestItem key={fe.name} fe={fe} active={i === activeIndex} />
-            ))}
+          <div className={styles.festsBody}>
+            {/* 좌: 축제명 리스트 (활성=검정, 비활성=회색) */}
+            <div className={styles.festsNames}>
+              {FESTIVALS.map((fe, i) => {
+                const on = i === activeIndex;
+                return (
+                  <div key={fe.name} className={styles.fest}>
+                    <motion.span
+                      className={styles.fest__name}
+                      animate={{ color: on ? "#0c0c0c" : "#c2c2bd" }}
+                      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    >
+                      {fe.name}
+                      <motion.span
+                        animate={{ color: on ? "#6c6c68" : "#d0d0cb" }}
+                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                      >
+                        {fe.section}
+                      </motion.span>
+                    </motion.span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 우: 활성 항목의 연도·영화명·이미지만 표시하는 단일 패널 */}
+            <div className={styles.festsPanel}>
+              <motion.div
+                key={`meta-${activeIndex}`}
+                className={styles.festsPanel__meta}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <span className={styles.festsPanel__yr}>{act.yr}</span>
+                <span className={styles.festsPanel__film}>{act.film}</span>
+              </motion.div>
+
+              {/* 이미지 — activeIndex 를 key 로 줘 바뀔 때마다 remount → spring 재등장
+                  (반대각 +10° 에서 scale 0 → -15° / scale 1 로 '뿅') */}
+              <motion.div
+                key={`img-${activeIndex}`}
+                className={styles.festsPanel__img}
+                initial={{ scale: 0, rotate: 10 }}
+                animate={{ scale: 1, rotate: -15 }}
+                transition={{ type: "spring", stiffness: 260, damping: 18 }}
+              >
+                <Image src={act.image} alt="" fill sizes="340px" />
+              </motion.div>
+            </div>
           </div>
         </motion.div>
       </div>
     </section>
-  );
-}
-
-/* 항목 1개 — 활성 여부(activeIndex 기반)로 색/이미지를 제어(항목별 useScroll 제거, 일원화). */
-function FestItem({
-  fe,
-  active,
-}: {
-  fe: (typeof FESTIVALS)[number];
-  active: boolean;
-}) {
-  const nameColor = active ? "#0c0c0c" : "#c2c2bd";
-  const metaColor = active ? "#3a3a38" : "#cbcbc6";
-  const subColor = active ? "#6c6c68" : "#d0d0cb";
-  const tr = { duration: 0.35, ease: [0.16, 1, 0.3, 1] as const };
-
-  return (
-    <div className={styles.fest}>
-      <motion.span className={styles.fest__yr} animate={{ color: metaColor }} transition={tr}>
-        {fe.yr}
-      </motion.span>
-      <motion.span className={styles.fest__name} animate={{ color: nameColor }} transition={tr}>
-        {fe.name}
-        <motion.span animate={{ color: subColor }} transition={tr}>
-          {fe.section}
-        </motion.span>
-      </motion.span>
-      <motion.span className={styles.fest__film} animate={{ color: metaColor }} transition={tr}>
-        {fe.film}
-      </motion.span>
-
-      {/* 활성 항목 이미지: spring 으로 반대각에서 -15° 회전하며 scale 0→1 등장 */}
-      <motion.span
-        className={styles.fest__thumb}
-        style={{ y: "-50%" }}
-        variants={THUMB_V}
-        initial="off"
-        animate={active ? "on" : "off"}
-        aria-hidden="true"
-      >
-        <Image src={fe.image} alt="" fill sizes="260px" />
-      </motion.span>
-    </div>
   );
 }
