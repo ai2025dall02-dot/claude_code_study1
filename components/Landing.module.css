@@ -422,8 +422,10 @@
   position: sticky;
   top: 0;
   height: 100vh;
+  box-sizing: border-box;
+  padding-top: clamp(2rem, 6vh, 4rem); /* 제목 근접 우선 — 무대를 살짝 위로 (활성 항목이 화면 중앙보다 약간 위) */
   display: flex;
-  align-items: center; /* [1] 무대를 화면 세로 정중앙에 (활성 항목이 화면 중앙) */
+  align-items: flex-start;
 }
 .festsSticky .inner { width: 100%; }
 
