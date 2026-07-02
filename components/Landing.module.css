@@ -416,9 +416,16 @@
   position: sticky;
   top: 0;
   height: 100vh;
+  width: 100%;
   overflow: hidden;
   display: flex;
-  align-items: center; /* 리스트를 화면 세로 중앙에 고정 */
+  flex-direction: column;
+  justify-content: center; /* 세로 중앙 고정 */
+}
+/* flex 안에서 margin:auto 로 폭이 콘텐츠에 맞게 줄어드는 걸 막고, 다른 섹션처럼
+   폭 100%(→ .inner 의 max-width·padding 이 그대로 적용)로 정렬/폭 일치 */
+.festsSticky .inner {
+  width: 100%;
 }
 .festsWrap .head { border-bottom: none; margin-bottom: 0; } /* head 아래 라인 제거 */
 
@@ -452,8 +459,8 @@
   top: 50%;
   right: clamp(0.5rem, 4vw, 4.5rem);
   z-index: 4;
-  width: clamp(180px, 18vw, 260px);
-  aspect-ratio: 3 / 4; /* 세로 긴 직사각형 (기존 4/3) */
+  width: clamp(220px, 24vw, 340px);
+  aspect-ratio: 4 / 3; /* 가로 긴 직사각형 */
   overflow: hidden;
   border-radius: 3px;
   pointer-events: none;
