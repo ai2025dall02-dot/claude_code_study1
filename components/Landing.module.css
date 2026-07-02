@@ -407,9 +407,10 @@
 /* ── FESTIVALS ──────────────────────────────────────── */
 .fests { background: #f8f8f8; }
 
-/* [5] 제목·리드문 — sticky 밖 일반 흐름 (스크롤하면 위로 흘러감) */
+/* [5] 제목·설명 — sticky 밖 일반 흐름 (스크롤하면 위로 흘러감) */
 .festsIntro {
-  padding-block: clamp(4.5rem, 11vh, 9rem) clamp(1rem, 3vh, 2rem);
+  /* 작업1: 하단 padding 축소 → 설명과 리스트 무대 사이 간격 대폭 축소 */
+  padding-block: clamp(4.5rem, 11vh, 9rem) clamp(0.25rem, 1vh, 0.75rem);
 }
 .festsIntro .head { border-bottom: none; margin-bottom: 0; } /* head 아래 라인 제거 */
 /* 섹션 간략 설명(약 2줄) — 제목 아래, 리스트 위. 제목과 리스트 사이 간격 메움 */
@@ -433,17 +434,19 @@
   position: sticky;
   top: 0;
   height: 100vh;
+  box-sizing: border-box;
+  /* 작업1: 무대를 화면 상단~중상단에 (align center → flex-start + padding-top). 리스트가
+     뷰포트 위쪽에서 시작해 제목/설명에 가깝게. (이미지·활성 항목은 무대 중심에서 계속 나란히) */
+  padding-top: clamp(2rem, 6vh, 4.5rem);
   display: flex;
-  /* 작업2: 무대를 화면 세로 정중앙에 → 활성 항목이 무대(=화면) 세로 중심에 와서 상하 여백 대칭.
-     (trackY 는 mtr.stageH/2 기준이므로 무대 중심 = 활성 항목 중심 = 이미지 세로 중심선과 일치) */
-  align-items: center;
+  align-items: flex-start;
 }
 .festsSticky .inner { width: 100%; }
 
 /* 무대: 중앙선(50%)에 [축제명 트랙] → [이미지] → [영화명] 가로 정렬. 트랙만 위아래로 흐름 */
 .festStage {
   position: relative;
-  height: 64vh; /* [2] 74vh → 64vh (간격 축소) */
+  height: 60vh; /* 작업2: 위아래 이웃이 함께 보이도록 (활성 항목은 무대 세로 중심 = 이미지 중심선) */
   overflow: hidden;
 }
 

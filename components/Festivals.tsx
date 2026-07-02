@@ -68,6 +68,8 @@ export default function Festivals() {
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
   }, []);
+  // 작업2: 기준값 mtr.stageH/2 는 이미지(.festCenterImg, festCenter top:50%)의 세로 중심과 동일 →
+  // 활성 항목 중심이 이미지 세로 중심선과 같은 높이에 나란히 정렬됨(무대를 상단 기준으로 옮겨도 유지).
   const trackY = useTransform(
     springF,
     (v) => mtr.stageH / 2 - mtr.firstCenter - v * mtr.stride
@@ -88,30 +90,36 @@ export default function Festivals() {
 
   return (
     <section className={styles.fests} id="festivals">
-      {/* [5] 제목 — sticky 밖 일반 흐름 + [3] 등장 fade-up (리드문은 [1] 로 제거) */}
-      <motion.div
-        className={styles.festsIntro}
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-15% 0px" }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-      >
+      {/* [5] 제목·설명 — sticky 밖 일반 흐름. 제목 블록과 설명을 각각 개별 motion 으로 분리 */}
+      <div className={styles.festsIntro}>
         <div className={styles.inner}>
-          <header className={styles.head}>
+          <motion.header
+            className={styles.head}
+            initial={{ opacity: 0, y: reduce ? 0 : 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-15% 0px" }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          >
             <div>
               <span className={styles.eyebrow}>Selections &amp; Awards</span>
               <TypeTitle solid="FESTI" outline="VALS" />
             </div>
             <span className={styles.index}>국내외 영화제 초청 · 수상</span>
-          </header>
+          </motion.header>
 
-          {/* 섹션 간략 설명(약 2줄) — 제목과 리스트 사이 간격 판단용. festsIntro 안(일반 흐름)에 배치 */}
-          <p className={styles.festsDesc}>
+          {/* 작업4: 설명 문단은 제목보다 살짝 늦게(delay 0.15) 아래→위 + opacity 로 개별 등장 */}
+          <motion.p
+            className={styles.festsDesc}
+            initial={{ opacity: 0, y: reduce ? 0 : 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-10% 0px" }}
+            transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          >
             우리가 배급한 작품들이 국내외 영화제에서 받은 초청과 수상의 기록입니다.
             부산에서 로테르담까지, 작가의 첫 영화가 세계의 스크린을 먼저 통과한 순간들.
-          </p>
+          </motion.p>
         </div>
-      </motion.div>
+      </div>
 
       {/* pin 무대 — 중앙선(50%)에 [축제명 트랙] → [이미지] → [영화명] 가로 정렬, 트랙만 이동 */}
       <div ref={scrollerRef} className={styles.festsScroller}>
@@ -191,7 +199,8 @@ function NameRow({
   // 작업3: 중앙(springF)으로부터의 거리로 opacity 페이드 — 거리 0→1, 1.2 이상→0.
   // (springF 를 공유하므로 위치 이동과 같은 리듬으로 흐림)
   const dist = useTransform(springF, (v) => Math.abs(v - i));
-  const distOpacity = useTransform(dist, [0, 1.2], [1, 0]);
+  // 작업3: 위아래 이웃이 동시에 더 보이도록 페이드 범위 확대 (dist 1→0.35, ~2.4 부터 0)
+  const distOpacity = useTransform(dist, [0, 1, 2.4], [1, 0.35, 0]);
   return (
     <div className={styles.festRow}>
       {/* 작업3: 거리 기반 opacity 는 진입 stagger(variants)와 충돌하지 않게 별도 wrapper 에.
