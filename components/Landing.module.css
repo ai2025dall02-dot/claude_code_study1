@@ -422,15 +422,17 @@
   position: sticky;
   top: 0;
   height: 100vh;
+  box-sizing: border-box;
+  padding-top: clamp(4.5rem, 11vh, 8rem); /* [2] 리스트를 위(제목 쪽)로 끌어올림 */
   display: flex;
-  align-items: center; /* 무대를 화면 세로 중앙에 */
+  align-items: flex-start; /* [2] 세로 중앙 → 상단 기준 (제목에 더 가깝게) */
 }
 .festsSticky .inner { width: 100%; }
 
 /* 무대: 중앙선(50%)에 [축제명 트랙] → [이미지] → [영화명] 가로 정렬. 트랙만 위아래로 흐름 */
 .festStage {
   position: relative;
-  height: 74vh;
+  height: 64vh; /* [2] 74vh → 64vh (간격 축소) */
   overflow: hidden;
 }
 
@@ -484,12 +486,12 @@
   will-change: transform;
 }
 .festRow {
-  height: clamp(92px, 12vh, 128px);
+  height: clamp(120px, 15vh, 168px); /* [3] 항목 간 간격 확대 (stride 는 measure 로 자동 재측정) */
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: flex-end; /* 오른쪽 정렬 */
-  text-align: right;
+  align-items: flex-start; /* [1] 좌측 정렬 (제목 라인과 맞춤) */
+  text-align: left;
 }
 .fest__name {
   display: block;
