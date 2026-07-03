@@ -1,7 +1,11 @@
+"use client";
+
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 import About from "@/components/About";
 import Lineup from "@/components/Lineup";
 import Filmmakers from "@/components/Filmmakers";
 import Festivals from "@/components/Festivals";
+import TypeTitle from "@/components/TypeTitle";
 import styles from "./Landing.module.css";
 
 /* 저널 / 소식 (데모용 가상 정보) */
@@ -15,6 +19,18 @@ const JOURNAL = [
 const FOOTER_NAV = ["ABOUT", "LINEUP", "FILMMAKERS", "FESTIVALS", "JOURNAL", "CONTACT"];
 
 export default function Landing() {
+  const reduce = useReducedMotion();
+
+  // 작업2: JOURNAL 리스트 등장 — 다른 섹션과 같은 stagger 컨테이너 + fade-up item 컨벤션
+  const postGroup: Variants = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } },
+  };
+  const postItem: Variants = {
+    hidden: { opacity: 0, y: reduce ? 0 : 30 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
+  };
+
   return (
     <div className={styles.land}>
       {/* ── ABOUT (scroll-darkening bg, fade-up, text-reveal) ─ */}
@@ -35,25 +51,36 @@ export default function Landing() {
           <header className={styles.head}>
             <div>
               <span className={styles.eyebrow}>News &amp; Notes</span>
-              <h2 className={styles.title}>
-                JOUR<em>NAL</em>
-              </h2>
+              {/* 작업1: 정적 h2 → TypeTitle 타이핑 (섹션 진입 시 발동, margin 으로 살짝 늦게) */}
+              <TypeTitle solid="JOUR" outline="NAL" inViewMargin="-15% 0px" />
             </div>
             <span className={styles.index}>개봉 · 인터뷰 · 상영회</span>
           </header>
 
-          <div className={styles.posts}>
+          {/* 작업2: 제목 이후 리스트 행이 아래→위로 순차 등장(stagger). 호버 CSS(padding/READ)는 그대로 */}
+          <motion.div
+            className={styles.posts}
+            variants={postGroup}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-10% 0px" }}
+          >
             {JOURNAL.map((p) => (
-              <a key={p.title} className={styles.post} href="#contact">
+              <motion.a
+                key={p.title}
+                className={styles.post}
+                href="#contact"
+                variants={postItem}
+              >
                 <span className={styles.post__date}>{p.date}</span>
                 <span>
                   <span className={styles.post__cat}>{p.cat}</span>
                   <span className={styles.post__title}>{p.title}</span>
                 </span>
                 <span className={styles.post__more}>READ →</span>
-              </a>
+              </motion.a>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 

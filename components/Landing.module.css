@@ -535,6 +535,8 @@
 
 /* ── JOURNAL ────────────────────────────────────────── */
 .journal { background: #fff; border-top: 1px solid rgba(0, 0, 0, 0.08); }
+/* 작업3: JOURNAL 헤더 바로 아래 구분선만 제거(공통 .head 의 border-bottom). 리스트(.post) 구분선은 유지 */
+.journal .head { border-bottom: none; }
 .posts { display: grid; gap: 0; }
 .post {
   display: grid;
