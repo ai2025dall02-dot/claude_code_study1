@@ -86,7 +86,9 @@ export default function Filmmakers() {
   const centerOffset = (m.vw - m.cardW) / 2; // 카드 0 이 중앙일 때의 x (= X_0)
   const P_START = 0.28; // 카드 이동 시작 진행도
   const C0 = 0.35; // 첫 카드가 중앙에 오는 진행도
-  const DWELL = 0.03; // 중앙에서 머무는 절반 폭(진행도) — 살짝만 머물게
+  // 중앙 sticky: 카드가 중앙에 오면 이 절반 폭(진행도)만큼 x 를 고정(플래토) → 스크롤해도 그 구간엔
+  // 카드가 중앙에 "붙어" 머묾. 값↑ = 더 오래 고정(더 sticky). 카드 간격(0.13)의 절반 미만이어야 함(<0.065).
+  const DWELL = 0.055; // 0.03 → 0.055 로 중앙 고정 구간 확대(스냅/스티키 느낌 강화)
   const snapIn: number[] = [P_START];
   const snapOut: number[] = [m.start];
   for (let i = 0; i < N; i++) {
