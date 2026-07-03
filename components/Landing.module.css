@@ -729,6 +729,10 @@
   color: #f4f4f2;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
+/* 작업3: CONTACT 에서만 헤더↔하단 그리드 사이 간격 축소(공통 .head 값 override, 타 섹션 무영향) */
+.contact .head {
+  margin-bottom: clamp(1rem, 2.5vw, 1.6rem);
+}
 /* 작업1: 검은 세로 패널들이 섹션 전체를 덮는 오버레이. 애니메이션이 끝나면(위로 걷힘)
    화면 밖으로 나가고, pointer-events:none 이라 클릭·스크롤을 막지 않음 */
 .contactReveal {
@@ -753,17 +757,8 @@
   gap: clamp(2rem, 4vw, 3rem) clamp(2rem, 6vw, 5rem);
   align-items: start;
 }
-/* 작업3: 좌측 — 작은 아이브로우 + 대형 리드 */
+/* 작업1: 좌측 — 대형 리드(킥커 문구 삭제) */
 .contactMain { grid-area: lead; }
-.contactKicker {
-  display: block;
-  font-family: var(--font-meta, monospace);
-  font-size: 10.5px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: #8a8a86;
-  margin-bottom: clamp(1rem, 2vw, 1.6rem);
-}
 .contactLead {
   font-family: "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
@@ -771,26 +766,7 @@
   letter-spacing: -0.03em;
   line-height: 1.12;
   max-width: 16ch;
-  color: #f4f4f2; /* 작업2: 아웃라인 제거 → 흰색 솔리드 */
-}
-/* 작업2: 글자별 타이핑을 위해 각 글자를 inline-block(개별 transform 가능) */
-.contactLead__char {
-  display: inline-block;
-  white-space: pre; /* 공백 글자 폭 유지 */
-}
-/* 작업2: 마지막에 깜빡이는 캐럿 */
-.contactLead__caret {
-  display: inline-block;
-  width: 0.06em;
-  height: 0.9em;
-  margin-left: 0.06em;
-  background: #f4f4f2;
-  vertical-align: -0.05em;
-  animation: contactCaretBlink 1s steps(1) infinite;
-}
-@keyframes contactCaretBlink {
-  0%, 50% { opacity: 1; }
-  50.01%, 100% { opacity: 0; }
+  color: #f4f4f2; /* 흰색 솔리드 (작업4: 타이핑 제거 후에도 유지) */
 }
 /* 작업1: 우측 상단 — CTA 링크(우측 열 좌측 정렬) */
 .contactCta {
@@ -798,6 +774,7 @@
   align-self: start;
   justify-self: start;
 }
+/* 작업2: 밑줄(border-bottom)/padding-bottom 제거. 색·화살표 이동 hover 만 유지 */
 .contactCta__link {
   font-family: "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
@@ -805,12 +782,10 @@
   letter-spacing: -0.01em;
   color: #f4f4f2;
   white-space: nowrap;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
-  padding-bottom: 3px;
-  transition: border-color 0.25s, color 0.25s;
+  transition: color 0.25s;
 }
 .contactCta__link span { display: inline-block; transition: transform 0.25s; }
-.contactCta__link:hover { border-color: #fff; color: #fff; }
+.contactCta__link:hover { color: #fff; }
 .contactCta__link:hover span { transform: translateX(4px); }
 /* 작업1: 우측 하단 — 연락처 2×2 그리드(레퍼런스의 BUSINESS ENQUIRY / SOCIAL 식) */
 .ciList {

@@ -17,9 +17,6 @@ const JOURNAL = [
   { date: "2024.05.12", cat: "소식", title: "필름 누벨, 2025 라인업 2편 추가 확정" },
 ];
 
-/* 작업2: 라인 아웃라인 제거 + 한 글자씩 타이핑되는 리드 문구 */
-const LEAD_TEXT = "한 편의 영화를 극장으로 옮기고 싶다면.";
-
 export default function Landing() {
   const reduce = useReducedMotion();
 
@@ -33,14 +30,16 @@ export default function Landing() {
     show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
   };
 
-  // 작업2: 리드 문구 타이핑 — 글자 컨테이너(패널 리빌 뒤 delayChildren 0.5s) + 글자별 fade-up
-  const leadGroup: Variants = {
+  // 작업5: CONTACT 콘텐츠 일괄 등장 — 하나의 stagger 컨테이너로 묶어 아래→위로 순차 fade-up.
+  // contentGroup 은 .inner 와 .contactGrid 양쪽에 재활용(빈 hidden/show + staggerChildren)해
+  // 헤더/리드/CTA/연락처/footer 가 커튼 리빌과 비슷한 타이밍에 스르륵 올라오게 함.
+  const contentGroup: Variants = {
     hidden: {},
-    show: { transition: { staggerChildren: 0.045, delayChildren: 0.5 } },
+    show: { transition: { staggerChildren: 0.1 } },
   };
-  const leadChar: Variants = {
-    hidden: { opacity: 0, y: reduce ? 0 : 10 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] } },
+  const contentItem: Variants = {
+    hidden: { opacity: 0, y: reduce ? 0 : 30 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
   };
 
   // JOURNAL→CONTACT 전환: JOURNAL 섹션이 화면 위로 빠져나가는 마지막 1뷰포트 구간에
@@ -56,15 +55,23 @@ export default function Landing() {
   const jExitOpacity = useTransform(journalExit, [0, 0.35, 0.9], [1, 1, reduce ? 1 : 0]);
   const jExitScale = useTransform(journalExit, [0, 1], [1, reduce ? 1 : 0.96]);
 
-  // 작업3(방식 A): 검은 커튼 패널을 whileInView 대신 journalExit 스크롤 진행도에 직접 연동.
-  // 패널 i 는 [i*0.06, 0.7+i*0.06] 구간에서 y 0%→-100% 로 걷혀 순차 리빌 → 되감으면 다시 덮임.
-  // (패널 6개 고정이라 훅 순서 안정적. reduce 여도 훅은 항상 호출하고 렌더만 조건 처리)
-  const pY0 = useTransform(journalExit, [0.0, 0.7], ["0%", "-100%"]);
-  const pY1 = useTransform(journalExit, [0.06, 0.76], ["0%", "-100%"]);
-  const pY2 = useTransform(journalExit, [0.12, 0.82], ["0%", "-100%"]);
-  const pY3 = useTransform(journalExit, [0.18, 0.88], ["0%", "-100%"]);
-  const pY4 = useTransform(journalExit, [0.24, 0.94], ["0%", "-100%"]);
-  const pY5 = useTransform(journalExit, [0.3, 1.0], ["0%", "-100%"]);
+  // 작업5: 커튼 트리거를 CONTACT 섹션 자체의 "진입" 스크롤로 변경(기존 journalExit 은 이미
+  // 1에 도달해 CONTACT 가 화면에 찰 땐 다 걷혀버려 안 보였음).
+  // offset ["start end","start start"]: CONTACT 상단이 뷰포트 하단에 닿을 때 0 → 상단에 닿을 때 1.
+  // → CONTACT 가 화면에 들어차는 동안 0→1 이라 커튼이 화면 안에서 걷히는 게 보임.
+  const contactRef = useRef<HTMLElement>(null);
+  const { scrollYProgress: contactEnter } = useScroll({
+    target: contactRef,
+    offset: ["start end", "start start"],
+  });
+  // 패널 6개 고정 → 훅 순서 안정적. 패널 i 는 [i*0.05, 0.6+i*0.05] 구간에서 y 0%→-100% 로
+  // 순차 상승(아래→위). 되감으면 다시 덮임. reduce 여도 훅은 항상 호출하고 렌더만 조건 처리.
+  const pY0 = useTransform(contactEnter, [0.0, 0.6], ["0%", "-100%"]);
+  const pY1 = useTransform(contactEnter, [0.05, 0.65], ["0%", "-100%"]);
+  const pY2 = useTransform(contactEnter, [0.1, 0.7], ["0%", "-100%"]);
+  const pY3 = useTransform(contactEnter, [0.15, 0.75], ["0%", "-100%"]);
+  const pY4 = useTransform(contactEnter, [0.2, 0.8], ["0%", "-100%"]);
+  const pY5 = useTransform(contactEnter, [0.25, 0.85], ["0%", "-100%"]);
   const panelYs = [pY0, pY1, pY2, pY3, pY4, pY5];
 
   return (
@@ -124,8 +131,9 @@ export default function Landing() {
       </section>
 
       {/* ── CONTACT + FOOTER (black) ───────────── */}
-      <section className={`${styles.section} ${styles.contact}`} id="contact">
-        {/* 작업3(방식 A): 스크롤 연동 검은 커튼. JOURNAL 이 걷히는 진행도(journalExit)에 물려
+      {/* 작업5: 섹션에 ref 부착 → 커튼을 CONTACT 자체 진입 스크롤(contactEnter)에 연동 */}
+      <section ref={contactRef} className={`${styles.section} ${styles.contact}`} id="contact">
+        {/* 작업5: 스크롤 연동 검은 커튼. contactEnter(0→1: CONTACT 가 화면에 들어차는 구간)에 물려
             패널이 각자 y 0%→-100% 로 순차 상승 → 그 아래 깔린 CONTACT 가 드러남. 되감으면 다시 덮임.
             pointer-events:none 이라 걷히기 전후 모두 클릭/스크롤을 막지 않음. reduce 면 미렌더. */}
         {!reduce && (
@@ -136,69 +144,40 @@ export default function Landing() {
           </div>
         )}
 
-        <div className={styles.inner}>
-          <header className={styles.head}>
+        {/* 작업5: 콘텐츠 전체를 하나의 stagger 컨테이너로 묶어 커튼과 함께 아래에서 위로 순차 등장.
+            .inner=상위 컨테이너(헤더/그리드/footer), .contactGrid=하위 컨테이너(리드/CTA/연락처). */}
+        <motion.div
+          className={styles.inner}
+          variants={contentGroup}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "0px 0px -15% 0px" }}
+        >
+          {/* 작업1: 킥커 삭제. 헤더도 등장 아이템 */}
+          <motion.header className={styles.head} variants={contentItem}>
             <div>
               <span className={styles.eyebrow}>Contact &amp; Acquisitions</span>
               <h2 className={styles.title}>
                 CON<em>TACT</em>
               </h2>
             </div>
-            {/* 작업3: 기존 우측 인덱스 문구는 리드 위 kicker(.contactKicker)로 이동 → 중복 제거 */}
-          </header>
+          </motion.header>
 
-          {/* 작업3: TRIONN 식 재배치 — 좌: 아이브로우+대형 리드 / 우: CTA / 하단: 연락처 4열 */}
-          <div className={styles.contactGrid}>
-            <div className={styles.contactMain}>
-              <span className={styles.contactKicker}>상영 · 배급 제안 환영</span>
-              {/* 작업2: em 아웃라인 제거 → 흰색 솔리드. 글자별 타이핑(reduce 면 통 텍스트) */}
-              {reduce ? (
-                <p className={styles.contactLead}>{LEAD_TEXT}</p>
-              ) : (
-                <motion.p
-                  className={styles.contactLead}
-                  variants={leadGroup}
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: true }}
-                  aria-label={LEAD_TEXT}
-                >
-                  {LEAD_TEXT.split("").map((ch, i) => (
-                    <motion.span
-                      key={i}
-                      className={styles.contactLead__char}
-                      variants={leadChar}
-                      aria-hidden="true"
-                    >
-                      {ch === " " ? " " : ch}
-                    </motion.span>
-                  ))}
-                  <span className={styles.contactLead__caret} aria-hidden="true" />
-                </motion.p>
-              )}
-            </div>
+          <motion.div className={styles.contactGrid} variants={contentGroup}>
+            {/* 작업4: 타이핑 제거 → 일반 텍스트(흰색 솔리드). 등장 아이템 */}
+            <motion.div className={styles.contactMain} variants={contentItem}>
+              <p className={styles.contactLead}>한 편의 영화를 극장으로 옮기고 싶다면.</p>
+            </motion.div>
 
-            {/* 작업1: 우측 열 상단 = CTA. 작업3: 커튼 뒤 살짝 딜레이(0.55s)로 fade-up 등장 */}
-            <motion.div
-              className={styles.contactCta}
-              initial={reduce ? false : { opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: reduce ? 0 : 0.55 }}
-            >
+            {/* 작업1: 우측 열 상단 = CTA */}
+            <motion.div className={styles.contactCta} variants={contentItem}>
               <a className={styles.contactCta__link} href="mailto:booking@film-nouvelle.example">
                 협업 시작하기 <span aria-hidden="true">→</span>
               </a>
             </motion.div>
 
-            {/* 작업1: 우측 열 하단 = 연락처 2×2. 작업3: CTA 뒤 이어서(0.7s) 순차 등장 */}
-            <motion.div
-              className={styles.ciList}
-              initial={reduce ? false : { opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: reduce ? 0 : 0.7 }}
-            >
+            {/* 작업1: 우측 열 하단 = 연락처 2×2 */}
+            <motion.div className={styles.ciList} variants={contentItem}>
               <div>
                 <p className={styles.ci__label}>배급 · 상영 문의</p>
                 <p className={styles.ci__value}>
@@ -220,10 +199,10 @@ export default function Landing() {
                 <p className={styles.ci__value}>서울특별시 마포구 와우산로 00, 3층</p>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
 
           {/* 작업2: 내비 링크 제거 → 로고(좌) ↔ 저작권/주소(우) 가로 양끝 정렬 */}
-          <footer className={styles.footer}>
+          <motion.footer className={styles.footer} variants={contentItem}>
             <div className={styles.footer__brand}>
               필름 누벨
               <small>FILM NOUVELLE</small>
@@ -233,8 +212,8 @@ export default function Landing() {
               <br />
               서울특별시 마포구 와우산로 00, 3층 · booking@film-nouvelle.example
             </p>
-          </footer>
-        </div>
+          </motion.footer>
+        </motion.div>
       </section>
     </div>
   );
