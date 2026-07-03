@@ -73,11 +73,13 @@ export default function Festivals() {
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
   }, []);
-  // 작업2: 기준값 mtr.stageH/2 는 이미지(.festCenterImg, festCenter top:50%)의 세로 중심과 동일 →
-  // 활성 항목 중심이 이미지 세로 중심선과 같은 높이에 나란히 정렬됨(무대를 상단 기준으로 옮겨도 유지).
+  // 활성 항목을 무대 중앙(50%)이 아니라 살짝 위(ACTIVE_FRAC=40%)에 두어, 아래로 다음 항목들이
+  // 더 많이 쌓여 보이게 한다. 이미지(.festCenter)의 top 도 동일한 40% 로 맞춰 활성 항목과 나란히.
+  // (이 값과 CSS .festCenter { top: 40% } 는 항상 같이 움직여야 함)
+  const ACTIVE_FRAC = 0.4;
   const trackY = useTransform(
     springF,
-    (v) => mtr.stageH / 2 - mtr.firstCenter - v * mtr.stride
+    (v) => mtr.stageH * ACTIVE_FRAC - mtr.firstCenter - v * mtr.stride
   );
 
   // [3] 등장 — 트랙 진입 시 각 행이 아래에서 위로 순차 fade-up (개별 행 내부 wrapper 에만 적용 →

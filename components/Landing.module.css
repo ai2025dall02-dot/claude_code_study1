@@ -442,11 +442,11 @@
 }
 .festsSticky .inner { width: 100%; }
 
-/* 무대: 중앙선(50%)에 [축제명 트랙] → [이미지] → [영화명] 가로 정렬. 트랙만 위아래로 흐름 */
+/* 무대: 활성선(40%)에 [축제명 트랙] → [이미지] → [영화명] 가로 정렬. 트랙만 위아래로 흐름 */
 .festStage {
   position: relative;
-  height: 60vh; /* 작업2: 위아래 이웃이 함께 보이도록 (활성 항목은 무대 세로 중심 = 이미지 중심선) */
-  overflow: hidden;
+  height: 85vh; /* 작업1: 60vh → 85vh. 활성 항목 위로 1~2개, 아래로 3~4개가 동시에 보이도록 */
+  overflow: hidden; /* 무대 밖은 잘림 */
 }
 
 /* 중앙선 고정 그룹 — [이미지] ... [연도/영화명]. 작업4: 이미지를 축제명(좌) 쪽으로 당겨
@@ -454,7 +454,7 @@
    우측 = 헤더 .index 우측)에 유지. */
 .festCenter {
   position: absolute;
-  top: 50%;
+  top: 40%; /* 작업2: 활성 항목과 같은 높이(무대 40% 지점, JS ACTIVE_FRAC 과 일치)에 이미지 정렬 */
   left: 48%; /* 축제명 오른쪽 가까이로 이미지를 당김 (가장 긴 축제명과 겹치지 않는 선) */
   right: 0;
   transform: translateY(-50%);
@@ -503,7 +503,7 @@
   will-change: transform;
 }
 .festRow {
-  height: clamp(150px, 18vh, 210px); /* [4] 축제명 확대에 맞춰 위아래 여백 확대 (stride 는 measure 로 자동 재측정) */
+  height: clamp(120px, 14vh, 160px); /* 작업3: 항목 간 간격 축소 → 아래로 여러 개가 자연스럽게 나열 (stride 자동 재측정) */
   display: flex;
   flex-direction: column;
   justify-content: center;
