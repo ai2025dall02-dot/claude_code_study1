@@ -555,21 +555,22 @@
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
-  /* .section 의 큰 padding-block(clamp 4.5~9rem)은 sticky 안에서 과함 → 축소 */
-  padding-block: clamp(2rem, 5vh, 3.5rem);
+  /* 작업1: .post 여백을 키운 대신 패널 위아래 여백을 줄여 8개가 100vh 에 들어가게 */
+  padding-block: clamp(1rem, 2.5vh, 1.75rem);
   box-sizing: border-box;
 }
 .journal .inner { width: 100%; } /* flex 안에서 full-width 유지 + margin auto 로 가운데 정렬 */
-/* 작업3: JOURNAL 헤더 바로 아래 구분선만 제거(공통 .head 의 border-bottom). 리스트(.post) 구분선은 유지 */
-.journal .head { border-bottom: none; }
+/* 헤더 아래 구분선 제거 + 작업1: 헤더↔리스트 간격 축소해 리스트에 세로 공간 확보 */
+.journal .head { border-bottom: none; margin-bottom: clamp(1rem, 2.5vw, 1.8rem); }
 .posts { display: grid; gap: 0; }
 .post {
   display: grid;
   grid-template-columns: 9rem 1fr auto;
   gap: 0.6rem 1.6rem;
   align-items: center; /* 작업1: baseline → center. 날짜/칩·제목/READ 를 세로 중앙 기준으로 정렬 */
-  /* 작업2: 8개가 100vh sticky 패널에 답답하지 않게 세로 패딩 축소 */
-  padding: clamp(0.75rem, 1.6vw, 1.15rem) 0;
+  /* 작업1(재조정): 항목별 위아래 여백을 넉넉하게(답답함 해소). 8개가 100vh 에 들어가도록 헤더/패널
+     여백을 줄여 확보(아래 .journal padding-block, .journal .head margin 참고) */
+  padding: clamp(1.1rem, 2.2vw, 1.6rem) 0;
   border-top: 1px solid rgba(0, 0, 0, 0.12);
   text-decoration: none;
   color: inherit;
@@ -747,14 +748,25 @@
 }
 
 /* ── CONTACT + FOOTER (black) ───────────────────────── */
-/* 작업1: 커튼 리빌 오버레이가 섹션을 덮으므로 relative + overflow:hidden(패널이 위로 빠져나가는 걸 클립) */
 .contact {
   position: relative;
   overflow: hidden;
   background: #0b0b0c;
   color: #f4f4f2;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  /* 작업2: 상단 회색 구분선 제거(검은 배경 위 라인이라 지저분) — border-top 삭제 */
 }
+/* 작업3: CONTACT 를 JOURNAL sticky 패널 안 오버레이로 얹음(블라인드 z5 위 z6).
+   y 100%(패널 아래) → 0%(제자리)로 올라옴. 콘텐츠는 세로 중앙 정렬. */
+.contactReveal {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  will-change: transform;
+}
+.contactReveal .inner { width: 100%; }
 /* 작업3: CONTACT 에서만 헤더↔하단 그리드 사이 간격 축소(공통 .head 값 override, 타 섹션 무영향) */
 .contact .head {
   margin-bottom: clamp(1rem, 2.5vw, 1.6rem);

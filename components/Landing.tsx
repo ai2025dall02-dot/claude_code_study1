@@ -79,15 +79,82 @@ export default function Landing() {
     offset: ["start start", "end end"],
   });
 
-  // 작업2: CONTACT slide-up. sticky 로 JOURNAL 이 핀되는 동안 CONTACT 는 화면 밖(아래)이라
-  // journalProgress 에 묶으면 화면에 들어오기 전 이미 정지해버림 → 실제로 "올라오는 게" 안 보임.
-  // 그래서 CONTACT 자체 진입 스크롤에 연동해, 트랙이 끝나 CONTACT 가 들어올 때 y 120px→0 로 올라오게 함.
-  const contactRef = useRef<HTMLElement>(null);
-  const { scrollYProgress: contactEnter } = useScroll({
-    target: contactRef,
-    offset: ["start end", "start center"],
-  });
-  const contactSlideY = useTransform(contactEnter, [0, 1], [reduce ? 0 : 120, 0]);
+  // 작업3: 블라인드와 CONTACT 등장을 "하나의 흐름"으로 잇기 위해, CONTACT 를 JOURNAL sticky 패널
+  // 안의 오버레이로 얹어 같은 journalProgress 로 아래→위로 올림(트랙 밖 별도 스크롤이 아님 → 끊김/지연 없음).
+  // [0.55, 1.0] 구간에서 y 100%(패널 아래) → 0%(제자리). 블라인드 상승(0.5~0.97)과 거의 동시에 올라와
+  // 트랙 끝(=페이지 끝) 시점에 제자리. 조절점: 이 구간을 앞당기면 CONTACT 가 더 빨리 올라옴.
+  const contactRevealY = useTransform(journalProgress, [0.55, 1.0], ["100%", "0%"]);
+
+  // 작업3: CONTACT 콘텐츠(헤더/그리드/footer). 오버레이(비-reduce)와 일반 섹션(reduce) 양쪽에서
+  // 재사용. 내부 아이템 stagger(contentGroup/contentItem)는 그대로. slide-up 은 바깥 래퍼가 담당.
+  const contactInner = (
+    <motion.div
+      className={styles.inner}
+      variants={contentGroup}
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, margin: "0px 0px -15% 0px" }}
+    >
+      <motion.header className={styles.head} variants={contentItem}>
+        <div>
+          <span className={styles.eyebrow}>Contact &amp; Acquisitions</span>
+          <h2 className={styles.title}>
+            CON<em>TACT</em>
+          </h2>
+        </div>
+      </motion.header>
+
+      <motion.div className={styles.contactGrid} variants={contentGroup}>
+        {/* 좌: 대형 리드 */}
+        <motion.div className={styles.contactMain} variants={contentItem}>
+          <p className={styles.contactLead}>한 편의 영화를 극장으로 옮기고 싶다면.</p>
+        </motion.div>
+
+        {/* 우측 상단 = CTA */}
+        <motion.div className={styles.contactCta} variants={contentItem}>
+          <a className={styles.contactCta__link} href="mailto:booking@film-nouvelle.example">
+            협업 시작하기 <span aria-hidden="true">→</span>
+          </a>
+        </motion.div>
+
+        {/* 우측 하단 = 연락처 2×2 */}
+        <motion.div className={styles.ciList} variants={contentItem}>
+          <div>
+            <p className={styles.ci__label}>배급 · 상영 문의</p>
+            <p className={styles.ci__value}>
+              <a href="mailto:booking@film-nouvelle.example">booking@film-nouvelle.example</a>
+            </p>
+          </div>
+          <div>
+            <p className={styles.ci__label}>작품 제안 (Acquisitions)</p>
+            <p className={styles.ci__value}>
+              <a href="mailto:acquisitions@film-nouvelle.example">acquisitions@film-nouvelle.example</a>
+            </p>
+          </div>
+          <div>
+            <p className={styles.ci__label}>전화</p>
+            <p className={styles.ci__value}>02-1234-5678 (평일 10–18시)</p>
+          </div>
+          <div>
+            <p className={styles.ci__label}>스튜디오</p>
+            <p className={styles.ci__value}>서울특별시 마포구 와우산로 00, 3층</p>
+          </div>
+        </motion.div>
+      </motion.div>
+
+      <motion.footer className={styles.footer} variants={contentItem}>
+        <div className={styles.footer__brand}>
+          필름 누벨
+          <small>FILM NOUVELLE</small>
+        </div>
+        <p className={styles.footer__fine}>
+          © 2026 FILM NOUVELLE. 모든 작품·인물은 데모용 가상 정보입니다.
+          <br />
+          서울특별시 마포구 와우산로 00, 3층 · booking@film-nouvelle.example
+        </p>
+      </motion.footer>
+    </motion.div>
+  );
 
   return (
     <div className={styles.land}>
@@ -103,15 +170,15 @@ export default function Landing() {
       {/* ── FESTIVALS (ABOUT 식 fade-up/line 등장 + 대형 리스트) ─ */}
       <Festivals />
 
-      {/* ── JOURNAL (작업2: sticky 체류 트랙) ────────────── */}
-      {/* .journalScroller = 높이 큰 스크롤 래퍼(체류 길이 = 이 높이, CSS 에서 조절).
-          그 안 .journalSticky 가 100vh 로 고정돼 래퍼 스크롤 동안 JOURNAL 이 화면에 머묾. */}
-      <div ref={journalTrackRef} className={styles.journalScroller}>
-        <div className={styles.journalSticky}>
+      {/* ── JOURNAL (sticky 체류 트랙) + CONTACT 오버레이 ──────────
+          작업3: CONTACT 를 JOURNAL sticky 패널 안 오버레이로 얹어, 블라인드 상승과 CONTACT 등장을
+          같은 journalProgress 로 이어지게 함(트랙 밖 별도 스크롤 제거 → 끊김/지연 없음).
+          reduce 면 sticky/오버레이 없이 JOURNAL·CONTACT 를 일반 흐름으로 렌더. */}
+      <div ref={journalTrackRef} className={reduce ? undefined : styles.journalScroller}>
+        <div className={reduce ? undefined : styles.journalSticky}>
           <section className={`${styles.section} ${styles.journal}`} id="journal">
             {/* 검은 가로 블라인드를 밝은 JOURNAL 위에 얹어 대비가 보이게 함. journalProgress 뒤 구간
-                (REVEAL_FROM~)에서 슬랫이 아래→위로 차오르며 덮음 → 검게 되고 검은 CONTACT 로 이어짐.
-                pointer-events:none / reduce 면 미렌더 / 역스크롤 시 역재생. */}
+                (REVEAL_FROM~)에서 슬랫이 아래→위로 차오르며 덮음. pointer-events:none / reduce 면 미렌더. */}
             {!reduce && (
               <div className={styles.blind} aria-hidden="true">
                 {Array.from({ length: SLATS }).map((_, i) => (
@@ -120,124 +187,58 @@ export default function Landing() {
               </div>
             )}
             <div className={styles.inner}>
-          <header className={styles.head}>
-            <div>
-              <span className={styles.eyebrow}>News &amp; Notes</span>
-              {/* 제목 타이핑: 하단 -45% → 제목이 화면 하단에서 45% 위(대략 화면 중앙쯤)까지
-                  올라왔을 때 발동. (이 % 를 키우면 더 늦게(더 올라와야) 발동) */}
-              <TypeTitle solid="JOUR" outline="NAL" inViewMargin="0px 0px -45% 0px" />
-            </div>
-            <span className={styles.index}>개봉 · 인터뷰 · 상영회</span>
-          </header>
+              <header className={styles.head}>
+                <div>
+                  <span className={styles.eyebrow}>News &amp; Notes</span>
+                  {/* 제목 타이핑: 하단 -45% 지점(대략 화면 중앙)까지 올라오면 발동 */}
+                  <TypeTitle solid="JOUR" outline="NAL" inViewMargin="0px 0px -45% 0px" />
+                </div>
+                <span className={styles.index}>개봉 · 인터뷰 · 상영회</span>
+              </header>
 
-          {/* 리스트 stagger: 하단 -40% → 리스트가 화면 중앙 근처까지 올라왔을 때 아래→위 순차 등장.
-              (이 % 를 키우면 더 늦게 발동) once:true 로 1회만 재생. 호버 CSS(padding/READ)는 그대로 */}
-          <motion.div
-            className={styles.posts}
-            variants={postGroup}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "0px 0px -40% 0px" }}
-          >
-            {JOURNAL.map((p) => (
-              <motion.a
-                key={p.title}
-                className={styles.post}
-                href="#contact"
-                variants={postItem}
+              {/* 리스트 stagger: 화면 중앙 근처(-40%)까지 올라오면 아래→위 순차 등장, once:true */}
+              <motion.div
+                className={styles.posts}
+                variants={postGroup}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: "0px 0px -40% 0px" }}
               >
-                <span className={styles.post__date}>{p.date}</span>
-                <span>
-                  <span className={styles.post__cat}>{p.cat}</span>
-                  <span className={styles.post__title}>{p.title}</span>
-                </span>
-                <span className={styles.post__more}>READ →</span>
-              </motion.a>
-            ))}
+                {JOURNAL.map((p) => (
+                  <motion.a key={p.title} className={styles.post} href="#contact" variants={postItem}>
+                    <span className={styles.post__date}>{p.date}</span>
+                    <span>
+                      <span className={styles.post__cat}>{p.cat}</span>
+                      <span className={styles.post__title}>{p.title}</span>
+                    </span>
+                    <span className={styles.post__more}>READ →</span>
+                  </motion.a>
+                ))}
               </motion.div>
             </div>
+
+            {/* 작업3: 비-reduce — CONTACT 를 sticky 패널 안 오버레이(z-index 블라인드 위)로. 블라인드가
+                차오르는 것과 거의 동시에(journalProgress [0.55,1]) y 100%→0% 로 아래에서 올라와 제자리.
+                이게 페이지의 마지막 화면(트랙 끝)이 됨 → 스크롤 지연 없이 바로 이어짐. */}
+            {!reduce && (
+              <motion.section
+                id="contact"
+                className={`${styles.section} ${styles.contact} ${styles.contactReveal}`}
+                style={{ y: contactRevealY }}
+              >
+                {contactInner}
+              </motion.section>
+            )}
           </section>
         </div>
       </div>
 
-      {/* ── CONTACT + FOOTER (black) ───────────── */}
-      {/* 블라인드는 JOURNAL 섹션으로 이동(밝은 배경 위에서 보이게). CONTACT 는 블라인드가 걷힌 뒤
-          자연스럽게 이어지는 검은 콘텐츠. 등장은 콘텐츠 stagger(whileInView)로 유지.
-          작업2: ref={contactRef} 로 CONTACT 진입 스크롤을 측정해 slide-up 에 사용. */}
-      <section ref={contactRef} className={`${styles.section} ${styles.contact}`} id="contact">
-        {/* 콘텐츠 전체를 하나의 stagger 컨테이너로 묶어 아래에서 위로 순차 등장.
-            작업2: 여기에 스크롤 연동 y(contactSlideY)를 더해 블라인드가 차오르는 흐름을 따라
-            컨테이너째 아래→위로 슬라이드 인(내부 아이템 stagger 는 그대로). */}
-        <motion.div
-          className={styles.inner}
-          style={{ y: contactSlideY }}
-          variants={contentGroup}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "0px 0px -15% 0px" }}
-        >
-          {/* 작업1: 킥커 삭제. 헤더도 등장 아이템 */}
-          <motion.header className={styles.head} variants={contentItem}>
-            <div>
-              <span className={styles.eyebrow}>Contact &amp; Acquisitions</span>
-              <h2 className={styles.title}>
-                CON<em>TACT</em>
-              </h2>
-            </div>
-          </motion.header>
-
-          <motion.div className={styles.contactGrid} variants={contentGroup}>
-            {/* 작업4: 타이핑 제거 → 일반 텍스트(흰색 솔리드). 등장 아이템 */}
-            <motion.div className={styles.contactMain} variants={contentItem}>
-              <p className={styles.contactLead}>한 편의 영화를 극장으로 옮기고 싶다면.</p>
-            </motion.div>
-
-            {/* 작업1: 우측 열 상단 = CTA */}
-            <motion.div className={styles.contactCta} variants={contentItem}>
-              <a className={styles.contactCta__link} href="mailto:booking@film-nouvelle.example">
-                협업 시작하기 <span aria-hidden="true">→</span>
-              </a>
-            </motion.div>
-
-            {/* 작업1: 우측 열 하단 = 연락처 2×2 */}
-            <motion.div className={styles.ciList} variants={contentItem}>
-              <div>
-                <p className={styles.ci__label}>배급 · 상영 문의</p>
-                <p className={styles.ci__value}>
-                  <a href="mailto:booking@film-nouvelle.example">booking@film-nouvelle.example</a>
-                </p>
-              </div>
-              <div>
-                <p className={styles.ci__label}>작품 제안 (Acquisitions)</p>
-                <p className={styles.ci__value}>
-                  <a href="mailto:acquisitions@film-nouvelle.example">acquisitions@film-nouvelle.example</a>
-                </p>
-              </div>
-              <div>
-                <p className={styles.ci__label}>전화</p>
-                <p className={styles.ci__value}>02-1234-5678 (평일 10–18시)</p>
-              </div>
-              <div>
-                <p className={styles.ci__label}>스튜디오</p>
-                <p className={styles.ci__value}>서울특별시 마포구 와우산로 00, 3층</p>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          {/* 작업2: 내비 링크 제거 → 로고(좌) ↔ 저작권/주소(우) 가로 양끝 정렬 */}
-          <motion.footer className={styles.footer} variants={contentItem}>
-            <div className={styles.footer__brand}>
-              필름 누벨
-              <small>FILM NOUVELLE</small>
-            </div>
-            <p className={styles.footer__fine}>
-              © 2026 FILM NOUVELLE. 모든 작품·인물은 데모용 가상 정보입니다.
-              <br />
-              서울특별시 마포구 와우산로 00, 3층 · booking@film-nouvelle.example
-            </p>
-          </motion.footer>
-        </motion.div>
-      </section>
+      {/* reduce 폴백: 오버레이/블라인드 없이 CONTACT 를 일반 섹션으로(즉시 표시) */}
+      {reduce && (
+        <section className={`${styles.section} ${styles.contact}`} id="contact">
+          {contactInner}
+        </section>
+      )}
     </div>
   );
 }
