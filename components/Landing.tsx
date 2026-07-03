@@ -18,6 +18,11 @@ const JOURNAL = [
 
 const FOOTER_NAV = ["ABOUT", "LINEUP", "FILMMAKERS", "FESTIVALS", "JOURNAL", "CONTACT"];
 
+/* 작업1: CONTACT 진입 시 아래→위로 걷히는 검은 커튼 패널 수 (모바일은 CSS 로 4개만 노출) */
+const PANELS = 6;
+/* 작업2: 라인 아웃라인 제거 + 한 글자씩 타이핑되는 리드 문구 */
+const LEAD_TEXT = "한 편의 영화를 극장으로 옮기고 싶다면.";
+
 export default function Landing() {
   const reduce = useReducedMotion();
 
@@ -29,6 +34,26 @@ export default function Landing() {
   const postItem: Variants = {
     hidden: { opacity: 0, y: reduce ? 0 : 30 },
     show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
+  };
+
+  // 작업1: 검은 패널 커튼 — 아래→위로 순차(stagger)로 걷히며 CONTACT 를 드러냄
+  const revealGroup: Variants = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.07 } },
+  };
+  const revealPanel: Variants = {
+    hidden: { y: "0%" }, // 처음엔 콘텐츠를 완전히 덮음
+    show: { y: "-100%", transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
+  };
+
+  // 작업2: 리드 문구 타이핑 — 글자 컨테이너(패널 리빌 뒤 delayChildren 0.5s) + 글자별 fade-up
+  const leadGroup: Variants = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.045, delayChildren: 0.5 } },
+  };
+  const leadChar: Variants = {
+    hidden: { opacity: 0, y: reduce ? 0 : 10 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] } },
   };
 
   return (
@@ -88,6 +113,23 @@ export default function Landing() {
 
       {/* ── CONTACT + FOOTER (black) ───────────── */}
       <section className={`${styles.section} ${styles.contact}`} id="contact">
+        {/* 작업1: 검은 패널 커튼 리빌. 진입 시 아래→위로 순차로 걷힘. once:true 로 1회만.
+            reduce 모션이면 오버레이 자체를 렌더하지 않아 콘텐츠가 즉시 보임 */}
+        {!reduce && (
+          <motion.div
+            className={styles.contactReveal}
+            variants={revealGroup}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "0px 0px -20% 0px" }}
+            aria-hidden="true"
+          >
+            {Array.from({ length: PANELS }).map((_, i) => (
+              <motion.span key={i} className={styles.contactReveal__panel} variants={revealPanel} />
+            ))}
+          </motion.div>
+        )}
+
         <div className={styles.inner}>
           <header className={styles.head}>
             <div>
@@ -96,13 +138,45 @@ export default function Landing() {
                 CON<em>TACT</em>
               </h2>
             </div>
-            <span className={styles.index}>상영 · 배급 제안 환영</span>
+            {/* 작업3: 기존 우측 인덱스 문구는 리드 위 kicker(.contactKicker)로 이동 → 중복 제거 */}
           </header>
 
+          {/* 작업3: TRIONN 식 재배치 — 좌: 아이브로우+대형 리드 / 우: CTA / 하단: 연락처 4열 */}
           <div className={styles.contactGrid}>
-            <p className={styles.contactLead}>
-              한 편의 영화를 <em>극장으로</em> 옮기고 싶다면.
-            </p>
+            <div className={styles.contactMain}>
+              <span className={styles.contactKicker}>상영 · 배급 제안 환영</span>
+              {/* 작업2: em 아웃라인 제거 → 흰색 솔리드. 글자별 타이핑(reduce 면 통 텍스트) */}
+              {reduce ? (
+                <p className={styles.contactLead}>{LEAD_TEXT}</p>
+              ) : (
+                <motion.p
+                  className={styles.contactLead}
+                  variants={leadGroup}
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={{ once: true }}
+                  aria-label={LEAD_TEXT}
+                >
+                  {LEAD_TEXT.split("").map((ch, i) => (
+                    <motion.span
+                      key={i}
+                      className={styles.contactLead__char}
+                      variants={leadChar}
+                      aria-hidden="true"
+                    >
+                      {ch === " " ? " " : ch}
+                    </motion.span>
+                  ))}
+                  <span className={styles.contactLead__caret} aria-hidden="true" />
+                </motion.p>
+              )}
+            </div>
+
+            <div className={styles.contactCta}>
+              <a className={styles.contactCta__link} href="mailto:booking@film-nouvelle.example">
+                협업 시작하기 <span aria-hidden="true">→</span>
+              </a>
+            </div>
 
             <div className={styles.ciList}>
               <div>
