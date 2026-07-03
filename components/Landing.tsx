@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { useRef } from "react";
+import { motion, useReducedMotion, useScroll, useTransform, type Variants } from "framer-motion";
 import About from "@/components/About";
 import Lineup from "@/components/Lineup";
 import Filmmakers from "@/components/Filmmakers";
@@ -56,6 +57,19 @@ export default function Landing() {
     show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] } },
   };
 
+  // JOURNAL→CONTACT 전환: JOURNAL 섹션이 화면 위로 빠져나가는 마지막 1뷰포트 구간에
+  // 내용이 떠오르며(위로 이동) 페이드·축소되어 퇴장 → 이어서 CONTACT 커튼 리빌이 걷힘.
+  // offset ["end end","end start"]: 섹션 하단이 뷰포트 하단→상단으로 이동하는 동안 0→1.
+  const journalRef = useRef<HTMLElement>(null);
+  const { scrollYProgress: journalExit } = useScroll({
+    target: journalRef,
+    offset: ["end end", "end start"],
+  });
+  // reduce 모션이면 이동/투명/축소 모두 정지값으로 → 전환 애니메이션 없이 그대로.
+  const jExitY = useTransform(journalExit, [0, 1], [0, reduce ? 0 : -160]);
+  const jExitOpacity = useTransform(journalExit, [0, 0.35, 0.9], [1, 1, reduce ? 1 : 0]);
+  const jExitScale = useTransform(journalExit, [0, 1], [1, reduce ? 1 : 0.96]);
+
   return (
     <div className={styles.land}>
       {/* ── ABOUT (scroll-darkening bg, fade-up, text-reveal) ─ */}
@@ -71,8 +85,9 @@ export default function Landing() {
       <Festivals />
 
       {/* ── JOURNAL ────────────────────────────── */}
-      <section className={`${styles.section} ${styles.journal}`} id="journal">
-        <div className={styles.inner}>
+      <section ref={journalRef} className={`${styles.section} ${styles.journal}`} id="journal">
+        {/* 스크롤 연동 퇴장 래퍼: 섹션이 위로 빠져나갈 때 내용이 떠오르며 페이드·축소 */}
+        <motion.div className={styles.inner} style={{ y: jExitY, opacity: jExitOpacity, scale: jExitScale }}>
           <header className={styles.head}>
             <div>
               <span className={styles.eyebrow}>News &amp; Notes</span>
@@ -108,7 +123,7 @@ export default function Landing() {
               </motion.a>
             ))}
           </motion.div>
-        </div>
+        </motion.div>
       </section>
 
       {/* ── CONTACT + FOOTER (black) ───────────── */}
