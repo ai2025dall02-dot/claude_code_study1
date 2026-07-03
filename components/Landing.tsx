@@ -51,19 +51,21 @@ export default function Landing() {
           <header className={styles.head}>
             <div>
               <span className={styles.eyebrow}>News &amp; Notes</span>
-              {/* 작업1: 정적 h2 → TypeTitle 타이핑 (섹션 진입 시 발동, margin 으로 살짝 늦게) */}
-              <TypeTitle solid="JOUR" outline="NAL" inViewMargin="-15% 0px" />
+              {/* 제목 타이핑: 하단 -45% → 제목이 화면 하단에서 45% 위(대략 화면 중앙쯤)까지
+                  올라왔을 때 발동. (이 % 를 키우면 더 늦게(더 올라와야) 발동) */}
+              <TypeTitle solid="JOUR" outline="NAL" inViewMargin="0px 0px -45% 0px" />
             </div>
             <span className={styles.index}>개봉 · 인터뷰 · 상영회</span>
           </header>
 
-          {/* 작업2: 제목 이후 리스트 행이 아래→위로 순차 등장(stagger). 호버 CSS(padding/READ)는 그대로 */}
+          {/* 리스트 stagger: 하단 -40% → 리스트가 화면 중앙 근처까지 올라왔을 때 아래→위 순차 등장.
+              (이 % 를 키우면 더 늦게 발동) once:true 로 1회만 재생. 호버 CSS(padding/READ)는 그대로 */}
           <motion.div
             className={styles.posts}
             variants={postGroup}
             initial="hidden"
             whileInView="show"
-            viewport={{ once: true, margin: "-10% 0px" }}
+            viewport={{ once: true, margin: "0px 0px -40% 0px" }}
           >
             {JOURNAL.map((p) => (
               <motion.a
