@@ -25,17 +25,16 @@ const JOURNAL = [
 ];
 
 /* 가로 블라인드 슬랫 1개. 훅 규칙 준수를 위해 useTransform 을 슬랫 컴포넌트 내부에서 호출
-   (부모 map 안에서 직접 useTransform 하면 훅 규칙 위반). 슬랫 i 는 progress
-   [i*STEP, i*STEP+WINDOW] 구간에서 scaleY 1→0 으로 위→아래 순차로 접혀 사라짐.
-   (y 이동은 슬랫 자기 높이만큼만 움직여 완전히 안 걷힘 → scaleY 로 각 슬랫이 선까지 줄어들며 리빌). */
+   (부모 map 안에서 직접 useTransform 하면 훅 규칙 위반).
+   근본수정: 밝은 JOURNAL 위에서 검은 슬랫이 "차오르며 덮는" 방향(scaleY 0→1). 슬랫 i 는
+   progress [i*STEP, i*STEP+WINDOW] 구간에서 위→아래 순차로 펼쳐져 밝은 영역을 가림. */
 const SLATS = 10;
 const SLAT_STEP = 0.05; // 슬랫 사이 시작 지연(위 슬랫부터)
-const SLAT_WINDOW = 0.45; // 슬랫 하나가 접히는 구간(마지막 슬랫: 0.45+0.45=0.90 → progress 1 이전 완주,
-// 동시에 진입 후반까지 덮개가 유지돼 CONTACT 가 화면을 채운 채 걷히는 게 보이도록)
+const SLAT_WINDOW = 0.3; // 슬랫 하나가 펼쳐지는 구간(마지막 슬랫: 0.45+0.3=0.75 → JOURNAL 이 절반쯤 빠지기 전 완전히 덮음)
 function RevealSlat({ index, progress }: { index: number; progress: MotionValue<number> }) {
   const start = index * SLAT_STEP;
-  const scaleY = useTransform(progress, [start, start + SLAT_WINDOW], [1, 0]);
-  return <motion.span className={styles.contactReveal__panel} style={{ scaleY }} />;
+  const scaleY = useTransform(progress, [start, start + SLAT_WINDOW], [0, 1]);
+  return <motion.span className={styles.blind__slat} style={{ scaleY }} />;
 }
 
 export default function Landing() {
@@ -66,25 +65,16 @@ export default function Landing() {
   // JOURNAL→CONTACT 전환: JOURNAL 섹션이 화면 위로 빠져나가는 마지막 1뷰포트 구간에
   // 내용이 떠오르며(위로 이동) 페이드·축소되어 퇴장 → 이어서 CONTACT 커튼 리빌이 걷힘.
   // offset ["end end","end start"]: 섹션 하단이 뷰포트 하단→상단으로 이동하는 동안 0→1.
+  // 블라인드 트리거 = JOURNAL 섹션 퇴장 스크롤. offset ["end end","end start"]: JOURNAL 하단이
+  // 뷰포트 하단→상단으로 이동하는 동안 0→1. JOURNAL 은 마지막 섹션이 아니라(아래 CONTACT 존재)
+  // 1까지 확실히 완주됨. 이 진행도에 검은 슬랫이 "밝은 JOURNAL 위로 차오르는" 것을 연동.
   const journalRef = useRef<HTMLElement>(null);
   const { scrollYProgress: journalExit } = useScroll({
     target: journalRef,
     offset: ["end end", "end start"],
   });
-  // reduce 모션이면 이동/투명/축소 모두 정지값으로 → 전환 애니메이션 없이 그대로.
-  const jExitY = useTransform(journalExit, [0, 1], [0, reduce ? 0 : -160]);
-  const jExitOpacity = useTransform(journalExit, [0, 0.35, 0.9], [1, 1, reduce ? 1 : 0]);
-  const jExitScale = useTransform(journalExit, [0, 1], [1, reduce ? 1 : 0.96]);
-
-  // 블라인드 트리거 = CONTACT 섹션 자체 진입 스크롤. CONTACT 는 마지막 섹션이라 그 아래 여백이
-  // 없어 상단이 뷰포트 최상단까지 못 올라감 → 끝점을 "start start" 로 두면 contactEnter 가 1에
-  // 도달하지 못해 뒤쪽 슬랫이 안 걷혔음(진단으로 max≈0.93 확인). 끝점을 "start 25%"(상단이 뷰포트
-  // 25% 지점) 로 바꿔 진입 중 0→1 을 확실히 완주 + 슬랫이 화면 대부분을 덮은 채 걷히는 게 보이게 함.
-  const contactRef = useRef<HTMLElement>(null);
-  const { scrollYProgress: contactEnter } = useScroll({
-    target: contactRef,
-    offset: ["start end", "start 25%"],
-  });
+  // 진단 결과: journalExit 는 0→0.93 까지 도달(JOURNAL 하단=CONTACT 상단이라 마지막 섹션
+  // 기하로 1엔 못 미침). 슬랫 매핑은 마지막 슬랫이 0.75 에 완전히 덮이도록 잡아 문제없이 다 채워짐.
 
   return (
     <div className={styles.land}>
@@ -102,8 +92,18 @@ export default function Landing() {
 
       {/* ── JOURNAL ────────────────────────────── */}
       <section ref={journalRef} className={`${styles.section} ${styles.journal}`} id="journal">
-        {/* 스크롤 연동 퇴장 래퍼: 섹션이 위로 빠져나갈 때 내용이 떠오르며 페이드·축소 */}
-        <motion.div className={styles.inner} style={{ y: jExitY, opacity: jExitOpacity, scale: jExitScale }}>
+        {/* 근본수정: 검은 가로 블라인드를 "밝은 JOURNAL(흰 배경) 위"에 얹어 대비가 보이게 함.
+            (기존엔 검은 CONTACT 배경 위라 검정-검정 무대비로 안 보였음.) JOURNAL 이 위로 빠지는
+            journalExit 에 맞춰 슬랫이 위→아래 순차로 차오르며 밝은 콘텐츠를 덮음 → 화면이 검게 되고
+            그 아래 검은 CONTACT 로 자연스럽게 이어짐. pointer-events:none / reduce 면 미렌더 / 역스크롤 시 역재생. */}
+        {!reduce && (
+          <div className={styles.blind} aria-hidden="true">
+            {Array.from({ length: SLATS }).map((_, i) => (
+              <RevealSlat key={i} index={i} progress={journalExit} />
+            ))}
+          </div>
+        )}
+        <div className={styles.inner}>
           <header className={styles.head}>
             <div>
               <span className={styles.eyebrow}>News &amp; Notes</span>
@@ -139,24 +139,14 @@ export default function Landing() {
               </motion.a>
             ))}
           </motion.div>
-        </motion.div>
+        </div>
       </section>
 
       {/* ── CONTACT + FOOTER (black) ───────────── */}
-      {/* 섹션에 ref 부착 → 커튼을 CONTACT 자체 진입 스크롤(contactEnter)에 연동 */}
-      <section ref={contactRef} className={`${styles.section} ${styles.contact}`} id="contact">
-        {/* 스크롤 연동 가로 블라인드: 검은 수평 슬랫 10개가 위에서부터 순차로 scaleY 1→0 접히며
-            그 아래 CONTACT 내용이 드러남. 되감으면 다시 덮임. 각 슬랫 값은 RevealSlat 내부에서
-            contactEnter 로 계산(훅 규칙 준수). pointer-events:none 이라 클릭/스크롤 비차단. reduce 면 미렌더. */}
-        {!reduce && (
-          <div className={styles.contactReveal} aria-hidden="true">
-            {Array.from({ length: SLATS }).map((_, i) => (
-              <RevealSlat key={i} index={i} progress={contactEnter} />
-            ))}
-          </div>
-        )}
-
-        {/* 작업5: 콘텐츠 전체를 하나의 stagger 컨테이너로 묶어 커튼과 함께 아래에서 위로 순차 등장.
+      {/* 블라인드는 JOURNAL 섹션으로 이동(밝은 배경 위에서 보이게). CONTACT 는 블라인드가 걷힌 뒤
+          자연스럽게 이어지는 검은 콘텐츠. 등장은 콘텐츠 stagger(whileInView)로 유지. */}
+      <section className={`${styles.section} ${styles.contact}`} id="contact">
+        {/* 콘텐츠 전체를 하나의 stagger 컨테이너로 묶어 아래에서 위로 순차 등장.
             .inner=상위 컨테이너(헤더/그리드/footer), .contactGrid=하위 컨테이너(리드/CTA/연락처). */}
         <motion.div
           className={styles.inner}

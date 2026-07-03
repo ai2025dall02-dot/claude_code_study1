@@ -534,7 +534,8 @@
 }
 
 /* ── JOURNAL ────────────────────────────────────────── */
-.journal { background: #fff; border-top: 1px solid rgba(0, 0, 0, 0.08); }
+/* position:relative → 검은 블라인드 오버레이(.blind)의 위치 기준(밝은 JOURNAL 위에 얹힘) */
+.journal { position: relative; background: #fff; border-top: 1px solid rgba(0, 0, 0, 0.08); }
 /* 작업3: JOURNAL 헤더 바로 아래 구분선만 제거(공통 .head 의 border-bottom). 리스트(.post) 구분선은 유지 */
 .journal .head { border-bottom: none; }
 .posts { display: grid; gap: 0; }
@@ -733,20 +734,24 @@
 .contact .head {
   margin-bottom: clamp(1rem, 2.5vw, 1.6rem);
 }
-/* 가로 블라인드: 검은 수평 슬랫들이 섹션 전체를 덮는 오버레이. 위에서부터 걷혀 위로 사라지고,
-   pointer-events:none 이라 클릭·스크롤을 막지 않음 */
-.contactReveal {
+/* 가로 블라인드 오버레이 — JOURNAL(밝은 배경) 위에 얹혀, 검은 수평 슬랫이 차오르며 덮음.
+   JOURNAL 하단 기준으로 bottom:0 + height:100vh → 전환 시 뷰포트 한 화면을 덮음.
+   pointer-events:none 이라 클릭·스크롤을 막지 않음. */
+.blind {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100vh;
   z-index: 5;
   display: flex;
-  flex-direction: column; /* ★ 세로 패널 → 수평 슬랫(가로 블라인드) */
+  flex-direction: column; /* ★ 수평 슬랫(가로 블라인드) */
   pointer-events: none;
 }
-.contactReveal__panel {
+.blind__slat {
   flex: 1 1 0; /* 동일 높이의 수평 슬랫 */
   background: #0b0b0c;
-  transform-origin: top; /* scaleY 축소가 위 기준 → 각 슬랫이 위에서부터 선까지 접힘 */
+  transform-origin: center; /* scaleY 0→1 로 제자리에서 펼쳐지며 밝은 영역을 덮음 */
   will-change: transform;
 }
 /* 작업1: TRIONN 식 — 좌측 lead 가 두 행 세로 차지, 우측은 cta→contacts 순으로 쌓임 */
