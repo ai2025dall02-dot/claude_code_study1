@@ -435,8 +435,8 @@
   top: 0;
   height: 100vh;
   box-sizing: border-box;
-  /* 작업5: 무대를 화면 상단~중상단에. padding-top 을 줄여 리스트가 제목/설명에 더 가깝게. */
-  padding-top: clamp(1.5rem, 4vh, 3rem);
+  /* 작업2: 무대 상단이 고정 내비게이션 아래에서 시작하도록(상단 정리) padding-top 확보 */
+  padding-top: clamp(3rem, 7vh, 4.5rem);
   display: flex;
   align-items: flex-start;
 }
@@ -445,8 +445,14 @@
 /* 무대: 활성선(40%)에 [축제명 트랙] → [이미지] → [영화명] 가로 정렬. 트랙만 위아래로 흐름 */
 .festStage {
   position: relative;
-  height: 85vh; /* 작업1: 60vh → 85vh. 활성 항목 위로 1~2개, 아래로 3~4개가 동시에 보이도록 */
-  overflow: hidden; /* 무대 밖은 잘림 */
+  /* 작업2: 무대 높이를 뷰포트보다 크게(패딩 포함 100vh 초과) 잡아 '하단 잘림 지점'을 화면 밖으로
+     내림 → 아래쪽 항목은 화면 끝까지 잘리지 않고 계속 이어져 보임. */
+  height: 96vh;
+  overflow: hidden; /* 넘치는 부분은 화면 밖(위/아래)에서만 잘림 */
+  /* 작업2: 상단만 배경색으로 페이드(마스크) → 위로 올라가는 항목이 제목/내비와 겹치지 않게 정리.
+     하단은 불투명 유지(자연스럽게 화면 끝까지 이어짐). */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 6%, #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 6%, #000 100%);
 }
 
 /* 중앙선 고정 그룹 — [이미지] ... [연도/영화명]. 작업4: 이미지를 축제명(좌) 쪽으로 당겨
@@ -503,7 +509,7 @@
   will-change: transform;
 }
 .festRow {
-  height: clamp(120px, 14vh, 160px); /* 작업3: 항목 간 간격 축소 → 아래로 여러 개가 자연스럽게 나열 (stride 자동 재측정) */
+  height: clamp(150px, 18vh, 200px); /* 작업1: 항목 간 간격 확대 (stride 자동 재측정) */
   display: flex;
   flex-direction: column;
   justify-content: center;
