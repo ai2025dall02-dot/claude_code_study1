@@ -409,8 +409,8 @@
 
 /* [5] 제목·설명 — sticky 밖 일반 흐름 (스크롤하면 위로 흘러감) */
 .festsIntro {
-  /* 작업1: 하단 padding 축소 → 설명과 리스트 무대 사이 간격 대폭 축소 */
-  padding-block: clamp(4.5rem, 11vh, 9rem) clamp(0.25rem, 1vh, 0.75rem);
+  /* 작업5: 하단 padding 을 더 축소 → 설명을 지나면 곧바로 리스트 무대로 */
+  padding-block: clamp(4.5rem, 11vh, 9rem) clamp(0px, 0.5vh, 0.5rem);
 }
 .festsIntro .head { border-bottom: none; margin-bottom: 0; } /* head 아래 라인 제거 */
 /* 섹션 간략 설명(약 2줄) — 제목 아래, 리스트 위. 제목과 리스트 사이 간격 메움 */
@@ -425,19 +425,18 @@
   color: #6a6a68;
 }
 
-/* [3] pin 무대 — 300vh 래퍼 + 내부 sticky(100vh). 중앙선은 고정, 축제명 트랙만 이동 */
+/* pin 무대 — 긴 래퍼 + 내부 sticky(100vh). 중앙선은 고정, 축제명 트랙만 이동 */
 .festsScroller {
   position: relative;
-  height: 360vh; /* [3] 300 → 360vh: 마지막 항목이 중앙에 온 뒤 잠깐 유지할 여유 */
+  height: 540vh; /* 작업6: 항목 9개(≈60vh/개) → 360vh 에서 540vh 로 늘려 진행 속도 완화 */
 }
 .festsSticky {
   position: sticky;
   top: 0;
   height: 100vh;
   box-sizing: border-box;
-  /* 작업1: 무대를 화면 상단~중상단에 (align center → flex-start + padding-top). 리스트가
-     뷰포트 위쪽에서 시작해 제목/설명에 가깝게. (이미지·활성 항목은 무대 중심에서 계속 나란히) */
-  padding-top: clamp(2rem, 6vh, 4.5rem);
+  /* 작업5: 무대를 화면 상단~중상단에. padding-top 을 줄여 리스트가 제목/설명에 더 가깝게. */
+  padding-top: clamp(1.5rem, 4vh, 3rem);
   display: flex;
   align-items: flex-start;
 }
@@ -450,17 +449,19 @@
   overflow: hidden;
 }
 
-/* 우측 고정 그룹 — 중앙선에서 [이미지] → [연도/영화명] 을 가로로. 축제명(트랙) 오른쪽에 위치 */
+/* 중앙선 고정 그룹 — [이미지] ... [연도/영화명]. 작업4: 이미지를 축제명(좌) 쪽으로 당겨
+   가로 여백 축소. left 지정 + space-between 으로 이미지는 왼쪽, 연도/영화명은 우측 끝(.inner
+   우측 = 헤더 .index 우측)에 유지. */
 .festCenter {
   position: absolute;
   top: 50%;
-  /* 작업1: left:50% → right:0. 그룹(이미지+연도/영화명) 우측 끝을 .inner 우측 경계
-     (= 헤더 .index "국내외 영화제 초청·수상" 우측 끝)에 정확히 맞춤 */
+  left: 48%; /* 축제명 오른쪽 가까이로 이미지를 당김 (가장 긴 축제명과 겹치지 않는 선) */
   right: 0;
   transform: translateY(-50%);
   z-index: 2;
   display: flex;
   align-items: center;
+  justify-content: space-between; /* 이미지=왼쪽, 연도/영화명=오른쪽 끝 */
   gap: clamp(1.2rem, 2.5vw, 2.5rem);
 }
 /* 이미지 (scale/rotate 는 motion 이 제어: -15°, hover 시 0°) */

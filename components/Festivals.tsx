@@ -9,20 +9,24 @@ import {
   useScroll,
   useSpring,
   useTransform,
-  type MotionValue,
   type Variants,
 } from "framer-motion";
 import TypeTitle from "./TypeTitle";
 import styles from "./Landing.module.css";
 
 /* 영화제 초청·수상 (데모용 가상 정보)
-   image: 중앙에 노출되는 행사 이미지 — 임시로 posters-photo/m* 매핑 */
+   image: 중앙에 노출되는 행사 이미지 — 임시로 posters-photo/m* 매핑
+   작업1: 5개 → 9개로 확장 (m9.jpg 는 프로젝트에 없어 타이베이 금마장은 m1 로 대체) */
 const FESTIVALS = [
   { yr: "2024", name: "부산국제영화제", section: "한국영화의 오늘 — 비전", film: "조용한 망명", image: "/posters-photo/m3.jpg" },
   { yr: "2024", name: "전주국제영화제", section: "국제경쟁", film: "여름의 잔상", image: "/posters-photo/m1.jpg" },
   { yr: "2023", name: "로테르담 국제영화제", section: "Tiger Competition", film: "북위 48도", image: "/posters-photo/m4.jpg" },
   { yr: "2023", name: "야마가타 다큐멘터리", section: "International Competition", film: "필름의 끝", image: "/posters-photo/m6.jpg" },
   { yr: "2022", name: "산세바스티안 영화제", section: "New Directors", film: "소금사막", image: "/posters-photo/m8.jpg" },
+  { yr: "2022", name: "로카르노 영화제", section: "Concorso Cineasti del presente", film: "재의 계절", image: "/posters-photo/m2.jpg" },
+  { yr: "2022", name: "낭트 3대륙 영화제", section: "Compétition", film: "붉은 방", image: "/posters-photo/m5.jpg" },
+  { yr: "2021", name: "카를로비바리 영화제", section: "Proxima Competition", film: "겨울 우체국", image: "/posters-photo/m7.jpg" },
+  { yr: "2021", name: "타이베이 금마장", section: "International New Talent", film: "빛의 문", image: "/posters-photo/m1.jpg" },
 ];
 
 export default function Festivals() {
@@ -37,8 +41,9 @@ export default function Festivals() {
     target: scrollerRef,
     offset: ["start start", "end end"],
   });
-  // [3] 끝 구간(0.82~1)엔 마지막 항목이 중앙에 고정된 채 유지되다가 다음 섹션으로.
-  const f = useTransform(scrollYProgress, [0.04, 0.82], [0, N - 1], { clamp: true });
+  // 작업5: 시작 구간을 0.04→0.01 로 당겨 무대 진입과 거의 동시에 리스트 진행 시작.
+  // 끝 구간(0.82~1)엔 마지막 항목이 중앙에 고정된 채 유지되다가 다음 섹션으로.
+  const f = useTransform(scrollYProgress, [0.01, 0.82], [0, N - 1], { clamp: true });
   // 스크롤 선형 f 를 spring 으로 따라가게 → 멈추면 살짝 오버슈트 후 정착하는 '뿅' 느낌.
   // stiffness↑·damping↓ 로 더 탄력있게 (너무 통통 튀면 damping 을 32 로).
   const springF = useSpring(f, { stiffness: 400, damping: 28 });
@@ -134,18 +139,12 @@ export default function Festivals() {
                 variants={rowContainer}
                 initial="hidden"
                 whileInView="show"
-                viewport={{ once: true, margin: "-20% 0px" }}
+                /* 작업3: 리스트 stagger 는 제목(TypeTitle)보다 늦게 발동. 제목은 위(festsIntro)에서
+                   먼저 재생되고, 리스트는 트랙이 무대에 들어와 하단 -20% 지점까지 올라왔을 때 등장. */
+                viewport={{ once: true, margin: "0px 0px -20% 0px" }}
               >
                 {FESTIVALS.map((fe, i) => (
-                  <NameRow
-                    key={fe.name}
-                    fe={fe}
-                    i={i}
-                    active={i === activeIndex}
-                    springF={springF}
-                    item={rowItem}
-                    reduce={!!reduce}
-                  />
+                  <NameRow key={fe.name} fe={fe} active={i === activeIndex} item={rowItem} />
                 ))}
               </motion.div>
 
@@ -178,46 +177,32 @@ export default function Festivals() {
   );
 }
 
-/* 축제명 한 줄 — 색은 activeIndex 기준으로 '딱' 전환(이미지 교체와 동기화, 짧은 tween),
-   위치 이동(trackY)은 부모의 springF 로 부드럽게. 안쪽(entrance)엔 최초 fade-up(1회). */
+/* 축제명 한 줄 — 색은 activeIndex 기준으로 '딱' 전환(이미지 교체와 동기화, 짧은 tween).
+   위치 이동(trackY)은 부모의 springF 로 부드럽게. 안쪽(entrance)엔 최초 fade-up(1회).
+   작업2: 거리 기반 opacity 페이드 제거 — 비활성도 항상 opacity 1, 활성/비활성은 색상으로만 구분. */
 function NameRow({
   fe,
-  i,
   active,
-  springF,
   item,
-  reduce,
 }: {
   fe: (typeof FESTIVALS)[number];
-  i: number;
   active: boolean;
-  springF: MotionValue<number>;
   item: Variants;
-  reduce: boolean;
 }) {
   const tr = { duration: 0.25, ease: [0.16, 1, 0.3, 1] as const };
-  // 작업3: 중앙(springF)으로부터의 거리로 opacity 페이드 — 거리 0→1, 1.2 이상→0.
-  // (springF 를 공유하므로 위치 이동과 같은 리듬으로 흐림)
-  const dist = useTransform(springF, (v) => Math.abs(v - i));
-  // 작업3: 위아래 이웃이 동시에 더 보이도록 페이드 범위 확대 (dist 1→0.35, ~2.4 부터 0)
-  const distOpacity = useTransform(dist, [0, 1, 2.4], [1, 0.35, 0]);
   return (
     <div className={styles.festRow}>
-      {/* 작업3: 거리 기반 opacity 는 진입 stagger(variants)와 충돌하지 않게 별도 wrapper 에.
-          reduce 면 페이드 끄고 항상 1. */}
-      <motion.div style={{ opacity: reduce ? 1 : distOpacity }}>
-        <motion.div variants={item}>
-          <motion.span
-            className={styles.fest__name}
-            animate={{ color: active ? "#0c0c0c" : "#c2c2bd" }}
-            transition={tr}
-          >
-            {fe.name}
-            <motion.span animate={{ color: active ? "#6c6c68" : "#d0d0cb" }} transition={tr}>
-              {fe.section}
-            </motion.span>
+      <motion.div variants={item}>
+        <motion.span
+          className={styles.fest__name}
+          animate={{ color: active ? "#0c0c0c" : "#c2c2bd" }}
+          transition={tr}
+        >
+          {fe.name}
+          <motion.span animate={{ color: active ? "#6c6c68" : "#d0d0cb" }} transition={tr}>
+            {fe.section}
           </motion.span>
-        </motion.div>
+        </motion.span>
       </motion.div>
     </div>
   );
