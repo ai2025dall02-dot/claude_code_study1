@@ -534,8 +534,32 @@
 }
 
 /* ── JOURNAL ────────────────────────────────────────── */
-/* position:relative → 검은 블라인드 오버레이(.blind)의 위치 기준(밝은 JOURNAL 위에 얹힘) */
-.journal { position: relative; background: #fff; border-top: 1px solid rgba(0, 0, 0, 0.08); }
+/* 작업2: JOURNAL sticky 체류 트랙 (FESTIVALS 의 scroller+sticky 패턴) */
+.journalScroller {
+  position: relative;
+  height: 240vh; /* 체류 길이 = 이 높이. 늘리면 더 오래 머묾(200~250vh 권장). 전환 시작점은 REVEAL_FROM(0.5) */
+}
+.journalSticky {
+  position: sticky;
+  top: 0;
+  height: 100vh; /* 화면에 고정되는 실제 패널 */
+  overflow: hidden; /* 블라인드가 넘치지 않게 클립 */
+  box-sizing: border-box;
+}
+/* position:relative → 블라인드 오버레이(.blind)의 위치 기준(밝은 JOURNAL 위에 얹힘).
+   작업2: sticky 안에서 100vh 를 채우고, 헤더+리스트(8개)를 세로 중앙 정렬해 답답하지 않게. */
+.journal {
+  position: relative;
+  height: 100%;
+  background: #fff;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  /* .section 의 큰 padding-block(clamp 4.5~9rem)은 sticky 안에서 과함 → 축소 */
+  padding-block: clamp(2rem, 5vh, 3.5rem);
+  box-sizing: border-box;
+}
+.journal .inner { width: 100%; } /* flex 안에서 full-width 유지 + margin auto 로 가운데 정렬 */
 /* 작업3: JOURNAL 헤더 바로 아래 구분선만 제거(공통 .head 의 border-bottom). 리스트(.post) 구분선은 유지 */
 .journal .head { border-bottom: none; }
 .posts { display: grid; gap: 0; }
@@ -544,7 +568,8 @@
   grid-template-columns: 9rem 1fr auto;
   gap: 0.6rem 1.6rem;
   align-items: center; /* 작업1: baseline → center. 날짜/칩·제목/READ 를 세로 중앙 기준으로 정렬 */
-  padding: clamp(1.2rem, 2.4vw, 1.7rem) 0;
+  /* 작업2: 8개가 100vh sticky 패널에 답답하지 않게 세로 패딩 축소 */
+  padding: clamp(0.75rem, 1.6vw, 1.15rem) 0;
   border-top: 1px solid rgba(0, 0, 0, 0.12);
   text-decoration: none;
   color: inherit;
