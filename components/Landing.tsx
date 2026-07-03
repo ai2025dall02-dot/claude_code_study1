@@ -62,9 +62,6 @@ export default function Landing() {
     show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
   };
 
-  // JOURNAL→CONTACT 전환: JOURNAL 섹션이 화면 위로 빠져나가는 마지막 1뷰포트 구간에
-  // 내용이 떠오르며(위로 이동) 페이드·축소되어 퇴장 → 이어서 CONTACT 커튼 리빌이 걷힘.
-  // offset ["end end","end start"]: 섹션 하단이 뷰포트 하단→상단으로 이동하는 동안 0→1.
   // 블라인드 트리거 = JOURNAL 섹션 퇴장 스크롤. offset ["end end","end start"]: JOURNAL 하단이
   // 뷰포트 하단→상단으로 이동하는 동안 0→1. JOURNAL 은 마지막 섹션이 아니라(아래 CONTACT 존재)
   // 1까지 확실히 완주됨. 이 진행도에 검은 슬랫이 "밝은 JOURNAL 위로 차오르는" 것을 연동.
