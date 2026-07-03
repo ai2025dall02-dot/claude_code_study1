@@ -1,7 +1,14 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useReducedMotion, useScroll, useTransform, type Variants } from "framer-motion";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+  type MotionValue,
+  type Variants,
+} from "framer-motion";
 import About from "@/components/About";
 import Lineup from "@/components/Lineup";
 import Filmmakers from "@/components/Filmmakers";
@@ -16,6 +23,20 @@ const JOURNAL = [
   { date: "2024.06.30", cat: "상영회", title: "16mm 아카이브 특별전 ‘필름의 끝’ 단독 상영" },
   { date: "2024.05.12", cat: "소식", title: "필름 누벨, 2025 라인업 2편 추가 확정" },
 ];
+
+/* 가로 블라인드 슬랫 1개. 훅 규칙 준수를 위해 useTransform 을 슬랫 컴포넌트 내부에서 호출
+   (부모 map 안에서 직접 useTransform 하면 훅 규칙 위반). 슬랫 i 는 progress
+   [i*STEP, i*STEP+WINDOW] 구간에서 scaleY 1→0 으로 위→아래 순차로 접혀 사라짐.
+   (y 이동은 슬랫 자기 높이만큼만 움직여 완전히 안 걷힘 → scaleY 로 각 슬랫이 선까지 줄어들며 리빌). */
+const SLATS = 10;
+const SLAT_STEP = 0.05; // 슬랫 사이 시작 지연(위 슬랫부터)
+const SLAT_WINDOW = 0.45; // 슬랫 하나가 접히는 구간(마지막 슬랫: 0.45+0.45=0.90 → progress 1 이전 완주,
+// 동시에 진입 후반까지 덮개가 유지돼 CONTACT 가 화면을 채운 채 걷히는 게 보이도록)
+function RevealSlat({ index, progress }: { index: number; progress: MotionValue<number> }) {
+  const start = index * SLAT_STEP;
+  const scaleY = useTransform(progress, [start, start + SLAT_WINDOW], [1, 0]);
+  return <motion.span className={styles.contactReveal__panel} style={{ scaleY }} />;
+}
 
 export default function Landing() {
   const reduce = useReducedMotion();
@@ -55,24 +76,15 @@ export default function Landing() {
   const jExitOpacity = useTransform(journalExit, [0, 0.35, 0.9], [1, 1, reduce ? 1 : 0]);
   const jExitScale = useTransform(journalExit, [0, 1], [1, reduce ? 1 : 0.96]);
 
-  // 작업5: 커튼 트리거를 CONTACT 섹션 자체의 "진입" 스크롤로 변경(기존 journalExit 은 이미
-  // 1에 도달해 CONTACT 가 화면에 찰 땐 다 걷혀버려 안 보였음).
-  // offset ["start end","start start"]: CONTACT 상단이 뷰포트 하단에 닿을 때 0 → 상단에 닿을 때 1.
-  // → CONTACT 가 화면에 들어차는 동안 0→1 이라 커튼이 화면 안에서 걷히는 게 보임.
+  // 블라인드 트리거 = CONTACT 섹션 자체 진입 스크롤. CONTACT 는 마지막 섹션이라 그 아래 여백이
+  // 없어 상단이 뷰포트 최상단까지 못 올라감 → 끝점을 "start start" 로 두면 contactEnter 가 1에
+  // 도달하지 못해 뒤쪽 슬랫이 안 걷혔음(진단으로 max≈0.93 확인). 끝점을 "start 25%"(상단이 뷰포트
+  // 25% 지점) 로 바꿔 진입 중 0→1 을 확실히 완주 + 슬랫이 화면 대부분을 덮은 채 걷히는 게 보이게 함.
   const contactRef = useRef<HTMLElement>(null);
   const { scrollYProgress: contactEnter } = useScroll({
     target: contactRef,
-    offset: ["start end", "start start"],
+    offset: ["start end", "start 25%"],
   });
-  // 패널 6개 고정 → 훅 순서 안정적. 패널 i 는 [i*0.05, 0.6+i*0.05] 구간에서 y 0%→-100% 로
-  // 순차 상승(아래→위). 되감으면 다시 덮임. reduce 여도 훅은 항상 호출하고 렌더만 조건 처리.
-  const pY0 = useTransform(contactEnter, [0.0, 0.6], ["0%", "-100%"]);
-  const pY1 = useTransform(contactEnter, [0.05, 0.65], ["0%", "-100%"]);
-  const pY2 = useTransform(contactEnter, [0.1, 0.7], ["0%", "-100%"]);
-  const pY3 = useTransform(contactEnter, [0.15, 0.75], ["0%", "-100%"]);
-  const pY4 = useTransform(contactEnter, [0.2, 0.8], ["0%", "-100%"]);
-  const pY5 = useTransform(contactEnter, [0.25, 0.85], ["0%", "-100%"]);
-  const panelYs = [pY0, pY1, pY2, pY3, pY4, pY5];
 
   return (
     <div className={styles.land}>
@@ -131,15 +143,15 @@ export default function Landing() {
       </section>
 
       {/* ── CONTACT + FOOTER (black) ───────────── */}
-      {/* 작업5: 섹션에 ref 부착 → 커튼을 CONTACT 자체 진입 스크롤(contactEnter)에 연동 */}
+      {/* 섹션에 ref 부착 → 커튼을 CONTACT 자체 진입 스크롤(contactEnter)에 연동 */}
       <section ref={contactRef} className={`${styles.section} ${styles.contact}`} id="contact">
-        {/* 작업5: 스크롤 연동 검은 커튼. contactEnter(0→1: CONTACT 가 화면에 들어차는 구간)에 물려
-            패널이 각자 y 0%→-100% 로 순차 상승 → 그 아래 깔린 CONTACT 가 드러남. 되감으면 다시 덮임.
-            pointer-events:none 이라 걷히기 전후 모두 클릭/스크롤을 막지 않음. reduce 면 미렌더. */}
+        {/* 스크롤 연동 가로 블라인드: 검은 수평 슬랫 10개가 위에서부터 순차로 scaleY 1→0 접히며
+            그 아래 CONTACT 내용이 드러남. 되감으면 다시 덮임. 각 슬랫 값은 RevealSlat 내부에서
+            contactEnter 로 계산(훅 규칙 준수). pointer-events:none 이라 클릭/스크롤 비차단. reduce 면 미렌더. */}
         {!reduce && (
           <div className={styles.contactReveal} aria-hidden="true">
-            {panelYs.map((y, i) => (
-              <motion.span key={i} className={styles.contactReveal__panel} style={{ y }} />
+            {Array.from({ length: SLATS }).map((_, i) => (
+              <RevealSlat key={i} index={i} progress={contactEnter} />
             ))}
           </div>
         )}
