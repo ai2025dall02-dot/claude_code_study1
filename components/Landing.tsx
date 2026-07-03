@@ -26,13 +26,14 @@ const JOURNAL = [
 
 /* 가로 블라인드 슬랫 1개. 훅 규칙 준수를 위해 useTransform 을 슬랫 컴포넌트 내부에서 호출
    (부모 map 안에서 직접 useTransform 하면 훅 규칙 위반).
-   근본수정: 밝은 JOURNAL 위에서 검은 슬랫이 "차오르며 덮는" 방향(scaleY 0→1). 슬랫 i 는
-   progress [i*STEP, i*STEP+WINDOW] 구간에서 위→아래 순차로 펼쳐져 밝은 영역을 가림. */
+   밝은 JOURNAL 위에서 검은 슬랫이 "차오르며 덮는" 방향(scaleY 0→1).
+   작업1: 레퍼런스처럼 아래→위로 차오르게 — 맨 아래 슬랫(index=SLATS-1)이 먼저, 위로 갈수록 나중. */
 const SLATS = 10;
-const SLAT_STEP = 0.05; // 슬랫 사이 시작 지연(위 슬랫부터)
-const SLAT_WINDOW = 0.3; // 슬랫 하나가 펼쳐지는 구간(마지막 슬랫: 0.45+0.3=0.75 → JOURNAL 이 절반쯤 빠지기 전 완전히 덮음)
+const SLAT_STEP = 0.05; // 슬랫 사이 시작 지연(아래 슬랫부터)
+const SLAT_WINDOW = 0.3; // 슬랫 하나가 펼쳐지는 구간(맨 위 슬랫: 0.45+0.3=0.75 → JOURNAL 이 절반쯤 빠지기 전 완전히 덮음)
 function RevealSlat({ index, progress }: { index: number; progress: MotionValue<number> }) {
-  const start = index * SLAT_STEP;
+  // 작업1: 시작 지연을 아래 슬랫 기준으로 뒤집음(맨 아래=index SLATS-1 이 progress 0 부근 먼저 펼쳐짐)
+  const start = (SLATS - 1 - index) * SLAT_STEP;
   const scaleY = useTransform(progress, [start, start + SLAT_WINDOW], [0, 1]);
   return <motion.span className={styles.blind__slat} style={{ scaleY }} />;
 }
@@ -72,6 +73,11 @@ export default function Landing() {
   });
   // 진단 결과: journalExit 는 0→0.93 까지 도달(JOURNAL 하단=CONTACT 상단이라 마지막 섹션
   // 기하로 1엔 못 미침). 슬랫 매핑은 마지막 슬랫이 0.75 에 완전히 덮이도록 잡아 문제없이 다 채워짐.
+
+  // 작업2: CONTACT 콘텐츠가 블라인드가 차오르는 흐름을 따라 아래→위로 슬라이드 인.
+  // 같은 journalExit 에 연동: [0.1, 0.8] 구간에서 y 120px→0 (블라인드 완주 0.75 즈음 제자리 도달).
+  // reduce 면 이동 없이 0 고정.
+  const contactSlideY = useTransform(journalExit, [0.1, 0.8], [reduce ? 0 : 120, 0]);
 
   return (
     <div className={styles.land}>
@@ -144,9 +150,11 @@ export default function Landing() {
           자연스럽게 이어지는 검은 콘텐츠. 등장은 콘텐츠 stagger(whileInView)로 유지. */}
       <section className={`${styles.section} ${styles.contact}`} id="contact">
         {/* 콘텐츠 전체를 하나의 stagger 컨테이너로 묶어 아래에서 위로 순차 등장.
-            .inner=상위 컨테이너(헤더/그리드/footer), .contactGrid=하위 컨테이너(리드/CTA/연락처). */}
+            작업2: 여기에 스크롤 연동 y(contactSlideY)를 더해 블라인드가 차오르는 흐름을 따라
+            컨테이너째 아래→위로 슬라이드 인(내부 아이템 stagger 는 그대로). */}
         <motion.div
           className={styles.inner}
+          style={{ y: contactSlideY }}
           variants={contentGroup}
           initial="hidden"
           whileInView="show"
