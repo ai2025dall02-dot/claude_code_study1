@@ -17,10 +17,6 @@ const JOURNAL = [
   { date: "2024.05.12", cat: "소식", title: "필름 누벨, 2025 라인업 2편 추가 확정" },
 ];
 
-const FOOTER_NAV = ["ABOUT", "LINEUP", "FILMMAKERS", "FESTIVALS", "JOURNAL", "CONTACT"];
-
-/* 작업1: CONTACT 진입 시 아래→위로 걷히는 검은 커튼 패널 수 (모바일은 CSS 로 4개만 노출) */
-const PANELS = 6;
 /* 작업2: 라인 아웃라인 제거 + 한 글자씩 타이핑되는 리드 문구 */
 const LEAD_TEXT = "한 편의 영화를 극장으로 옮기고 싶다면.";
 
@@ -35,16 +31,6 @@ export default function Landing() {
   const postItem: Variants = {
     hidden: { opacity: 0, y: reduce ? 0 : 30 },
     show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
-  };
-
-  // 작업1: 검은 패널 커튼 — 아래→위로 순차(stagger)로 걷히며 CONTACT 를 드러냄
-  const revealGroup: Variants = {
-    hidden: {},
-    show: { transition: { staggerChildren: 0.07 } },
-  };
-  const revealPanel: Variants = {
-    hidden: { y: "0%" }, // 처음엔 콘텐츠를 완전히 덮음
-    show: { y: "-100%", transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
   };
 
   // 작업2: 리드 문구 타이핑 — 글자 컨테이너(패널 리빌 뒤 delayChildren 0.5s) + 글자별 fade-up
@@ -69,6 +55,17 @@ export default function Landing() {
   const jExitY = useTransform(journalExit, [0, 1], [0, reduce ? 0 : -160]);
   const jExitOpacity = useTransform(journalExit, [0, 0.35, 0.9], [1, 1, reduce ? 1 : 0]);
   const jExitScale = useTransform(journalExit, [0, 1], [1, reduce ? 1 : 0.96]);
+
+  // 작업3(방식 A): 검은 커튼 패널을 whileInView 대신 journalExit 스크롤 진행도에 직접 연동.
+  // 패널 i 는 [i*0.06, 0.7+i*0.06] 구간에서 y 0%→-100% 로 걷혀 순차 리빌 → 되감으면 다시 덮임.
+  // (패널 6개 고정이라 훅 순서 안정적. reduce 여도 훅은 항상 호출하고 렌더만 조건 처리)
+  const pY0 = useTransform(journalExit, [0.0, 0.7], ["0%", "-100%"]);
+  const pY1 = useTransform(journalExit, [0.06, 0.76], ["0%", "-100%"]);
+  const pY2 = useTransform(journalExit, [0.12, 0.82], ["0%", "-100%"]);
+  const pY3 = useTransform(journalExit, [0.18, 0.88], ["0%", "-100%"]);
+  const pY4 = useTransform(journalExit, [0.24, 0.94], ["0%", "-100%"]);
+  const pY5 = useTransform(journalExit, [0.3, 1.0], ["0%", "-100%"]);
+  const panelYs = [pY0, pY1, pY2, pY3, pY4, pY5];
 
   return (
     <div className={styles.land}>
@@ -128,21 +125,15 @@ export default function Landing() {
 
       {/* ── CONTACT + FOOTER (black) ───────────── */}
       <section className={`${styles.section} ${styles.contact}`} id="contact">
-        {/* 작업1: 검은 패널 커튼 리빌. 진입 시 아래→위로 순차로 걷힘. once:true 로 1회만.
-            reduce 모션이면 오버레이 자체를 렌더하지 않아 콘텐츠가 즉시 보임 */}
+        {/* 작업3(방식 A): 스크롤 연동 검은 커튼. JOURNAL 이 걷히는 진행도(journalExit)에 물려
+            패널이 각자 y 0%→-100% 로 순차 상승 → 그 아래 깔린 CONTACT 가 드러남. 되감으면 다시 덮임.
+            pointer-events:none 이라 걷히기 전후 모두 클릭/스크롤을 막지 않음. reduce 면 미렌더. */}
         {!reduce && (
-          <motion.div
-            className={styles.contactReveal}
-            variants={revealGroup}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "0px 0px -20% 0px" }}
-            aria-hidden="true"
-          >
-            {Array.from({ length: PANELS }).map((_, i) => (
-              <motion.span key={i} className={styles.contactReveal__panel} variants={revealPanel} />
+          <div className={styles.contactReveal} aria-hidden="true">
+            {panelYs.map((y, i) => (
+              <motion.span key={i} className={styles.contactReveal__panel} style={{ y }} />
             ))}
-          </motion.div>
+          </div>
         )}
 
         <div className={styles.inner}>
@@ -187,13 +178,27 @@ export default function Landing() {
               )}
             </div>
 
-            <div className={styles.contactCta}>
+            {/* 작업1: 우측 열 상단 = CTA. 작업3: 커튼 뒤 살짝 딜레이(0.55s)로 fade-up 등장 */}
+            <motion.div
+              className={styles.contactCta}
+              initial={reduce ? false : { opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: reduce ? 0 : 0.55 }}
+            >
               <a className={styles.contactCta__link} href="mailto:booking@film-nouvelle.example">
                 협업 시작하기 <span aria-hidden="true">→</span>
               </a>
-            </div>
+            </motion.div>
 
-            <div className={styles.ciList}>
+            {/* 작업1: 우측 열 하단 = 연락처 2×2. 작업3: CTA 뒤 이어서(0.7s) 순차 등장 */}
+            <motion.div
+              className={styles.ciList}
+              initial={reduce ? false : { opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: reduce ? 0 : 0.7 }}
+            >
               <div>
                 <p className={styles.ci__label}>배급 · 상영 문의</p>
                 <p className={styles.ci__value}>
@@ -214,21 +219,15 @@ export default function Landing() {
                 <p className={styles.ci__label}>스튜디오</p>
                 <p className={styles.ci__value}>서울특별시 마포구 와우산로 00, 3층</p>
               </div>
-            </div>
+            </motion.div>
           </div>
 
+          {/* 작업2: 내비 링크 제거 → 로고(좌) ↔ 저작권/주소(우) 가로 양끝 정렬 */}
           <footer className={styles.footer}>
             <div className={styles.footer__brand}>
               필름 누벨
               <small>FILM NOUVELLE</small>
             </div>
-            <nav className={styles.footer__nav}>
-              {FOOTER_NAV.map((l) => (
-                <a key={l} href={`#${l.toLowerCase()}`}>
-                  {l}
-                </a>
-              ))}
-            </nav>
             <p className={styles.footer__fine}>
               © 2026 FILM NOUVELLE. 모든 작품·인물은 데모용 가상 정보입니다.
               <br />

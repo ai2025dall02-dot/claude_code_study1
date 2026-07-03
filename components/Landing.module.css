@@ -743,13 +743,14 @@
   background: #0b0b0c;
   will-change: transform;
 }
+/* 작업1: TRIONN 식 — 좌측 lead 가 두 행 세로 차지, 우측은 cta→contacts 순으로 쌓임 */
 .contactGrid {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr 0.9fr;
   grid-template-areas:
     "lead cta"
-    "contacts contacts";
-  gap: clamp(2.4rem, 6vw, 5rem) clamp(2rem, 6vw, 5rem);
+    "lead contacts";
+  gap: clamp(2rem, 4vw, 3rem) clamp(2rem, 6vw, 5rem);
   align-items: start;
 }
 /* 작업3: 좌측 — 작은 아이브로우 + 대형 리드 */
@@ -791,11 +792,11 @@
   0%, 50% { opacity: 1; }
   50.01%, 100% { opacity: 0; }
 }
-/* 작업3: 우측 — CTA 링크 */
+/* 작업1: 우측 상단 — CTA 링크(우측 열 좌측 정렬) */
 .contactCta {
   grid-area: cta;
-  align-self: center;
-  justify-self: end;
+  align-self: start;
+  justify-self: start;
 }
 .contactCta__link {
   font-family: "Arial Black", Helvetica, sans-serif;
@@ -811,12 +812,12 @@
 .contactCta__link span { display: inline-block; transition: transform 0.25s; }
 .contactCta__link:hover { border-color: #fff; color: #fff; }
 .contactCta__link:hover span { transform: translateX(4px); }
-/* 작업3: 하단 — 연락처 4열 가로 그리드 */
+/* 작업1: 우측 하단 — 연락처 2×2 그리드(레퍼런스의 BUSINESS ENQUIRY / SOCIAL 식) */
 .ciList {
   grid-area: contacts;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: clamp(1.4rem, 3vw, 2.4rem);
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(1.4rem, 3vw, 2.2rem);
   padding-top: clamp(1.8rem, 3vw, 2.4rem);
   border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
@@ -865,25 +866,10 @@
   color: #8a8a86;
   margin-top: 0.6rem;
 }
-.footer__nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.2rem;
-}
-.footer__nav a {
-  font-family: var(--font-meta, monospace);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #a9a9a4;
-  transition: color 0.2s;
-}
-.footer__nav a:hover { color: #fff; }
+/* 작업2: 내비 제거 → 저작권/주소를 로고 오른쪽에 배치(우측 정렬, 작은 meta 폰트) */
 .footer__fine {
-  width: 100%;
-  margin-top: 1.4rem;
-  padding-top: 1.2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  width: auto;
+  text-align: right;
   font-family: var(--font-meta, monospace);
   font-size: 10.5px;
   letter-spacing: 0.04em;
@@ -907,6 +893,9 @@
   }
   .contactCta { justify-self: start; align-self: start; }
   .ciList { grid-template-columns: repeat(2, 1fr); }
+  /* 작업2: footer 도 로고와 문구가 세로로 쌓이게(문구 좌측 정렬) */
+  .footer { flex-direction: column; align-items: flex-start; gap: 1.2rem; }
+  .footer__fine { text-align: left; }
 }
 @media (max-width: 600px) {
   .grid { flex-direction: column; gap: 0.9rem; } /* 모바일: 열을 세로로 쌓아 단일 흐름 */
