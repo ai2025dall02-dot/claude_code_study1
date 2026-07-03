@@ -537,7 +537,9 @@
 /* 작업2: JOURNAL sticky 체류 트랙 (FESTIVALS 의 scroller+sticky 패턴) */
 .journalScroller {
   position: relative;
-  height: 240vh; /* 체류 길이 = 이 높이. 늘리면 더 오래 머묾(200~250vh 권장). 전환 시작점은 REVEAL_FROM(0.5) */
+  /* 작업1: 체류/무게감 핵심 조절점. 240vh → 340vh 로 늘려 JOURNAL 이 더 오래 고정되고 블라인드 상승도
+     같은 진행도라도 더 많은 스크롤에 퍼져 묵직해짐. 더 무겁게 하려면 이 값을 키우면 됨(예 400vh). */
+  height: 340vh;
 }
 .journalSticky {
   position: sticky;

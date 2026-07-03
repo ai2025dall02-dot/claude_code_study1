@@ -5,6 +5,7 @@ import {
   motion,
   useReducedMotion,
   useScroll,
+  useSpring,
   useTransform,
   type MotionValue,
   type Variants,
@@ -33,10 +34,20 @@ const JOURNAL = [
    밝은 JOURNAL 위에서 검은 슬랫이 "차오르며 덮는" 방향(scaleY 0→1), 아래→위 순차.
    작업2: sticky 트랙 진행도(journalProgress)의 "뒤 구간"에서만 발동 → 앞 구간은 JOURNAL 체류.
    REVEAL_FROM 부터 전환 시작(이 값을 낮추면 체류 짧아지고 전환 빨라짐). */
+/* ── 무게감/타이밍 조절점 ──────────────────────────────────────────────
+   · 체류 길이: .journalScroller height (CSS, 길수록 묵직) — 현재 340vh
+   · 블라인드 시작: REVEAL_FROM (뒤로 미룰수록 앞 체류 ↑)
+   · 블라인드 무게: SLAT_STEP(stagger 간격 ↑ = 한 장씩 묵직) / SLAT_WINDOW(슬랫 펼침 구간)
+   · 감속 스무딩: SPRING(아래) stiffness ↓ = 더 무거움 / damping ↑ = 급정지 없이 부드럽게
+   · CONTACT 상승: contactRevealY 구간(아래) — 블라인드보다 살짝 뒤에서 시작 */
 const SLATS = 10;
-const REVEAL_FROM = 0.5; // journalProgress 0.5 부터 블라인드 차오름 시작(앞 0~0.5 는 체류)
-const SLAT_STEP = 0.03; // 슬랫 사이 시작 지연(아래 슬랫부터)
-const SLAT_WINDOW = 0.2; // 슬랫 하나 펼침 구간(맨 위 슬랫: 0.5+9*0.03+0.2=0.97 → 트랙 끝나기 직전 완전히 덮음)
+// 작업1: 블라인드 시작을 0.5 → 0.56 으로 미뤄 앞쪽 순수 체류를 넉넉히 확보.
+const REVEAL_FROM = 0.56;
+// 작업2: stagger 간격 ↑(0.03→0.033, 한 장씩 묵직) + 전체 진행을 REVEAL_FROM~1.0 에 넓게 퍼지게.
+const SLAT_STEP = 0.033; // 슬랫 사이 시작 지연(아래 슬랫부터)
+const SLAT_WINDOW = 0.14; // 맨 위 슬랫: 0.56+9*0.033+0.14 ≈ 1.0 → 트랙 끝에서 완전히 덮임(더 긴 스크롤 = 무겁게)
+// 작업2: journalProgress 를 스프링으로 감싸 묵직·부드럽게(급가속/급정지 방지). stiffness↓/damping↑ = 더 무겁게.
+const SPRING = { stiffness: 70, damping: 26, mass: 1.1 };
 function RevealSlat({ index, progress }: { index: number; progress: MotionValue<number> }) {
   // 아래 슬랫(index=SLATS-1)이 REVEAL_FROM 부근 먼저, 위로 갈수록 나중에 펼쳐짐
   const start = REVEAL_FROM + (SLATS - 1 - index) * SLAT_STEP;
@@ -78,12 +89,14 @@ export default function Landing() {
     target: journalTrackRef,
     offset: ["start start", "end end"],
   });
+  // 작업2: 스크롤 진행도를 스프링으로 스무딩 → 블라인드/CONTACT 가 묵직하게 따라오고 부드럽게 정착.
+  // (오버댐프: damping 26 > 임계 ~17.5 라 오버슈트 없이 부드럽게 멈춤. reduce 면 오버레이/블라인드 미렌더라 미사용.)
+  const journalSmooth = useSpring(journalProgress, SPRING);
 
-  // 작업3: 블라인드와 CONTACT 등장을 "하나의 흐름"으로 잇기 위해, CONTACT 를 JOURNAL sticky 패널
-  // 안의 오버레이로 얹어 같은 journalProgress 로 아래→위로 올림(트랙 밖 별도 스크롤이 아님 → 끊김/지연 없음).
-  // [0.55, 1.0] 구간에서 y 100%(패널 아래) → 0%(제자리). 블라인드 상승(0.5~0.97)과 거의 동시에 올라와
-  // 트랙 끝(=페이지 끝) 시점에 제자리. 조절점: 이 구간을 앞당기면 CONTACT 가 더 빨리 올라옴.
-  const contactRevealY = useTransform(journalProgress, [0.55, 1.0], ["100%", "0%"]);
+  // 작업3: 블라인드와 CONTACT 등장을 "하나의 흐름"으로 — CONTACT 를 sticky 패널 오버레이로 얹어
+  // 같은(스무딩된) 진행도로 올림. 블라인드보다 살짝 뒤(0.62)에서 시작해 이어서 따라 올라오는 시차.
+  // [0.62, 1.0] 에서 y 100%(패널 아래) → 0%(제자리). 끝점 1.0 유지 → 트랙 끝에서 정확히 안착.
+  const contactRevealY = useTransform(journalSmooth, [0.62, 1.0], ["100%", "0%"]);
 
   // 작업3: CONTACT 콘텐츠(헤더/그리드/footer). 오버레이(비-reduce)와 일반 섹션(reduce) 양쪽에서
   // 재사용. 내부 아이템 stagger(contentGroup/contentItem)는 그대로. slide-up 은 바깥 래퍼가 담당.
@@ -181,8 +194,9 @@ export default function Landing() {
                 (REVEAL_FROM~)에서 슬랫이 아래→위로 차오르며 덮음. pointer-events:none / reduce 면 미렌더. */}
             {!reduce && (
               <div className={styles.blind} aria-hidden="true">
+                {/* 작업2: 스무딩된 진행도(journalSmooth)로 묵직·부드럽게 차오름 */}
                 {Array.from({ length: SLATS }).map((_, i) => (
-                  <RevealSlat key={i} index={i} progress={journalProgress} />
+                  <RevealSlat key={i} index={i} progress={journalSmooth} />
                 ))}
               </div>
             )}
