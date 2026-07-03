@@ -7,6 +7,7 @@ import {
   useMotionTemplate,
   useReducedMotion,
   useScroll,
+  useSpring,
   useTransform,
   type MotionValue,
 } from "framer-motion";
@@ -102,6 +103,13 @@ export default function Filmmakers() {
   }
   const x = useTransform(scrollYProgress, snapIn, snapOut);
 
+  // 작업1: 트랙 x 를 useSpring 으로 스무딩 → 묵직한 관성 + 부드러운 감속(스냅 지점서 급정지 대신
+  //   살짝 밀렸다 정착). 조절점: stiffness 낮을수록 무거움 / damping 높을수록 덜 출렁 / mass 관성.
+  //   (damping 28 > 임계 ~19.9 → 오버댐프로 과한 출렁임 없음)
+  const xSmooth = useSpring(x, { stiffness: 90, damping: 28, mass: 1.1 });
+  // reduce 면 spring 우회(x 직결). 트랙과 FmCard 가 "같은" 값을 봐야 blur/scale/위치가 안 어긋남.
+  const trackX = reduce ? x : xSmooth;
+
   // [1] 타이핑 구간(0~0.28)에는 트랙 전체를 숨김 → 0.28 부근에서 fade-in (타이핑 먼저 노출)
   const trackGate = useTransform(scrollYProgress, [0.24, 0.3], [0, 1]);
   const trackOpacity = reduce ? 1 : trackGate;
@@ -112,14 +120,16 @@ export default function Filmmakers() {
         {/* 배경에 고정된 큰 FILMMAKERS 텍스트 (카드가 그 앞을 지나감) */}
         <div className={styles.fmBg} aria-hidden="true">
           <span className={styles.eyebrow}>Directors &amp; Authors</span>
-          <TypeTitle solid="FILM" outline="MAKERS" inViewMargin="0px" />
+          {/* 작업2: 즉시(0px) → "0px 0px -45% 0px" 로 늦춤. 제목이 뷰포트 하단에서 45% 위(대략 화면
+              중앙)까지 올라와 섹션이 자리잡은 뒤 타이핑 시작. trackGate(0.24~0.3)보다 먼저라 순서 유지. */}
+          <TypeTitle solid="FILM" outline="MAKERS" inViewMargin="0px 0px -45% 0px" />
           <span className={styles.fmHeadSub}>우리가 동행하는 작가들</span>
         </div>
 
-        {/* 가로 트랙 — x 만 연동. 카드별 강조/블러는 각 FmCard 가 중앙거리로 개별 처리 */}
-        <motion.div ref={trackRef} className={styles.fmTrack} style={{ x, opacity: trackOpacity }}>
+        {/* 가로 트랙 — 스무딩된 trackX 연동. 카드별 강조/블러는 각 FmCard 가 중앙거리로 개별 처리 */}
+        <motion.div ref={trackRef} className={styles.fmTrack} style={{ x: trackX, opacity: trackOpacity }}>
           {MAKERS.map((mk, i) => (
-            <FmCard key={mk.id} maker={mk} index={i} trackX={x} metrics={m} reduce={!!reduce} />
+            <FmCard key={mk.id} maker={mk} index={i} trackX={trackX} metrics={m} reduce={!!reduce} />
           ))}
         </motion.div>
       </div>
