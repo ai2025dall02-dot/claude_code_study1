@@ -944,6 +944,10 @@
   .post { grid-template-columns: 1fr; }
   .ciList { grid-template-columns: 1fr; } /* 모바일 1열 */
 
+  /* [2] 섹션 사이 가로 구분선 제거 (모바일) — .fm(border-block)·.journal(border-top).
+     (.lineup·.contact 은 원래 상단 border 없음) */
+  .fm, .journal { border-block: none; }
+
   /* [2] ABOUT: 모바일에선 pin(sticky·100vh·overflow) 해제 → 화면을 넘는 본문이 잘리지 않게
      일반 흐름으로. 원형 reveal 레이어(lineupReveal/aboutInvert)는 pin 이 없으면 불필요 → 미표시.
      (reduce 모션 처리와 같은 방향) */

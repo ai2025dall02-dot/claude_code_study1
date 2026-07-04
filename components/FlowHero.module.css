@@ -297,7 +297,7 @@
      안 됨(원근 왜곡으로 기울기가 달라 보임). 그래서 .deckTilt 는 데스크탑 지오메트리(--scale 0.8)를
      그대로 두고, perspective 컨테이너인 .deck 자체를 균일 축소(scale 0.5) → 투영 결과가 통째로
      작아질 뿐 각도(rotateZ -8·rotateX -20)는 픽셀 단위로 동일. left 도 데스크탑과 같은 50%. */
-  .deck { left: 50%; transform: scale(0.5); transform-origin: center; }
+  .deck { left: 50%; transform: scale(0.65); transform-origin: center; } /* 원통덱 확대(0.5→0.65), 각도·left 유지 */
   .deckTilt { --scale: 0.8; } /* 태블릿(0.6) 상속 방지 — 데스크탑 지오메트리로 복귀 */
   /* [2] 회전 릴 + 원형 회전 텍스트(ringText) 모바일 삭제 */
   .reelWrap { display: none; }

@@ -68,7 +68,11 @@ export default function Landing() {
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
   }, []);
-  // sticky/블라인드/오버레이를 끄는 조건 (reduce 이거나 모바일)
+  // flat = "JOURNAL sticky 체류 + 블라인드 + CONTACT 슬라이드업 커튼" 을 끄는 조건(reduce 또는 모바일).
+  // ※ 이건 '구조(커튼/핀)'만 끄는 것. CONTACT 콘텐츠 등장(contentGroup/contentItem fade-up)은 아래
+  //   폴백 섹션의 contactInner 에 그대로 살아 있어 모바일에서도 whileInView 로 정상 발동한다.
+  //   fade-up 의 '이동량'만 reduce 에서 0 으로 죽임(contentItem: y = reduce ? 0 : 30) → 즉 모바일은
+  //   y 이동 포함 fade-up 유지, reduce 만 opacity 위주로 최소화(둘을 분리).
   const flat = reduce || isMobile;
 
   // 작업2: JOURNAL 리스트 등장 — 다른 섹션과 같은 stagger 컨테이너 + fade-up item 컨벤션
