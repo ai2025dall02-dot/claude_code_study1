@@ -39,17 +39,17 @@ export default function About() {
     target: ref,
     offset: ["start end", "end start"],
   });
-  // 작업1: 스크롤 진행도를 스프링으로 스무딩 → 배경/인용문 색이 관성 있게 묵직하게, 부드럽게 정착.
-  //   조절점: stiffness 낮을수록 무거움 / damping 높을수록 덜 출렁 / mass 관성.
-  const smoothEnter = useSpring(scrollYProgress, { stiffness: 70, damping: 26, mass: 1.1 });
+  // 작업1: 스크롤 진행도를 스프링으로 스무딩(부드러움 유지) + 빠릿하게 stiffness 70→90(damping 28 로
+  //   출렁임 억제). 조절점: stiffness 높을수록 빠릿/낮을수록 무거움 / damping 높을수록 덜 출렁.
+  const smoothEnter = useSpring(scrollYProgress, { stiffness: 90, damping: 28, mass: 1.1 });
   const enterInput = reduce ? scrollYProgress : smoothEnter; // reduce 면 spring 우회
-  // 진입: 흰→검정. 구간 [0,0.2] → [0,0.28] 로 넓혀 더 오래 걸쳐 묵직하게. 셋 다 같은 spring 입력 공유.
-  const backgroundColor = useTransform(enterInput, [0, 0.28], ["#f8f8f8", "#0b0b0c"]);
+  // 작업1: 전환 구간 [0,0.28] → [0,0.16] 으로 좁혀 더 빨리 검게(부드러움은 spring 이 유지). 셋 다 같은 입력 공유.
+  const backgroundColor = useTransform(enterInput, [0, 0.16], ["#f8f8f8", "#0b0b0c"]);
   // 인용문 글자색: 밝은 배경에선 어둡게, 어두워지면 밝게 (대비 유지)
-  const quoteFill = useTransform(enterInput, [0, 0.28], ["#1a1a1a", "#f4f4f2"]);
+  const quoteFill = useTransform(enterInput, [0, 0.16], ["#1a1a1a", "#f4f4f2"]);
   const quoteGhost = useTransform(
     enterInput,
-    [0, 0.28],
+    [0, 0.16],
     ["rgba(26,26,26,0.22)", "rgba(244,244,242,0.16)"]
   );
 
