@@ -58,6 +58,17 @@ export default function Lineup() {
   const reduce = useReducedMotion();
   const sectionRef = useRef<HTMLElement | null>(null);
 
+  // 모바일(≤767)에서는 .grid 가 1열로 쌓여 열마다 속도가 다른 패럴랙스가 서로 어긋난다
+  // → 모바일에서는 패럴랙스 정지(y=0). 데스크톱/태블릿은 그대로 유지.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const sync = () => setIsMobile(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
   // 패럴랙스용 — 섹션이 화면을 지나는 전체 진행도 (0: 하단 진입 ~ 1: 상단 이탈)
   // (원형 reveal 은 About 컴포넌트로 이동 — About 본문 기준으로 시작 시점을 잡기 위해)
   const { scrollYProgress } = useScroll({
@@ -85,6 +96,7 @@ export default function Lineup() {
               progress={scrollYProgress}
               speed={COL_SPEED[c]}
               reduce={!!reduce}
+              noParallax={isMobile}
               items={ITEMS.map((f, i) => ({ f, i })).filter(({ i }) => i % COLS === c)}
             />
           ))}
@@ -101,12 +113,14 @@ function ParallaxColumn({
   progress,
   speed,
   reduce,
+  noParallax,
   className,
   items,
 }: {
   progress: MotionValue<number>;
   speed: number;
   reduce: boolean;
+  noParallax: boolean; // 모바일 1열 — 열 이동 정지
   className: string;
   items: { f: Film; i: number }[];
 }) {
@@ -121,7 +135,9 @@ function ParallaxColumn({
   // 열 이동 스프링 — 관성은 줄이고 부드러움만: stiffness↑(스크롤에 더 붙음) + mass 1.0(가벼움) + damping 유지.
   //   조절점: stiffness 높을수록 스크롤 밀착(관성↓) / damping 높을수록 덜 출렁 / mass 낮을수록 가벼움.
   const ySmooth = useSpring(yRaw, { stiffness: 185, damping: 28, mass: 1.0 });
-  const y = reduce ? 0 : ySmooth;
+  // reduce 또는 모바일(noParallax)이면 열 이동 정지(y=0). 페이드(opacity)는 그대로 유지.
+  const still = reduce || noParallax;
+  const y = still ? 0 : ySmooth;
   return (
     <motion.div className={className} style={{ y, willChange: "transform" }}>
       {items.map(({ f, i }, colIdx) => (
@@ -132,8 +148,8 @@ function ParallaxColumn({
           topCard={colIdx === 0}
           reduce={reduce}
           // 작업2(중요): opacity 위치 보정도 트랙과 "같은" 스무딩 값(ySmooth)을 구독 → 이미지 위치와
-          // 페이드가 어긋나지 않음.
-          parallaxY={reduce ? undefined : ySmooth}
+          // 페이드가 어긋나지 않음. (정지 시엔 undefined → 레이아웃 위치 기준으로 페이드)
+          parallaxY={still ? undefined : ySmooth}
         />
       ))}
     </motion.div>

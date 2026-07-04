@@ -322,7 +322,8 @@
   margin-bottom: 1rem;
 }
 .fmBg .title {
-  font-size: clamp(3.4rem, 15vw, 13rem);
+  /* 노트북(1280~1440)에서 화면 밖으로 과하게 넘치지 않게 상한·vw 계수 하향 (13rem→9.5, 15vw→11) */
+  font-size: clamp(3.4rem, 11vw, 9.5rem);
   line-height: 0.9;
   justify-content: center;
   color: #0b0b0c; /* LINEUP 제목과 동일 톤 */
@@ -345,7 +346,8 @@
   position: relative;
   z-index: 1;
   display: flex;
-  gap: clamp(140px, 28vw, 560px);
+  /* 카드 축소에 맞춰 gap 도 소폭 하향 → 카드 대비 간격이 과해지지 않게(JS가 pitch 재측정) */
+  gap: clamp(130px, 24vw, 470px);
   width: max-content;
   will-change: transform;
   perspective: 1600px; /* 카드 rotateY/z 깊이감 (뒤→앞) */
@@ -353,7 +355,8 @@
 }
 .fmCard {
   flex: 0 0 auto;
-  width: clamp(260px, 26vw, 400px); /* 비율(3:4) 유지하며 카드 크기 축소 (기존 300~460) */
+  /* 노트북에서 중앙 카드가 너무 크지 않게 상한·vw 계수 하향 (400→330, 26vw→22) — 3:4 비율 유지 */
+  width: clamp(260px, 22vw, 330px);
 }
 .fmCard__photo {
   position: relative;
@@ -704,7 +707,8 @@
   margin-top: 2.4rem;
   max-width: none; /* 영역(.inner) 전체 폭을 채움 */
   color: #b9b9b4;
-  font-size: clamp(1.05rem, 1.9vw, 1.5rem);
+  /* 노트북에서 본문이 크게 느껴지지 않게 상한·vw 계수 하향 (1.5→1.25, 1.9vw→1.5). line-height 유지 */
+  font-size: clamp(1.05rem, 1.5vw, 1.25rem);
   line-height: 1.7;
 }
 /* 제목 타이핑 커서 */
@@ -926,7 +930,8 @@
 
 /* 모바일 (≤767): 대부분 1열 + 최소 폰트 (상하/좌우 여백은 --ln-* 토큰이 담당) */
 @media (max-width: 767px) {
-  .grid { flex-direction: column; gap: 0.9rem; } /* 모바일: 열을 세로로 쌓아 단일 흐름 */
+  /* 모바일: 3열 flex → 1열. align-items:stretch 로 열/카드가 inner 좌우 폭을 꽉 채움 */
+  .grid { flex-direction: column; align-items: stretch; gap: 0.9rem; }
   .col1, .col2 { margin-top: 0; }
   .maker { grid-template-columns: 2.2rem 1fr 2.2rem; }
   .fest { grid-template-columns: 3rem 1fr; }
