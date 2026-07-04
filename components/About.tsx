@@ -5,6 +5,7 @@ import {
   motion,
   useReducedMotion,
   useScroll,
+  useSpring,
   useTransform,
   type Variants,
 } from "framer-motion";
@@ -38,17 +39,17 @@ export default function About() {
     target: ref,
     offset: ["start end", "end start"],
   });
-  // 진입: 흰→검정(0~0.2), 이후 검정 유지. (LINEUP 전환은 LINEUP 의 원형 reveal 이 담당)
-  const backgroundColor = useTransform(
-    scrollYProgress,
-    [0, 0.2],
-    ["#f8f8f8", "#0b0b0c"]
-  );
+  // 작업1: 스크롤 진행도를 스프링으로 스무딩 → 배경/인용문 색이 관성 있게 묵직하게, 부드럽게 정착.
+  //   조절점: stiffness 낮을수록 무거움 / damping 높을수록 덜 출렁 / mass 관성.
+  const smoothEnter = useSpring(scrollYProgress, { stiffness: 70, damping: 26, mass: 1.1 });
+  const enterInput = reduce ? scrollYProgress : smoothEnter; // reduce 면 spring 우회
+  // 진입: 흰→검정. 구간 [0,0.2] → [0,0.28] 로 넓혀 더 오래 걸쳐 묵직하게. 셋 다 같은 spring 입력 공유.
+  const backgroundColor = useTransform(enterInput, [0, 0.28], ["#f8f8f8", "#0b0b0c"]);
   // 인용문 글자색: 밝은 배경에선 어둡게, 어두워지면 밝게 (대비 유지)
-  const quoteFill = useTransform(scrollYProgress, [0, 0.2], ["#1a1a1a", "#f4f4f2"]);
+  const quoteFill = useTransform(enterInput, [0, 0.28], ["#1a1a1a", "#f4f4f2"]);
   const quoteGhost = useTransform(
-    scrollYProgress,
-    [0, 0.2],
+    enterInput,
+    [0, 0.28],
     ["rgba(26,26,26,0.22)", "rgba(244,244,242,0.16)"]
   );
 
@@ -60,9 +61,13 @@ export default function About() {
     target: pinRef,
     offset: ["start start", "end start"],
   });
+  // 작업2: 원형 reveal 진행도도 스프링으로 스무딩 → 원이 관성 있게 묵직하게 커지다 부드럽게 정착.
+  //   조절점: stiffness 낮을수록 무거움 / damping 높을수록 덜 출렁 / mass 관성.
+  const smoothGrow = useSpring(growProgress, { stiffness: 70, damping: 26, mass: 1.1 });
+  const growInput = reduce ? growProgress : smoothGrow; // reduce 면 spring 우회(원은 아래서 미렌더)
   // sticky(100vh)는 pin 래퍼(200vh)의 앞 절반 동안 고정. 0~0.2 는 '텍스트 감상+정지' 구간(원 반경 0 유지),
   // 0.2 부터 원이 커지기 시작해 0.6 에 최대(170) → 텍스트 fade-up 이 끝난 뒤에 원이 시작됨.
-  const revealRadius = useTransform(growProgress, [0.2, 0.6], [0, 170]);
+  const revealRadius = useTransform(growInput, [0.2, 0.6], [0, 170]);
   const revealClip = useTransform(revealRadius, (v) => `circle(${v}% at 50% 50%)`);
 
   // 마우스 따라다니는 옅은 흰 스포트라이트 (rAF throttle)
