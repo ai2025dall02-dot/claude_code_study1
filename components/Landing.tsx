@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   motion,
   useReducedMotion,
@@ -52,6 +52,18 @@ function RevealSlat({ index, progress }: { index: number; progress: MotionValue<
   // 아래 슬랫(index=SLATS-1)이 REVEAL_FROM 부근 먼저, 위로 갈수록 나중에 펼쳐짐
   const start = REVEAL_FROM + (SLATS - 1 - index) * SLAT_STEP;
   const scaleY = useTransform(progress, [start, start + SLAT_WINDOW], [0, 1]);
+  return <motion.span className={styles.blind__slat} style={{ scaleY }} />;
+}
+
+// 모바일 전용 CONTACT 블라인드 슬랫 — sticky(journalProgress)가 꺼진 모바일에서 CONTACT 섹션 자체
+// 스크롤(contactProgress)에 연동해 검은 슬랫이 '아래→위'로 차오른다. (밝은 밴드 배경 위라 대비가 보임)
+const C_SLATS = 6;
+const C_STEP = 0.09; // 슬랫 사이 시작 지연(아래부터)
+const C_WINDOW = 0.28; // 한 슬랫이 0→1 로 차는 구간
+function ContactSlat({ index, progress }: { index: number; progress: MotionValue<number> }) {
+  // 아래 슬랫(index=C_SLATS-1)이 먼저, 위로 갈수록 나중에 → 아래→위로 차오르는 느낌
+  const start = 0.08 + (C_SLATS - 1 - index) * C_STEP;
+  const scaleY = useTransform(progress, [start, start + C_WINDOW], [0, 1]);
   return <motion.span className={styles.blind__slat} style={{ scaleY }} />;
 }
 
@@ -114,6 +126,21 @@ export default function Landing() {
   // 같은(스무딩된) 진행도로 올림. 블라인드보다 살짝 뒤(0.62)에서 시작해 이어서 따라 올라오는 시차.
   // [0.62, 1.0] 에서 y 100%(패널 아래) → 0%(제자리). 끝점 1.0 유지 → 트랙 끝에서 정확히 안착.
   const contactRevealY = useTransform(journalSmooth, [0.62, 1.0], ["100%", "0%"]);
+
+  // 모바일 전용: sticky/journalProgress 가 꺼져 있으므로 CONTACT 블라인드는 CONTACT 섹션 자체의
+  // 진입 스크롤에 연동한다. offset ["start end","start center"] → CONTACT 상단이 화면 하단→중앙으로
+  // 올라오는 동안 0→1 (그 사이에 슬랫이 확실히 차오름). 원시 진행도라 스크롤에 지연 없이 붙음.
+  // ※ CONTACT 폴백 섹션은 isMobile 이 켜진 뒤에야 마운트되므로 useRef 로는 useScroll 이 최초 1회
+  //   측정에서 놓친다 → 콜백 ref+state 로 요소가 붙은 뒤 target 을 갱신해 재측정되게 한다.
+  const [contactEl, setContactEl] = useState<HTMLElement | null>(null);
+  const contactTarget = useMemo(
+    () => (contactEl ? { current: contactEl } : undefined),
+    [contactEl]
+  );
+  const { scrollYProgress: contactProgress } = useScroll({
+    target: contactTarget,
+    offset: ["start end", "start center"],
+  });
 
   // 작업3: CONTACT 콘텐츠(헤더/그리드/footer). 오버레이(비-reduce)와 일반 섹션(reduce) 양쪽에서
   // 재사용. 내부 아이템 stagger(contentGroup/contentItem)는 그대로. slide-up 은 바깥 래퍼가 담당.
@@ -264,9 +291,19 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* reduce·모바일 폴백: 오버레이/블라인드 없이 CONTACT 를 일반 섹션으로(즉시 표시) */}
+      {/* reduce·모바일 폴백: JOURNAL sticky/커튼 없이 CONTACT 를 일반 흐름 섹션으로. 단, 모바일(비-reduce)
+          에서는 CONTACT 전환 블라인드를 되살린다 — 섹션 최상단 100vh '밝은 밴드' 위로 검은 슬랫이
+          아래→위로 차올라(밝음→검정) CONTACT(검정)로 이어짐. 밝은 밴드라 '검정 위 검정' 안 됨.
+          블라인드는 pointer-events:none, reduce 면 미렌더, contactInner fade-up 은 그대로. */}
       {flat && (
-        <section className={`${styles.section} ${styles.contact}`} id="contact">
+        <section ref={setContactEl} className={`${styles.section} ${styles.contact}`} id="contact">
+          {!reduce && isMobile && (
+            <div className={styles.contactBlindMobile} aria-hidden="true">
+              {Array.from({ length: C_SLATS }).map((_, i) => (
+                <ContactSlat key={i} index={i} progress={contactProgress} />
+              ))}
+            </div>
+          )}
           {contactInner}
         </section>
       )}
