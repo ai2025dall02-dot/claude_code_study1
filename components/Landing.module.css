@@ -293,7 +293,7 @@
 .fm {
   position: relative;
   height: 450vh; /* 세로 스크롤 길이 — pitch 가 커진 만큼 스크롤 여유 확보 */
-  background: #fff;
+  background: #f8f8f8; /* #fff → #f8f8f8 (FESTIVALS 와 동일한 옅은 회색) */
   border-block: 1px solid rgba(0, 0, 0, 0.08);
 }
 .fmViewport {
@@ -553,7 +553,7 @@
 .journal {
   position: relative;
   height: 100%;
-  background: #fff;
+  background: #f8f8f8; /* #fff → #f8f8f8 (옅은 회색) */
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
