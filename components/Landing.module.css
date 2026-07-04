@@ -930,14 +930,32 @@
 
 /* 모바일 (≤767): 대부분 1열 + 최소 폰트 (상하/좌우 여백은 --ln-* 토큰이 담당) */
 @media (max-width: 767px) {
-  /* 모바일: 3열 flex → 1열. align-items:stretch 로 열/카드가 inner 좌우 폭을 꽉 채움 */
-  .grid { flex-direction: column; align-items: stretch; gap: 0.9rem; }
+  /* [1] 모바일: 3열 flex → 2열 그리드. .col 을 display:contents 로 흐트려 카드들이 .grid 의
+     그리드 아이템이 되게 하면 12개가 2열로 흐름(이미지 폭 ≈ 절반). 모바일은 패럴랙스 정지
+     상태라 .col 의 translateY 가 불필요 → contents 로 대체해도 안전. */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; align-items: start; }
+  .col { display: contents; }
+  .card { margin-top: 0 !important; } /* 카드별 인라인 stagger(marginTop) 무력화 → 2열 정렬 */
   .col1, .col2 { margin-top: 0; }
   .maker { grid-template-columns: 2.2rem 1fr 2.2rem; }
   .fest { grid-template-columns: 3rem 1fr; }
   .post { grid-template-columns: 1fr; }
   .ciList { grid-template-columns: 1fr; } /* 모바일 1열 */
-  .about { padding-bottom: 0; } /* ABOUT→LINEUP pin 이음새 유지 */
+
+  /* [2] ABOUT: 모바일에선 pin(sticky·100vh·overflow) 해제 → 화면을 넘는 본문이 잘리지 않게
+     일반 흐름으로. 원형 reveal 레이어(lineupReveal/aboutInvert)는 pin 이 없으면 불필요 → 미표시.
+     (reduce 모션 처리와 같은 방향) */
+  .aboutPin { height: auto; }
+  .aboutPinSticky {
+    position: static;
+    height: auto;
+    overflow: visible;
+    display: block;
+    padding-block: clamp(1.5rem, 6vh, 3rem);
+  }
+  .lineupReveal, .aboutInvert { display: none; }
+  /* [3] ABOUT↔LINEUP 간격 — pin 해제 후 두 섹션이 붙어 답답하지 않게 하단 여백 넉넉히 */
+  .about { padding-bottom: clamp(3.5rem, 14vw, 6rem); }
 
   /* 헤더: 우측 보조 메타(.index)를 숨기지 않고, 헤더를 세로로 쌓아 제목 아래 작게 배치 */
   .head {
@@ -954,8 +972,27 @@
   .fmCard__meta { font-size: 10px; margin-top: 0.6rem; }
   .fmCard__film { font-size: 11.5px; margin-top: 0.3rem; } /* 복구 + 축소(대표작 라인 유지) */
   .post__more { font-size: 10px; } /* 복구 + 축소('READ →' 어포던스 유지) */
-  .festCenterImg { width: clamp(130px, 38vw, 170px); } /* 기울어진 중앙 이미지 넘침 방지 */
-  .fest__name { font-size: clamp(1.7rem, 8vw, 2.6rem); }
+  /* [5] FESTIVALS: 가로 3분할(트랙46%+이미지+메타) → 세로 리스트 중심으로 단순화.
+     축제명 트랙을 전체 폭으로(크게 세로 쌓임, 활성 강조색은 JS activeIndex 그대로),
+     중앙 이미지는 작게 우측 상단에 겹쳐 배치. sticky/스크롤 활성 전환 동작은 유지
+     (트랙 translateY 는 세로 stride 기반이라 폭 변경과 무관). */
+  .festTrack { width: 100%; } /* 좌측 46% → 전체 폭: 축제명 리스트를 크게 세로로 */
+  .fest__name { font-size: clamp(1.9rem, 9vw, 3rem); } /* 전체 폭이므로 더 크게 */
+  .festCenter {
+    top: 6%;
+    left: auto;
+    right: 0;
+    width: auto;
+    transform: none;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    z-index: 3; /* 리스트 위에 겹쳐 표시 */
+  }
+  .festCenterImg { width: clamp(96px, 30vw, 128px); } /* 작게 우측 상단 배지 */
+  .festCenterMeta { align-items: flex-end; text-align: right; }
+  .festCenterFilm { font-size: clamp(0.95rem, 4.5vw, 1.15rem); }
 }
 
 /* JOURNAL sticky 패널 밀도 — 낮은 뷰포트(노트북/모바일 가로)에서 8개 포스트가 100vh 안에

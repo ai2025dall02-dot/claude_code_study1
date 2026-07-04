@@ -293,6 +293,8 @@
           가로 스크롤 없이 장식 유지
    [크기] 하단 러닝 라벨(.tagline) 살짝 축소로 밀도 정리 (레이아웃/애니메이션 구조는 유지) */
 @media (max-width: 767px) {
+  /* [4] 회전 릴(reel) + 3D 카드덱(캐러셀) 은 모바일에서 제거 — 배경 텍스트/타이틀/링·태그라인은 유지 */
+  .reelWrap, .deck { display: none; }
   .ringText {
     width: clamp(150px, 44vw, 200px);
     height: clamp(150px, 44vw, 200px);
