@@ -118,9 +118,9 @@ function ParallaxColumn({
     [0, 1],
     [-speed * PARALLAX_DISTANCE * 0.6, speed * PARALLAX_DISTANCE]
   );
-  // 작업2: 열 이동을 스프링으로 스무딩 → 관성 있게 묵직·부드럽게 흐름.
-  //   조절점: stiffness 낮을수록 무거움 / damping 높을수록 덜 출렁 / mass 관성.
-  const ySmooth = useSpring(yRaw, { stiffness: 70, damping: 26, mass: 1.1 });
+  // 열 이동 스프링 — 관성은 줄이고 부드러움만: stiffness↑(스크롤에 더 붙음) + mass 1.0(가벼움) + damping 유지.
+  //   조절점: stiffness 높을수록 스크롤 밀착(관성↓) / damping 높을수록 덜 출렁 / mass 낮을수록 가벼움.
+  const ySmooth = useSpring(yRaw, { stiffness: 185, damping: 28, mass: 1.0 });
   const y = reduce ? 0 : ySmooth;
   return (
     <motion.div className={className} style={{ y, willChange: "transform" }}>
