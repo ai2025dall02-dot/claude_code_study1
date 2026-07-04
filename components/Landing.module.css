@@ -937,6 +937,8 @@
   .col { display: contents; }
   .card { margin-top: 0 !important; } /* 카드별 인라인 stagger(marginTop) 무력화 → 2열 정렬 */
   .col1, .col2 { margin-top: 0; }
+  /* [5] 카드 이미지 세로 길이 통일 — 인라인 conf.ar(제각각) 무시하고 3/4 로 고정 */
+  .card__media { aspect-ratio: 3 / 4 !important; }
   .maker { grid-template-columns: 2.2rem 1fr 2.2rem; }
   .fest { grid-template-columns: 3rem 1fr; }
   .post { grid-template-columns: 1fr; }
@@ -956,13 +958,15 @@
   .lineupReveal, .aboutInvert { display: none; }
   /* [3] ABOUT↔LINEUP 간격 — pin 해제 후 두 섹션이 붙어 답답하지 않게 하단 여백 넉넉히 */
   .about { padding-bottom: clamp(3.5rem, 14vw, 6rem); }
-  /* [3] 이탈 구간 배경이 밝아질 때 본문 글자색도 반전되도록, 주요 텍스트가 래퍼(.inner)의
-     모션 color(About.tsx) 를 따르게 inherit 처리. (뮤트 그레이 라벨류는 그대로 유지) */
+  /* [3][4] 이탈 구간 배경이 밝아질 때 본문 글자색도 반전. 주요 텍스트는 래퍼(.inner)의 모션
+     color(About.tsx) 를 inherit. 아웃라인 제목(NOUVELLE=.title em)은 fill 투명 유지 + stroke 는
+     --about-fg(모션 CSS 변수)로 → 솔리드가 아니라 '라인'으로 보이며 배경 반전에 맞춰 색도 반전.
+     (이전 currentColor 는 em 의 color:transparent 를 참조해 stroke 가 투명해지는 버그였음) */
   .about .inner .title,
   .about .inner .aboutBody,
   .about .inner .principle__title,
   .about .inner .principle__text { color: inherit; }
-  .about .inner .title em { -webkit-text-stroke-color: currentColor; }
+  .about .inner .title em { color: transparent; -webkit-text-stroke-color: var(--about-fg, #fafafa); }
 
   /* 헤더: 우측 보조 메타(.index)를 숨기지 않고, 헤더를 세로로 쌓아 제목 아래 작게 배치 */
   .head {
@@ -988,22 +992,33 @@
   .fest__name { font-size: clamp(1.2rem, 5vw, 1.6rem); }
   /* 폰트 축소에 맞춰 행 높이(=stride)도 축소 → JS 가 재측정(간격 과대 방지) */
   .festRow { height: clamp(84px, 12vh, 116px); }
-  /* 이미지: 활성 항목(무대 40% 선)과 같은 높이의 우측에 작게 → 리스트 위로 뜨지 않고 활성 옆에 */
+  /* [7] 이미지: 활성 항목(무대 40% 선) 우측에 작게. 우측 끝에 붙이지 않고 살짝 안쪽으로(inset) →
+     -15° 회전한 이미지 모서리가 무대 overflow 에 잘리지 않게. 메타 간격도 좁힘. */
   .festCenter {
     top: 40%;
     left: auto;
-    right: 0;
+    right: clamp(6px, 3vw, 14px); /* 회전 이미지 잘림 방지용 여백 */
     width: auto;
     transform: translateY(-50%);
     flex-direction: column;
     align-items: flex-end;
     justify-content: center;
-    gap: 0.4rem;
+    gap: 0.3rem;
     z-index: 3;
   }
-  .festCenterImg { width: clamp(84px, 24vw, 112px); } /* 활성 옆 작은 이미지 */
+  .festCenterImg { width: clamp(80px, 22vw, 104px); } /* 회전 여유 확보 위해 소폭 축소 */
   .festCenterMeta { align-items: flex-end; text-align: right; }
   .festCenterFilm { font-size: clamp(0.9rem, 4vw, 1.1rem); }
+
+  /* [6] 제목/설명 ↔ 리스트 무대 간격 축소 (모바일) */
+  .festsIntro { padding-bottom: 0; }
+  .festsSticky { padding-top: clamp(1.25rem, 3.5vh, 2rem); }
+
+  /* [8] JOURNAL 헤더가 sticky 100vh 안에서 세로중앙 정렬로 위로 밀려 잘리던 문제 →
+     상단 정렬 + 고정 내비 아래로 내려 헤더(eyebrow+제목)가 리스트 위에 보이게.
+     (헤더가 화면에 들어와야 TypeTitle useInView 도 트리거되어 타이핑됨) */
+  .journalSticky { padding-top: 68px; box-sizing: border-box; }
+  .journal { align-items: flex-start; }
 }
 
 /* JOURNAL sticky 패널 밀도 — 낮은 뷰포트(노트북/모바일 가로)에서 8개 포스트가 100vh 안에

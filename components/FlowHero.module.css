@@ -293,9 +293,11 @@
           가로 스크롤 없이 장식 유지
    [크기] 하단 러닝 라벨(.tagline) 살짝 축소로 밀도 정리 (레이아웃/애니메이션 구조는 유지) */
 @media (max-width: 767px) {
-  /* [1] 원통형 3D 카드덱(캐러셀)·회전 릴 복구 — 제거 대신 모바일 크기로 축소해 화면 안에 표시 */
-  .deckTilt { --scale: 0.4; } /* 실린더 덱 스케일 축소(태블릿 0.6 → 모바일 0.4) — 과대·잘림 방지 */
-  .reelWrap { width: 76px; height: 76px; left: 5%; bottom: 11%; } /* 회전 릴 축소 */
+  /* [1] 원통 카드덱: 회전 각도는 데스크탑과 동일(rotateZ -8·rotateX -20) 유지, 크기(scale)만 0.4 로 축소.
+     (--scale 만 바꾸면 브라우저에 따라 각도가 틀어져 보일 수 있어 transform 을 명시적으로 재선언) */
+  .deckTilt { transform: translate(-50%, -50%) rotateZ(-8deg) rotateX(-20deg) scale(0.4); }
+  /* [2] 회전 릴은 모바일에서 삭제 */
+  .reelWrap { display: none; }
   .ringText {
     width: clamp(150px, 44vw, 200px);
     height: clamp(150px, 44vw, 200px);

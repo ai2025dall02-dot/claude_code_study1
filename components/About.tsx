@@ -7,6 +7,7 @@ import {
   useScroll,
   useSpring,
   useTransform,
+  type MotionStyle,
   type Variants,
 } from "framer-motion";
 import { TextReveal } from "./TextReveal";
@@ -57,17 +58,19 @@ export default function About() {
   // 작업1: 전환 구간 [0,0.28] → [0,0.16] 으로 좁혀 더 빨리 검게(부드러움은 spring 이 유지). 셋 다 같은 입력 공유.
   // 데스크톱: 진입만(밝→검). 모바일: 진입(밝→검) + 이탈(검→밝) 을 한 곡선에 담아 LINEUP 배경으로 페이드.
   const bgDesktop = useTransform(enterInput, [0, 0.16], ["#f8f8f8", "#0b0b0c"]);
+  // 모바일 이탈 구간을 조금 앞당기고 넓혀(0.72~0.9) 본문/원칙이 아직 보이는 동안 배경이 밝아지도록 →
+  // 전환이 확실히 눈에 보이고, 섹션 끝(spring lag)에 걸려 안 바뀌는 문제도 방지. 끝값은 LINEUP 배경.
   const bgMobile = useTransform(
     enterInput,
-    [0, 0.16, 0.84, 0.95],
+    [0, 0.16, 0.72, 0.9],
     ["#f8f8f8", "#0b0b0c", "#0b0b0c", "#f8f8f8"]
   );
   const backgroundColor = isMobile ? bgMobile : bgDesktop;
-  // 모바일 본문 글자색: 어두운 배경 구간엔 밝게, 이탈해 배경이 밝아지면 어둡게(대비 유지) → .inner 에 적용,
-  // 주요 텍스트가 inherit 로 따라옴(CSS). (데스크톱은 undefined → 기존 CSS 색 유지)
+  // 모바일 본문 글자색: 어두운 배경 구간엔 밝게, 이탈해 배경이 밝아지면 어둡게(대비 유지). .inner 의
+  // color + CSS 변수(--about-fg)로 내려 주요 텍스트(inherit)와 아웃라인 제목(stroke)이 함께 반전됨.
   const mobileFg = useTransform(
     enterInput,
-    [0, 0.88, 0.96],
+    [0, 0.74, 0.9],
     ["#ececea", "#ececea", "#101010"]
   );
   // 인용문 글자색: 밝은 배경에선 어둡게, 어두워지면 밝게 (대비 유지)
@@ -172,8 +175,13 @@ export default function About() {
         <div className={styles.aboutPinSticky}>
           <motion.div
             className={styles.inner}
-            // 모바일: 이탈 시 배경이 밝아지는 것에 맞춰 본문 글자색 반전(주요 텍스트가 inherit).
-            style={isMobile ? { color: mobileFg } : undefined}
+            // 모바일: 이탈 시 배경이 밝아지는 것에 맞춰 본문 글자색 반전. color 는 일반 텍스트(inherit),
+            // --about-fg 는 아웃라인 제목(.title em)의 stroke 색으로 사용 → 둘 다 함께 반전.
+            style={
+              isMobile
+                ? ({ color: mobileFg, "--about-fg": mobileFg } as MotionStyle)
+                : undefined
+            }
             variants={group}
             initial="hidden"
             whileInView="show"
