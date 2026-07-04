@@ -956,6 +956,13 @@
   .lineupReveal, .aboutInvert { display: none; }
   /* [3] ABOUT↔LINEUP 간격 — pin 해제 후 두 섹션이 붙어 답답하지 않게 하단 여백 넉넉히 */
   .about { padding-bottom: clamp(3.5rem, 14vw, 6rem); }
+  /* [3] 이탈 구간 배경이 밝아질 때 본문 글자색도 반전되도록, 주요 텍스트가 래퍼(.inner)의
+     모션 color(About.tsx) 를 따르게 inherit 처리. (뮤트 그레이 라벨류는 그대로 유지) */
+  .about .inner .title,
+  .about .inner .aboutBody,
+  .about .inner .principle__title,
+  .about .inner .principle__text { color: inherit; }
+  .about .inner .title em { -webkit-text-stroke-color: currentColor; }
 
   /* 헤더: 우측 보조 메타(.index)를 숨기지 않고, 헤더를 세로로 쌓아 제목 아래 작게 배치 */
   .head {
@@ -976,23 +983,27 @@
      축제명 트랙을 전체 폭으로(크게 세로 쌓임, 활성 강조색은 JS activeIndex 그대로),
      중앙 이미지는 작게 우측 상단에 겹쳐 배치. sticky/스크롤 활성 전환 동작은 유지
      (트랙 translateY 는 세로 stride 기반이라 폭 변경과 무관). */
-  .festTrack { width: 100%; } /* 좌측 46% → 전체 폭: 축제명 리스트를 크게 세로로 */
-  .fest__name { font-size: clamp(1.9rem, 9vw, 3rem); } /* 전체 폭이므로 더 크게 */
+  .festTrack { width: 100%; } /* 좌측 46% → 전체 폭: 축제명 리스트를 세로로 */
+  /* [2] 볼드 축제명 대폭 축소(모바일 전용) → 레이아웃 안정·이미지 밀림 방지 */
+  .fest__name { font-size: clamp(1.2rem, 5vw, 1.6rem); }
+  /* 폰트 축소에 맞춰 행 높이(=stride)도 축소 → JS 가 재측정(간격 과대 방지) */
+  .festRow { height: clamp(84px, 12vh, 116px); }
+  /* 이미지: 활성 항목(무대 40% 선)과 같은 높이의 우측에 작게 → 리스트 위로 뜨지 않고 활성 옆에 */
   .festCenter {
-    top: 6%;
+    top: 40%;
     left: auto;
     right: 0;
     width: auto;
-    transform: none;
+    transform: translateY(-50%);
     flex-direction: column;
     align-items: flex-end;
-    justify-content: flex-start;
-    gap: 0.5rem;
-    z-index: 3; /* 리스트 위에 겹쳐 표시 */
+    justify-content: center;
+    gap: 0.4rem;
+    z-index: 3;
   }
-  .festCenterImg { width: clamp(96px, 30vw, 128px); } /* 작게 우측 상단 배지 */
+  .festCenterImg { width: clamp(84px, 24vw, 112px); } /* 활성 옆 작은 이미지 */
   .festCenterMeta { align-items: flex-end; text-align: right; }
-  .festCenterFilm { font-size: clamp(0.95rem, 4.5vw, 1.15rem); }
+  .festCenterFilm { font-size: clamp(0.9rem, 4vw, 1.1rem); }
 }
 
 /* JOURNAL sticky 패널 밀도 — 낮은 뷰포트(노트북/모바일 가로)에서 8개 포스트가 100vh 안에

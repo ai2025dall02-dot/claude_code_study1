@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   motion,
   useReducedMotion,
@@ -43,8 +43,33 @@ export default function About() {
   //   출렁임 억제). 조절점: stiffness 높을수록 빠릿/낮을수록 무거움 / damping 높을수록 덜 출렁.
   const smoothEnter = useSpring(scrollYProgress, { stiffness: 90, damping: 28, mass: 1.1 });
   const enterInput = reduce ? scrollYProgress : smoothEnter; // reduce 면 spring 우회
+  // 모바일(≤767)에서는 pin(원형 reveal) 이 해제되므로, ABOUT 이탈~LINEUP 진입을 '배경색 페이드 +
+  // 글자색 반전'으로 처리(데스크톱은 원형 reveal 유지). matchMedia 로 감지.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const sync = () => setIsMobile(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
   // 작업1: 전환 구간 [0,0.28] → [0,0.16] 으로 좁혀 더 빨리 검게(부드러움은 spring 이 유지). 셋 다 같은 입력 공유.
-  const backgroundColor = useTransform(enterInput, [0, 0.16], ["#f8f8f8", "#0b0b0c"]);
+  // 데스크톱: 진입만(밝→검). 모바일: 진입(밝→검) + 이탈(검→밝) 을 한 곡선에 담아 LINEUP 배경으로 페이드.
+  const bgDesktop = useTransform(enterInput, [0, 0.16], ["#f8f8f8", "#0b0b0c"]);
+  const bgMobile = useTransform(
+    enterInput,
+    [0, 0.16, 0.84, 0.95],
+    ["#f8f8f8", "#0b0b0c", "#0b0b0c", "#f8f8f8"]
+  );
+  const backgroundColor = isMobile ? bgMobile : bgDesktop;
+  // 모바일 본문 글자색: 어두운 배경 구간엔 밝게, 이탈해 배경이 밝아지면 어둡게(대비 유지) → .inner 에 적용,
+  // 주요 텍스트가 inherit 로 따라옴(CSS). (데스크톱은 undefined → 기존 CSS 색 유지)
+  const mobileFg = useTransform(
+    enterInput,
+    [0, 0.88, 0.96],
+    ["#ececea", "#ececea", "#101010"]
+  );
   // 인용문 글자색: 밝은 배경에선 어둡게, 어두워지면 밝게 (대비 유지)
   const quoteFill = useTransform(enterInput, [0, 0.16], ["#1a1a1a", "#f4f4f2"]);
   const quoteGhost = useTransform(
@@ -147,6 +172,8 @@ export default function About() {
         <div className={styles.aboutPinSticky}>
           <motion.div
             className={styles.inner}
+            // 모바일: 이탈 시 배경이 밝아지는 것에 맞춰 본문 글자색 반전(주요 텍스트가 inherit).
+            style={isMobile ? { color: mobileFg } : undefined}
             variants={group}
             initial="hidden"
             whileInView="show"
