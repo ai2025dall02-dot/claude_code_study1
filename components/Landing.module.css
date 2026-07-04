@@ -918,42 +918,70 @@
   .footer { flex-direction: column; align-items: flex-start; gap: 1.2rem; }
   .footer__fine { text-align: left; }
 }
+/* ── 태블릿 (601–1024px) ─────────────────────────────
+   [조밀도] 데스크톱 대비 섹션 여백을 한 단계 압축
+   [크기]   초대형 배경 제목(FILMMAKERS)만 폭에 맞춰 축소
+   숨김 요소 없음 — 콘텐츠는 전부 유지, 값만 조정 (형태·애니메이션 불변) */
+@media (min-width: 601px) and (max-width: 1024px) {
+  .section { padding-block: clamp(3.5rem, 9vh, 7rem); }
+  .head { margin-bottom: clamp(1.8rem, 4.5vw, 2.8rem); }
+  .fmBg .title { font-size: clamp(3rem, 14vw, 8.5rem); } /* 넘침 방지용 상한만 축소 */
+}
+
 @media (max-width: 600px) {
   .grid { flex-direction: column; gap: 0.9rem; } /* 모바일: 열을 세로로 쌓아 단일 흐름 */
   .col1, .col2 { margin-top: 0; }
   .maker { grid-template-columns: 2.2rem 1fr 2.2rem; }
-  .maker__film { display: none; }
   .fest { grid-template-columns: 3rem 1fr; }
-  .fest__film { display: none; }
   .post { grid-template-columns: 1fr; }
-  .post__more { display: none; }
   /* 모바일 연락처 1열. (가로 블라인드 슬랫은 얇은 수평 줄이라 모바일에서도 10개 그대로 유지) */
   .ciList { grid-template-columns: 1fr; }
 
-  /* ── 모바일 최적화 ─────────────────────────────────
+  /* ── 모바일 최적화 (숨김 없이 조밀도·크기만) ───────────────
+     [복구]   .index / .fmHeadSub / .fmCard__film / .post__more 다시 표시
+              — 정보를 지우지 않고 '작게' 담아 밀도만 확보
      [조밀도] 섹션 상하 여백·헤더 여백 축소로 스크롤 피로 완화
-     [숨김]   보조 메타(.index, .fmHeadSub, .fmCard__film) 제거로 정보 밀도 정리
-     [크기]   대형 타이틀·카드명·중앙 이미지 축소로 화면 밖 넘침 방지
+     [크기]   대형 타이틀·카드명·중앙 이미지·보조 메타 폰트 축소로 넘침 방지
      (레이아웃 형태·애니메이션 트랙/구조는 그대로 — 값만 조정) */
   .section { padding-block: clamp(2.5rem, 8vh, 3.75rem); } /* 상하 여백 압축 */
   .about { padding-bottom: 0; } /* ABOUT→LINEUP pin 이음새 유지(위 .section 규칙이 덮어쓰지 않게) */
-  .head { margin-bottom: clamp(1.3rem, 5vw, 2rem); padding-bottom: 1.1rem; } /* 헤더 하단 여백 축소 */
-  .index { display: none; } /* 우측 보조 메타(연도·지역 등) 숨김 — 헤더 혼잡 해소 */
+
+  /* 헤더: 우측 보조 메타(.index)를 지우지 않고, 헤더를 세로로 쌓아 제목 아래 작게 배치 */
+  .head {
+    grid-template-columns: 1fr; /* 1fr auto → 1fr: index 를 아랫줄로 */
+    gap: 0.5rem;
+    margin-bottom: clamp(1.3rem, 5vw, 2rem);
+    padding-bottom: 1.1rem;
+  }
+  .index { text-align: left; font-size: 10px; letter-spacing: 0.12em; } /* 복구 + 축소 */
 
   /* FILMMAKERS */
   .fmBg .title { font-size: clamp(2.4rem, 13vw, 3.2rem); } /* 초대형 배경 제목 축소 */
-  .fmHeadSub { display: none; } /* 제목 아래 보조 문구 숨김 */
+  .fmHeadSub { font-size: 10.5px; margin-top: 0.8rem; letter-spacing: 0.14em; } /* 복구 + 축소 */
   .fmCard__name { font-size: clamp(1.35rem, 6vw, 1.8rem); } /* 카드 이름 축소 */
-  .fmCard__film { display: none; } /* 카드 대표작 라인 숨김 — 카드 높이 절약 */
+  .fmCard__meta { font-size: 10px; margin-top: 0.6rem; } /* 밀도 정리 */
+  .fmCard__film { font-size: 11.5px; margin-top: 0.3rem; } /* 복구 + 축소(대표작 라인 유지) */
+
+  .post__more { font-size: 10px; } /* 복구 + 축소('READ →' 클릭 어포던스 유지) */
 
   /* FESTIVALS — 기울어진 중앙 이미지가 화면 밖으로 넘치지 않게 축소 */
   .festCenterImg { width: clamp(130px, 38vw, 170px); }
+  .fest__name { font-size: clamp(1.7rem, 8vw, 2.6rem); } /* 축제명 폭 맞춤 축소 */
 }
-/* 낮은 뷰포트(노트북 13" 800~900px, 모바일 세로 등) 대응 — sticky 100vh JOURNAL 패널이 8개를
-   다 담도록 "여백만" 축소(형태·항목 수·애니메이션 트랙 높이는 그대로). 헤더가 내비에 가리거나
-   마지막 카드가 바닥에 잘리는 것 방지. (16" 982px 등 충분히 큰 높이는 영향 없음) */
+/* ── 노트북 최적화 (낮은 뷰포트) ──────────────────────
+   13~16" 노트북(높이 ≈ 700~920px)·모바일 가로 대응. 세로 공간이 부족하므로 "여백만" 압축해
+   콘텐츠가 한 화면에 더 잘 담기게 한다(형태·항목 수·애니메이션 트랙 높이·폰트는 그대로).
+   폭 기준이 아닌 '높이' 기준이라 짧은 노트북 전반에 일관 적용. (충분히 큰 높이는 영향 없음) */
 @media (max-height: 920px) {
+  /* 일반 섹션 상하 여백 한 단계 압축 — 짧은 화면에서 스크롤 피로/헤더 가림 완화 */
+  .section { padding-block: clamp(3rem, 8vh, 6rem); }
+  /* sticky 100vh JOURNAL 패널이 8개 포스트를 다 담도록 내부 여백 축소 */
   .journal { padding-block: clamp(0.4rem, 1vh, 0.9rem); }
   .journal .head { margin-bottom: clamp(0.4rem, 1.2vh, 0.9rem); }
   .post { padding-block: clamp(0.45rem, 1.1vh, 0.95rem); }
+}
+/* 가장 낮은 노트북(13" 1280×800 등, 브라우저 크롬 제외 ≈ 700px) — 여백을 한 단계 더 압축 */
+@media (max-height: 760px) {
+  .section { padding-block: clamp(2.4rem, 6vh, 4.5rem); }
+  .head { margin-bottom: clamp(1.4rem, 3.5vh, 2.6rem); }
 }

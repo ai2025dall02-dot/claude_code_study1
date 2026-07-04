@@ -286,11 +286,18 @@
   .deckTilt { --scale: 0.6; }
   .reelWrap { width: 104px; height: 104px; bottom: 10%; }
 }
-/* ── 모바일 최적화 ──────────────────────────────────
-   [숨김] 회전 링 텍스트는 최소 폭(220px)이 좁은 화면 우측으로 넘쳐 가로 스크롤 유발 → 제거
+/* ── 모바일 최적화 (숨김 없이 크기·위치만) ──────────────
+   [복구] 회전 링 텍스트를 지우지 않고 축소·안쪽 배치 → stage(overflow:hidden) 안에 들어와
+          가로 스크롤 없이 장식 유지
    [크기] 하단 러닝 라벨(.tagline) 살짝 축소로 밀도 정리 (레이아웃/애니메이션 구조는 유지) */
 @media (max-width: 600px) {
-  .ringText { display: none; }
+  .ringText {
+    width: clamp(150px, 44vw, 200px);
+    height: clamp(150px, 44vw, 200px);
+    right: clamp(-24px, -3vw, -8px); /* 화면 안쪽으로 당겨 넘침 최소화 */
+    top: 54%;
+  }
+  .ringText text { font-size: 10.5px; letter-spacing: 0.14em; }
   .tagline { font-size: 10px; letter-spacing: 0.14em; }
 }
 
