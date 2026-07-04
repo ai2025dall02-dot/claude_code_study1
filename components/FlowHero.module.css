@@ -40,7 +40,7 @@
   transition: opacity 0.2s;
 }
 .nav__links a:hover { opacity: 0.45; }
-@media (max-width: 880px) {
+@media (max-width: 1024px) { /* 태블릿부터 상단 링크 숨김 */
   .nav__links { display: none; }
 }
 
@@ -278,19 +278,21 @@
   color: #6c6c68;
 }
 
-@media (max-width: 1100px) {
+/* 통일 브레이크포인트(1280 / 1024 / 767)로 히어로 3D 카드덱·릴 스케일 단계 조정.
+   (스핀/등장 트랜지션 등 애니메이션 동작은 불변 — 크기/위치만) */
+@media (max-width: 1280px) { /* 노트북 축소 */
   .deckTilt { --scale: 0.78; }
 }
-@media (max-width: 880px) {
+@media (max-width: 1024px) { /* 태블릿 */
   .deck { left: 56%; }
   .deckTilt { --scale: 0.6; }
   .reelWrap { width: 104px; height: 104px; bottom: 10%; }
 }
-/* ── 모바일 최적화 (숨김 없이 크기·위치만) ──────────────
+/* ── 모바일 (≤767): 숨김 없이 크기·위치만 ──────────────
    [복구] 회전 링 텍스트를 지우지 않고 축소·안쪽 배치 → stage(overflow:hidden) 안에 들어와
           가로 스크롤 없이 장식 유지
    [크기] 하단 러닝 라벨(.tagline) 살짝 축소로 밀도 정리 (레이아웃/애니메이션 구조는 유지) */
-@media (max-width: 600px) {
+@media (max-width: 767px) {
   .ringText {
     width: clamp(150px, 44vw, 200px);
     height: clamp(150px, 44vw, 200px);

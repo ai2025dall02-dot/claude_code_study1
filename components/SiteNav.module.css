@@ -64,6 +64,6 @@
 }
 .links a:hover { opacity: 0.45; }
 
-@media (max-width: 880px) {
+@media (max-width: 1024px) { /* 태블릿부터 상단 링크 숨김(통일 브레이크포인트) */
   .links { display: none; }
 }

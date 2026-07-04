@@ -28,11 +28,52 @@
   --gutter: clamp(1.25rem, 5vw, 4.5rem);
   --bar: clamp(28px, 6vh, 64px); /* letterbox bar height */
 
+  /* — Responsive step tokens (hero-flow 사이트 공통) —
+     ────────────────────────────────────────────────────────────
+     통일 브레이크포인트(폭):
+       · 데스크탑 기본 : 1280px+  (13~16" 노트북 포함 · 최대폭/여백 기준)
+       · 노트북 축소   : ≤1280px  (13" 대응 — 여백/gap 살짝 축소)
+       · 태블릿        : ≤1024px  (다열→2열 · 큰 타이포 축소)
+       · 모바일        : ≤767px   (대부분 1열 · 최소 폰트/여백)
+     아래 --ln-* 토큰을 각 단계에서 재정의 → 개별 섹션은 var() 만 소비하므로
+     섹션마다 여백용 미디어쿼리를 중복 작성할 필요가 없다.
+     (base 값 = 기존 데스크탑 값 그대로 → 데스크탑 렌더 변화 없음) */
+  --ln-section: clamp(4.5rem, 11vh, 9rem);   /* 섹션 상하 여백(padding-block) */
+  --ln-gutter: clamp(1.4rem, 4vw, 3rem);     /* inner 좌우 여백(padding-inline) */
+  --ln-head: clamp(2rem, 5vw, 3.4rem);       /* 섹션 헤더 하단 여백 */
+  --ln-gap: clamp(1.5rem, 3vw, 2.5rem);      /* 다열 그리드 공용 gap */
+
   /* — Motion — */
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
 
   color-scheme: dark;
+}
+
+/* 반응형 토큰 단계 재정의 — 폭 기준 단일 소스(여기 한 곳)에서만 관리.
+   max-width 캐스케이드라 좁을수록 뒤 규칙이 앞 규칙을 덮어씀. */
+@media (max-width: 1280px) {
+  :root { /* 노트북 축소 */
+    --ln-section: clamp(3.75rem, 9vh, 6.5rem);
+    --ln-head: clamp(1.8rem, 4.5vw, 2.8rem);
+    --ln-gap: clamp(1.4rem, 2.6vw, 2.1rem);
+  }
+}
+@media (max-width: 1024px) {
+  :root { /* 태블릿 */
+    --ln-section: clamp(3.25rem, 8vh, 5.25rem);
+    --ln-gutter: clamp(1.4rem, 4vw, 2.25rem);
+    --ln-head: clamp(1.6rem, 4vw, 2.4rem);
+    --ln-gap: clamp(1.2rem, 2.4vw, 1.8rem);
+  }
+}
+@media (max-width: 767px) {
+  :root { /* 모바일 */
+    --ln-section: clamp(2.5rem, 8vh, 3.75rem);
+    --ln-gutter: clamp(1.15rem, 4.5vw, 1.5rem);
+    --ln-head: clamp(1.3rem, 5vw, 2rem);
+    --ln-gap: 0.9rem;
+  }
 }
 
 * {
