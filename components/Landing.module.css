@@ -929,6 +929,25 @@
   .post__more { display: none; }
   /* 모바일 연락처 1열. (가로 블라인드 슬랫은 얇은 수평 줄이라 모바일에서도 10개 그대로 유지) */
   .ciList { grid-template-columns: 1fr; }
+
+  /* ── 모바일 최적화 ─────────────────────────────────
+     [조밀도] 섹션 상하 여백·헤더 여백 축소로 스크롤 피로 완화
+     [숨김]   보조 메타(.index, .fmHeadSub, .fmCard__film) 제거로 정보 밀도 정리
+     [크기]   대형 타이틀·카드명·중앙 이미지 축소로 화면 밖 넘침 방지
+     (레이아웃 형태·애니메이션 트랙/구조는 그대로 — 값만 조정) */
+  .section { padding-block: clamp(2.5rem, 8vh, 3.75rem); } /* 상하 여백 압축 */
+  .about { padding-bottom: 0; } /* ABOUT→LINEUP pin 이음새 유지(위 .section 규칙이 덮어쓰지 않게) */
+  .head { margin-bottom: clamp(1.3rem, 5vw, 2rem); padding-bottom: 1.1rem; } /* 헤더 하단 여백 축소 */
+  .index { display: none; } /* 우측 보조 메타(연도·지역 등) 숨김 — 헤더 혼잡 해소 */
+
+  /* FILMMAKERS */
+  .fmBg .title { font-size: clamp(2.4rem, 13vw, 3.2rem); } /* 초대형 배경 제목 축소 */
+  .fmHeadSub { display: none; } /* 제목 아래 보조 문구 숨김 */
+  .fmCard__name { font-size: clamp(1.35rem, 6vw, 1.8rem); } /* 카드 이름 축소 */
+  .fmCard__film { display: none; } /* 카드 대표작 라인 숨김 — 카드 높이 절약 */
+
+  /* FESTIVALS — 기울어진 중앙 이미지가 화면 밖으로 넘치지 않게 축소 */
+  .festCenterImg { width: clamp(130px, 38vw, 170px); }
 }
 /* 낮은 뷰포트(노트북 13" 800~900px, 모바일 세로 등) 대응 — sticky 100vh JOURNAL 패널이 8개를
    다 담도록 "여백만" 축소(형태·항목 수·애니메이션 트랙 높이는 그대로). 헤더가 내비에 가리거나
