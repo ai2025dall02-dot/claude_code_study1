@@ -930,3 +930,11 @@
   /* 모바일 연락처 1열. (가로 블라인드 슬랫은 얇은 수평 줄이라 모바일에서도 10개 그대로 유지) */
   .ciList { grid-template-columns: 1fr; }
 }
+/* 낮은 뷰포트(노트북 13" 800~900px, 모바일 세로 등) 대응 — sticky 100vh JOURNAL 패널이 8개를
+   다 담도록 "여백만" 축소(형태·항목 수·애니메이션 트랙 높이는 그대로). 헤더가 내비에 가리거나
+   마지막 카드가 바닥에 잘리는 것 방지. (16" 982px 등 충분히 큰 높이는 영향 없음) */
+@media (max-height: 920px) {
+  .journal { padding-block: clamp(0.4rem, 1vh, 0.9rem); }
+  .journal .head { margin-bottom: clamp(0.4rem, 1.2vh, 0.9rem); }
+  .post { padding-block: clamp(0.45rem, 1.1vh, 0.95rem); }
+}
