@@ -947,7 +947,10 @@
   /* [2] ABOUT: 모바일에선 pin(sticky·100vh·overflow) 해제 → 화면을 넘는 본문이 잘리지 않게
      일반 흐름으로. 원형 reveal 레이어(lineupReveal/aboutInvert)는 pin 이 없으면 불필요 → 미표시.
      (reduce 모션 처리와 같은 방향) */
-  .aboutPin { height: auto; }
+  /* [3] 핵심 버그 수정: .aboutPin 의 하드코딩 배경(#0b0b0c)이 섹션의 모션 backgroundColor 위를
+     덮어, 이탈 시 섹션 배경이 밝아져도 화면엔 검정이 그대로 보이고 어두워진 글자만 사라졌음.
+     모바일은 pin(원형 reveal)을 안 쓰므로 .aboutPin 을 투명 처리 → 섹션의 bgMobile 이 그대로 비침. */
+  .aboutPin { height: auto; background: transparent; }
   .aboutPinSticky {
     position: static;
     height: auto;
@@ -1010,7 +1013,10 @@
   .festCenterMeta { align-items: flex-end; text-align: right; }
   .festCenterFilm { font-size: clamp(0.9rem, 4vw, 1.1rem); }
 
-  /* [6] 제목/설명 ↔ 리스트 무대 간격 축소 (모바일) */
+  /* [6][4] 제목/설명 ↔ 리스트 무대, 리스트 ↔ JOURNAL 간격 축소 (모바일).
+     트랙 길이(.festsScroller)를 540vh→300vh 로 줄여 과한 스크롤 여백 제거 → 리스트가 설명
+     바로 아래, JOURNAL 이 리스트 바로 아래로 붙음. (트랙 stride 측정은 DOM 기반이라 무관) */
+  .festsScroller { height: 300vh; }
   .festsIntro { padding-bottom: 0; }
   .festsSticky { padding-top: clamp(1.25rem, 3.5vh, 2rem); }
 

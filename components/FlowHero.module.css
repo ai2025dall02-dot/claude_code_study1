@@ -293,18 +293,15 @@
           가로 스크롤 없이 장식 유지
    [크기] 하단 러닝 라벨(.tagline) 살짝 축소로 밀도 정리 (레이아웃/애니메이션 구조는 유지) */
 @media (max-width: 767px) {
-  /* [1] 원통 카드덱: 회전 각도는 데스크탑과 동일(rotateZ -8·rotateX -20) 유지, 크기(scale)만 0.4 로 축소.
-     (--scale 만 바꾸면 브라우저에 따라 각도가 틀어져 보일 수 있어 transform 을 명시적으로 재선언) */
-  .deckTilt { transform: translate(-50%, -50%) rotateZ(-8deg) rotateX(-20deg) scale(0.4); }
-  /* [2] 회전 릴은 모바일에서 삭제 */
+  /* [1] 원통 카드덱: 데스크탑과 '동일한 각도'로 보이게 하려면 perspective 안에서 scale 하면
+     안 됨(원근 왜곡으로 기울기가 달라 보임). 그래서 .deckTilt 는 데스크탑 지오메트리(--scale 0.8)를
+     그대로 두고, perspective 컨테이너인 .deck 자체를 균일 축소(scale 0.5) → 투영 결과가 통째로
+     작아질 뿐 각도(rotateZ -8·rotateX -20)는 픽셀 단위로 동일. left 도 데스크탑과 같은 50%. */
+  .deck { left: 50%; transform: scale(0.5); transform-origin: center; }
+  .deckTilt { --scale: 0.8; } /* 태블릿(0.6) 상속 방지 — 데스크탑 지오메트리로 복귀 */
+  /* [2] 회전 릴 + 원형 회전 텍스트(ringText) 모바일 삭제 */
   .reelWrap { display: none; }
-  .ringText {
-    width: clamp(150px, 44vw, 200px);
-    height: clamp(150px, 44vw, 200px);
-    right: clamp(-24px, -3vw, -8px); /* 화면 안쪽으로 당겨 넘침 최소화 */
-    top: 54%;
-  }
-  .ringText text { font-size: 10.5px; letter-spacing: 0.14em; }
+  .ringText { display: none; }
   .tagline { font-size: 10px; letter-spacing: 0.14em; }
 }
 

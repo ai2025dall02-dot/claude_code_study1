@@ -58,18 +58,21 @@ export default function About() {
   // 작업1: 전환 구간 [0,0.28] → [0,0.16] 으로 좁혀 더 빨리 검게(부드러움은 spring 이 유지). 셋 다 같은 입력 공유.
   // 데스크톱: 진입만(밝→검). 모바일: 진입(밝→검) + 이탈(검→밝) 을 한 곡선에 담아 LINEUP 배경으로 페이드.
   const bgDesktop = useTransform(enterInput, [0, 0.16], ["#f8f8f8", "#0b0b0c"]);
-  // 모바일 이탈 구간을 조금 앞당기고 넓혀(0.72~0.9) 본문/원칙이 아직 보이는 동안 배경이 밝아지도록 →
-  // 전환이 확실히 눈에 보이고, 섹션 끝(spring lag)에 걸려 안 바뀌는 문제도 방지. 끝값은 LINEUP 배경.
+  // 모바일 배경/글자 반전은 스프링(enterInput)이 아니라 '원시 스크롤(scrollYProgress)'에 직접 연동한다.
+  // enterInput 스프링은 지연(lag)이 커서 실제 스크롤 속도로 넘길 때 이탈 구간을 놓쳐 배경이 안 바뀌어
+  // 보였음(핵심 원인). 원시 진행도에 연동하면 스크롤 위치에 1:1 로 붙어 항상 눈에 보이게 전환됨.
+  // 이탈 구간(0.72~0.9)은 본문/원칙이 아직 보이는 동안 배경이 밝아지도록 잡음. 끝값 = LINEUP 배경.
   const bgMobile = useTransform(
-    enterInput,
+    scrollYProgress,
     [0, 0.16, 0.72, 0.9],
     ["#f8f8f8", "#0b0b0c", "#0b0b0c", "#f8f8f8"]
   );
   const backgroundColor = isMobile ? bgMobile : bgDesktop;
   // 모바일 본문 글자색: 어두운 배경 구간엔 밝게, 이탈해 배경이 밝아지면 어둡게(대비 유지). .inner 의
   // color + CSS 변수(--about-fg)로 내려 주요 텍스트(inherit)와 아웃라인 제목(stroke)이 함께 반전됨.
+  // 배경과 같은 원시 진행도에 연동 → 배경이 밝아지는 것과 정확히 맞물려 글자가 어두워짐.
   const mobileFg = useTransform(
-    enterInput,
+    scrollYProgress,
     [0, 0.74, 0.9],
     ["#ececea", "#ececea", "#101010"]
   );

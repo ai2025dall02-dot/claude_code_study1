@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   motion,
   useReducedMotion,
@@ -57,6 +57,19 @@ function RevealSlat({ index, progress }: { index: number; progress: MotionValue<
 
 export default function Landing() {
   const reduce = useReducedMotion();
+
+  // 모바일(≤767)에서는 JOURNAL sticky 체류 구조(100vh·overflow hidden)를 해제하고 일반 흐름으로
+  // 렌더 → 8개 리스트가 잘리지 않고 다 보이게. 블라인드/오버레이도 미렌더(=reduce 폴백과 동일 경로).
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const sync = () => setIsMobile(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+  // sticky/블라인드/오버레이를 끄는 조건 (reduce 이거나 모바일)
+  const flat = reduce || isMobile;
 
   // 작업2: JOURNAL 리스트 등장 — 다른 섹션과 같은 stagger 컨테이너 + fade-up item 컨벤션
   const postGroup: Variants = {
@@ -187,12 +200,12 @@ export default function Landing() {
           작업3: CONTACT 를 JOURNAL sticky 패널 안 오버레이로 얹어, 블라인드 상승과 CONTACT 등장을
           같은 journalProgress 로 이어지게 함(트랙 밖 별도 스크롤 제거 → 끊김/지연 없음).
           reduce 면 sticky/오버레이 없이 JOURNAL·CONTACT 를 일반 흐름으로 렌더. */}
-      <div ref={journalTrackRef} className={reduce ? undefined : styles.journalScroller}>
-        <div className={reduce ? undefined : styles.journalSticky}>
+      <div ref={journalTrackRef} className={flat ? undefined : styles.journalScroller}>
+        <div className={flat ? undefined : styles.journalSticky}>
           <section className={`${styles.section} ${styles.journal}`} id="journal">
             {/* 검은 가로 블라인드를 밝은 JOURNAL 위에 얹어 대비가 보이게 함. journalProgress 뒤 구간
-                (REVEAL_FROM~)에서 슬랫이 아래→위로 차오르며 덮음. pointer-events:none / reduce 면 미렌더. */}
-            {!reduce && (
+                (REVEAL_FROM~)에서 슬랫이 아래→위로 차오르며 덮음. pointer-events:none / reduce·모바일 면 미렌더. */}
+            {!flat && (
               <div className={styles.blind} aria-hidden="true">
                 {/* 작업2: 스무딩된 진행도(journalSmooth)로 묵직·부드럽게 차오름 */}
                 {Array.from({ length: SLATS }).map((_, i) => (
@@ -234,7 +247,7 @@ export default function Landing() {
             {/* 작업3: 비-reduce — CONTACT 를 sticky 패널 안 오버레이(z-index 블라인드 위)로. 블라인드가
                 차오르는 것과 거의 동시에(journalProgress [0.55,1]) y 100%→0% 로 아래에서 올라와 제자리.
                 이게 페이지의 마지막 화면(트랙 끝)이 됨 → 스크롤 지연 없이 바로 이어짐. */}
-            {!reduce && (
+            {!flat && (
               <motion.section
                 id="contact"
                 className={`${styles.section} ${styles.contact} ${styles.contactReveal}`}
@@ -247,8 +260,8 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* reduce 폴백: 오버레이/블라인드 없이 CONTACT 를 일반 섹션으로(즉시 표시) */}
-      {reduce && (
+      {/* reduce·모바일 폴백: 오버레이/블라인드 없이 CONTACT 를 일반 섹션으로(즉시 표시) */}
+      {flat && (
         <section className={`${styles.section} ${styles.contact}`} id="contact">
           {contactInner}
         </section>
