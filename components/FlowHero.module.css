@@ -61,8 +61,7 @@
 .reelWrap { transition-delay: 0.46s; }
 .tagline { transition-delay: 0.56s; }
 
-/* 작업1: 워드마크는 글자 낙하 애니메이션(framer, revealed 게이팅)이 등장을 담당 → 컨테이너 슬라이드 제거 */
-.stage[data-revealed="false"] .bigword { opacity: 1; transform: none; }
+.stage[data-revealed="false"] .bigword { opacity: 0; transform: translateX(-9vw); }   /* 좌 */
 .stage[data-revealed="false"] .outline { opacity: 0; transform: translateX(9vw); }    /* 우 */
 .stage[data-revealed="false"] .ringText { opacity: 0; }                                /* 우(스핀 보존 → 페이드) */
 .stage[data-revealed="false"] .deck { opacity: 0; transform: translateY(90px); }       /* 하단 */
@@ -81,36 +80,27 @@
   }
 }
 
-/* ── 대형 워드마크 (글자 낙하 → 좌측 하단 계단식 스택, MOVIE→FILMNOUVELLE→FILM) ── */
+/* ── 거대 줄무늬 디졸브 글자 ── */
 .bigword {
   position: absolute;
-  left: clamp(0.5rem, 2vw, 2.5rem);
-  bottom: clamp(3rem, 9vh, 6.5rem); /* 하단 러닝 라벨(.tagline) 위에 안착 */
-  top: auto;
+  left: -0.06em;
+  top: 4%;
   z-index: 2;
   margin: 0;
   font-family: "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
-  font-size: clamp(96px, 20vw, 300px);
+  font-size: clamp(150px, 30vw, 440px);
   line-height: 0.8;
   letter-spacing: -0.04em;
   color: #0b0b0c;
   white-space: nowrap;
   user-select: none;
 }
-/* 단어 = 글자들의 inline-flex. 하단 정렬(계단이 아래에서부터 쌓이도록) */
-.word {
-  display: inline-flex;
-  align-items: flex-end;
-}
-/* 계단/겹침 위치는 wrapper(정적 transform·margin), 낙하 애니메이션은 안쪽 .letter(framer) 담당 → 충돌 없음 */
-.letterStep {
-  display: inline-block;
-  will-change: transform;
-}
-.letter {
-  display: inline-block;
-  will-change: transform, opacity;
+/* FILM 기하 워드마크 */
+.filmMark {
+  display: block;
+  width: min(90vw, 1040px);
+  height: auto;
 }
 
 /* ── 우측 REEL — 각진 아웃라인(라인) 대형 글자 ── */
@@ -152,11 +142,10 @@
 @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
 
 /* ── 회전하는 필름 릴 — 라인아트(reel.png 스타일) ── */
-/* 작업1: 워드마크가 좌측 하단으로 내려오면서 겹치지 않도록, 릴을 좌측 중앙(빈 공간)으로 올림 */
 .reelWrap {
   position: absolute;
   left: 7%;
-  bottom: 50%;
+  bottom: 15%;
   z-index: 4;
   width: 158px;
   height: 158px;
@@ -174,10 +163,8 @@
 /* ── 원통형(3D 실린더) 카드 덱 ── */
 .deck {
   position: absolute;
-  /* 작업2: 원통 덱을 우측 상단으로 이동(네비 .nav 아래). 덱 내부 동작·3D 구조는 그대로. */
-  left: auto;
-  right: clamp(3rem, 12vw, 13rem);
-  top: 42%;
+  left: 50%;
+  top: 58%;
   z-index: 6;
   perspective: 1600px;
   /* 작업1: 드래그(플릭) 입력 — 세로 스크롤/텍스트 선택 막고, 잡는 커서 표시 */
@@ -267,13 +254,12 @@
 /* 통일 브레이크포인트(1280 / 1024 / 767)로 히어로 3D 카드덱·릴 스케일 단계 조정.
    (스핀/등장 트랜지션 등 애니메이션 동작은 불변 — 크기/위치만) */
 @media (max-width: 1280px) { /* 노트북 축소 */
-  .deck { right: clamp(2rem, 9vw, 9rem); top: 40%; }
   .deckTilt { --scale: 0.78; }
 }
-@media (max-width: 1024px) { /* 태블릿 — 우측 상단 유지, 화면 안에 들어오게 안쪽으로 */
-  .deck { left: auto; right: clamp(1rem, 5vw, 5rem); top: 38%; }
+@media (max-width: 1024px) { /* 태블릿 */
+  .deck { left: 56%; }
   .deckTilt { --scale: 0.6; }
-  .reelWrap { width: 104px; height: 104px; bottom: 46%; } /* 워드마크와 겹침 방지: 좌측 중앙 */
+  .reelWrap { width: 104px; height: 104px; bottom: 10%; }
 }
 /* ── 모바일 (≤767): 숨김 없이 크기·위치만 ──────────────
    [복구] 회전 링 텍스트를 지우지 않고 축소·안쪽 배치 → stage(overflow:hidden) 안에 들어와
@@ -284,8 +270,7 @@
      안 됨(원근 왜곡으로 기울기가 달라 보임). 그래서 .deckTilt 는 데스크탑 지오메트리(--scale 0.8)를
      그대로 두고, perspective 컨테이너인 .deck 자체를 균일 축소(scale 0.5) → 투영 결과가 통째로
      작아질 뿐 각도(rotateZ -8·rotateX -20)는 픽셀 단위로 동일. left 도 데스크탑과 같은 50%. */
-  /* 작업2: 모바일도 우측 상단(브랜드 로고 아래). 균일 축소(scale 0.55)로 각도 유지하며 화면 안에. */
-  .deck { left: auto; right: -6%; top: 30%; transform: scale(0.55); transform-origin: top right; }
+  .deck { left: 50%; transform: scale(0.65); transform-origin: center; } /* 원통덱 확대(0.5→0.65), 각도·left 유지 */
   .deckTilt { --scale: 0.8; } /* 태블릿(0.6) 상속 방지 — 데스크탑 지오메트리로 복귀 */
   /* [2] 회전 릴 + 원형 회전 텍스트(ringText) 모바일 삭제 */
   .reelWrap { display: none; }

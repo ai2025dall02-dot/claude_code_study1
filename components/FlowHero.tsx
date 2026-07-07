@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useIntroRevealed } from "./Intro";
 import styles from "./FlowHero.module.css";
 
@@ -51,77 +50,8 @@ function opacityAt(i: number, rot: number) {
   return clamp((FULL_DEG + FADE_BAND - dist) / FADE_BAND, 0, 1);
 }
 
-// 작업1: 대형 워드마크 — 글자가 위에서 떨어져(fall-in) 좌측 하단에 계단식으로 쌓임.
-// 텍스트는 MOVIE → FILMNOUVELLE → FILM 순으로 교체되고 마지막 FILM 에서 멈춰 유지.
-const WORDS = ["MOVIE", "FILMNOUVELLE", "FILM"];
-
-function BigWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
-  const last = WORDS.length - 1;
-  const [wi, setWi] = useState(0);
-
-  // reduce-motion: 낙하 없이 최종 단어(FILM) 바로 표시
-  useEffect(() => {
-    if (reduce) setWi(last);
-  }, [reduce, last]);
-
-  // 단어 교체 타이머: (글자별 stagger 낙하 완료 + 체류) 후 다음 단어로. 마지막에서 멈춤. 인트로 공개 후 시작.
-  useEffect(() => {
-    if (reduce || !revealed || wi >= last) return;
-    const settle = WORDS[wi].length * 0.06 + 0.6; // 마지막 글자까지 떨어져 정착
-    const hold = 0.95; // 다음 단어로 넘어가기 전 유지(단계 간 딜레이)
-    const t = setTimeout(() => setWi((v) => Math.min(last, v + 1)), (settle + hold) * 1000);
-    return () => clearTimeout(t);
-  }, [wi, revealed, reduce, last]);
-
-  const word = WORDS[wi];
-  return (
-    <h1 className={styles.bigword} aria-label={word}>
-      {/* mode="wait": 이전 단어가 빠진 뒤 다음 단어가 떨어짐 */}
-      <AnimatePresence mode="wait">
-        <motion.span
-          key={word}
-          className={styles.word}
-          aria-hidden="true"
-          initial="enter"
-          animate={revealed ? "show" : "enter"}
-          exit="leave"
-        >
-          {word.split("").map((ch, i) => (
-            // wrapper: 계단(위로 갈수록 살짝 상승)·겹침(음수 marginLeft) — 정적. 낙하는 안쪽 .letter.
-            <span
-              key={i}
-              className={styles.letterStep}
-              style={{ marginLeft: i === 0 ? 0 : "-0.03em", transform: `translateY(${-i * 0.04}em)` }}
-            >
-              <motion.span
-                className={styles.letter}
-                variants={{
-                  enter: reduce ? { y: 0, opacity: 1 } : { y: "-130%", opacity: 0 },
-                  show: {
-                    y: 0,
-                    opacity: 1,
-                    transition: reduce
-                      ? { duration: 0 }
-                      : { delay: i * 0.06, type: "spring", stiffness: 460, damping: 24 },
-                  },
-                  leave: reduce
-                    ? { opacity: 1 }
-                    : { y: "22%", opacity: 0, transition: { duration: 0.22, delay: i * 0.02 } },
-                }}
-              >
-                {ch}
-              </motion.span>
-            </span>
-          ))}
-        </motion.span>
-      </AnimatePresence>
-    </h1>
-  );
-}
-
 export default function FlowHero() {
   const revealed = useIntroRevealed();
-  const reduce = useReducedMotion();
   const ringRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const pausedRef = useRef(false);
@@ -240,8 +170,36 @@ export default function FlowHero() {
         REEL
       </p>
 
-      {/* 대형 워드마크 — 글자 낙하 → 좌측 하단 계단식 스택, MOVIE→FILMNOUVELLE→FILM */}
-      <BigWordmark revealed={revealed} reduce={!!reduce} />
+      {/* FILM — 바우하우스 기하 워드마크 (원·반원·파이·세로 줄무늬) */}
+      <h1 className={styles.bigword} aria-label="FILM">
+        <svg className={styles.filmMark} viewBox="0 0 452 140" aria-hidden="true">
+          <defs>
+            <pattern id="filmHatch" width="8" height="24" patternUnits="userSpaceOnUse">
+              <rect x="0" y="0" width="3.6" height="24" fill="#0b0b0c" />
+            </pattern>
+          </defs>
+          {/* F — 좌상단 1/4 라운드 */}
+          <path
+            d="M0 32 A20 20 0 0 1 20 12 L66 12 L66 35 L26 35 L26 57 L54 57 L54 80 L26 80 L26 116 L0 116 Z"
+            fill="#0b0b0c"
+          />
+          {/* I — 세로 줄무늬(해칭) 기둥 */}
+          <rect x="96" y="12" width="30" height="104" fill="url(#filmHatch)" />
+          {/* L */}
+          <path d="M150 12 L176 12 L176 93 L220 93 L220 116 L150 116 Z" fill="#0b0b0c" />
+          {/* M — 굵은 스트로크 */}
+          <path
+            d="M256 116 L256 12 L318 86 L380 12 L380 116"
+            fill="none"
+            stroke="#0b0b0c"
+            strokeWidth="26"
+            strokeLinejoin="miter"
+          />
+          {/* 액센트 — 파이(노치) + 원 */}
+          <path d="M424 40 L424 22 A18 18 0 1 1 406 40 Z" fill="#0b0b0c" />
+          <circle cx="424" cy="100" r="18" fill="#0b0b0c" />
+        </svg>
+      </h1>
 
       <svg className={styles.ringText} viewBox="0 0 100 100" aria-hidden="true">
         <defs>
