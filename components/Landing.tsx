@@ -55,14 +55,15 @@ function RevealSlat({ index, progress }: { index: number; progress: MotionValue<
   return <motion.span className={styles.blind__slat} style={{ scaleY }} />;
 }
 
-// 모바일 전용 CONTACT 블라인드 슬랫 — sticky(journalProgress)가 꺼진 모바일에서 CONTACT 섹션 자체
-// 스크롤(contactProgress)에 연동해 검은 슬랫이 '아래→위'로 차오른다. (밝은 밴드 배경 위라 대비가 보임)
+// 모바일 전용 CONTACT 블라인드 슬랫 — 밝은 sticky 패널(.contactBlindSticky)이 화면을 채운 채로
+// blindProgress 에 따라 검은 슬랫이 화면 '아래→위'로 차오른다. sticky 고정(pin) 구간은 스크롤러
+// 진행도 [0, ~0.33] 이므로, 그 안에서 채워지도록 타이밍을 앞쪽으로 압축한다.
 const C_SLATS = 6;
-const C_STEP = 0.09; // 슬랫 사이 시작 지연(아래부터)
-const C_WINDOW = 0.28; // 한 슬랫이 0→1 로 차는 구간
+const C_STEP = 0.035; // 슬랫 사이 시작 지연(아래부터)
+const C_WINDOW = 0.12; // 한 슬랫이 0→1 로 차는 구간
 function ContactSlat({ index, progress }: { index: number; progress: MotionValue<number> }) {
-  // 아래 슬랫(index=C_SLATS-1)이 먼저, 위로 갈수록 나중에 → 아래→위로 차오르는 느낌
-  const start = 0.08 + (C_SLATS - 1 - index) * C_STEP;
+  // 아래 슬랫(index=C_SLATS-1)이 먼저, 위로 갈수록 나중에 → 화면 아래에서 위로 차오르는 커튼
+  const start = 0.02 + (C_SLATS - 1 - index) * C_STEP;
   const scaleY = useTransform(progress, [start, start + C_WINDOW], [0, 1]);
   return <motion.span className={styles.blind__slat} style={{ scaleY }} />;
 }
@@ -127,19 +128,20 @@ export default function Landing() {
   // [0.62, 1.0] 에서 y 100%(패널 아래) → 0%(제자리). 끝점 1.0 유지 → 트랙 끝에서 정확히 안착.
   const contactRevealY = useTransform(journalSmooth, [0.62, 1.0], ["100%", "0%"]);
 
-  // 모바일 전용: sticky/journalProgress 가 꺼져 있으므로 CONTACT 블라인드는 CONTACT 섹션 자체의
-  // 진입 스크롤에 연동한다. offset ["start end","start center"] → CONTACT 상단이 화면 하단→중앙으로
-  // 올라오는 동안 0→1 (그 사이에 슬랫이 확실히 차오름). 원시 진행도라 스크롤에 지연 없이 붙음.
-  // ※ CONTACT 폴백 섹션은 isMobile 이 켜진 뒤에야 마운트되므로 useRef 로는 useScroll 이 최초 1회
-  //   측정에서 놓친다 → 콜백 ref+state 로 요소가 붙은 뒤 target 을 갱신해 재측정되게 한다.
-  const [contactEl, setContactEl] = useState<HTMLElement | null>(null);
-  const contactTarget = useMemo(
-    () => (contactEl ? { current: contactEl } : undefined),
-    [contactEl]
+  // 모바일 전용 CONTACT 블라인드: 데스크탑의 sticky 블라인드처럼, CONTACT 최상단에 '밝은(#f8f8f8)'
+  // sticky 패널을 두고 그 pin 스크롤(blindProgress) 동안 검은 슬랫이 화면 아래→위로 차오르게 한다.
+  // 이렇게 해야 밝은 패널이 화면을 채운 채 슬랫이 올라와 '흰 배경 → 검은 차오름 → CONTACT 검정' 대비가
+  // 확실히 보인다(예전 top-앵커 밴드는 아래 슬랫이 화면 밖이라 대비가 안 보였음 → 수정).
+  // offset ["start start","end start"] = 스크롤러가 화면 상단을 지나는 동안(=sticky 고정 구간) 0→1.
+  // ※ 스크롤러는 isMobile 이 켜진 뒤 마운트되므로 콜백 ref+state 로 useScroll 이 재측정되게 한다.
+  const [blindEl, setBlindEl] = useState<HTMLDivElement | null>(null);
+  const blindTarget = useMemo(
+    () => (blindEl ? { current: blindEl } : undefined),
+    [blindEl]
   );
-  const { scrollYProgress: contactProgress } = useScroll({
-    target: contactTarget,
-    offset: ["start end", "start center"],
+  const { scrollYProgress: blindProgress } = useScroll({
+    target: blindTarget,
+    offset: ["start start", "end start"],
   });
 
   // 작업3: CONTACT 콘텐츠(헤더/그리드/footer). 오버레이(비-reduce)와 일반 섹션(reduce) 양쪽에서
@@ -273,6 +275,9 @@ export default function Landing() {
                   </motion.a>
                 ))}
               </motion.div>
+              {/* 모바일: 리스트 하단에 사이트 배경색(#f8f8f8) 그라데이션 오버레이 → 아래쪽 항목이
+                  서서히 가려짐(페이드아웃). 일반 흐름 리스트는 전부 존재, pointer-events:none. */}
+              {isMobile && <div className={styles.journalFade} aria-hidden="true" />}
             </div>
 
             {/* 작업3: 비-reduce — CONTACT 를 sticky 패널 안 오버레이(z-index 블라인드 위)로. 블라인드가
@@ -296,12 +301,14 @@ export default function Landing() {
           아래→위로 차올라(밝음→검정) CONTACT(검정)로 이어짐. 밝은 밴드라 '검정 위 검정' 안 됨.
           블라인드는 pointer-events:none, reduce 면 미렌더, contactInner fade-up 은 그대로. */}
       {flat && (
-        <section ref={setContactEl} className={`${styles.section} ${styles.contact}`} id="contact">
+        <section className={`${styles.section} ${styles.contact}`} id="contact">
           {!reduce && isMobile && (
-            <div className={styles.contactBlindMobile} aria-hidden="true">
-              {Array.from({ length: C_SLATS }).map((_, i) => (
-                <ContactSlat key={i} index={i} progress={contactProgress} />
-              ))}
+            <div ref={setBlindEl} className={styles.contactBlindScroller} aria-hidden="true">
+              <div className={styles.contactBlindSticky}>
+                {Array.from({ length: C_SLATS }).map((_, i) => (
+                  <ContactSlat key={i} index={i} progress={blindProgress} />
+                ))}
+              </div>
             </div>
           )}
           {contactInner}

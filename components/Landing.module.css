@@ -568,6 +568,19 @@
 .journal .inner { width: 100%; } /* flex 안에서 full-width 유지 + margin auto 로 가운데 정렬 */
 /* 헤더 아래 구분선 제거 + 작업1: 헤더↔리스트 간격 축소해 리스트에 세로 공간 확보 */
 .journal .head { border-bottom: none; margin-bottom: clamp(1rem, 2.5vw, 1.8rem); }
+/* 모바일 JOURNAL 리스트 하단 페이드 — 사이트 배경색(#f8f8f8)으로 아래쪽 항목이 서서히 가려짐.
+   position:sticky; bottom:0 로 '화면 하단'에 고정 → 리스트가 그 아래로 지나며 페이드, 스크롤을
+   내리면 가려졌던 항목이 위로 드러난다. margin-top 음수로 플로우 높이 상쇄(리스트 위에 겹침).
+   pointer-events:none(스크롤/클릭 통과). (JSX 에서 isMobile 만 렌더) */
+.journalFade {
+  position: sticky;
+  bottom: 0;
+  height: clamp(140px, 28vh, 240px);
+  margin-top: calc(-1 * clamp(140px, 28vh, 240px));
+  background: linear-gradient(to bottom, rgba(248, 248, 248, 0), #f8f8f8);
+  pointer-events: none;
+  z-index: 3;
+}
 .posts { display: grid; gap: 0; }
 .post {
   display: grid;
@@ -798,17 +811,23 @@
   transform-origin: center; /* scaleY 0→1 로 제자리에서 펼쳐지며 밝은 영역을 덮음 */
   will-change: transform;
 }
-/* 모바일 CONTACT 전환 블라인드 밴드 — sticky 없는 모바일 전용. 일반 흐름 100vh '밝은 밴드'(#f8f8f8)라
-   직전 JOURNAL(밝음)과 이어지고, 그 위로 검은 슬랫(.blind__slat)이 아래→위로 차오르며 CONTACT(검정)로
-   전환됨(밝음→검정 대비가 보임 = '검정 위 검정' 방지). pointer-events:none. */
-.contactBlindMobile {
+/* 모바일 CONTACT 전환 블라인드 — sticky 패널을 pin 해 '밝은(#f8f8f8)' 화면이 뷰포트를 채운 채로
+   검은 슬랫(.blind__slat)이 아래→위로 차오르게 한다. (예전 top-앵커 밴드는 아래 슬랫이 화면 밖이라
+   대비가 안 보였음 → sticky 로 뷰포트를 채워 '흰 배경 → 검은 차오름 → CONTACT 검정' 이 확실히 보임.)
+   scroller(150vh) 중 sticky(100vh) 를 뺀 ~50vh 동안 pin 되며 그 사이 슬랫이 채워짐. */
+.contactBlindScroller {
   position: relative;
+  height: 150vh;
+  pointer-events: none;
+}
+.contactBlindSticky {
+  position: sticky;
+  top: 0;
   height: 100vh;
-  background: #f8f8f8;
+  background: #f8f8f8; /* 밝은 배경 → 검은 슬랫이 대비로 확실히 보임 */
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  pointer-events: none;
 }
 /* 작업1: TRIONN 식 — 좌측 lead 가 두 행 세로 차지, 우측은 cta→contacts 순으로 쌓임 */
 .contactGrid {
@@ -1046,6 +1065,7 @@
      (헤더가 화면에 들어와야 TypeTitle useInView 도 트리거되어 타이핑됨) */
   .journalSticky { padding-top: 68px; box-sizing: border-box; }
   .journal { align-items: flex-start; }
+  .journal .inner { position: relative; } /* [1] journalFade(리스트 하단 페이드) 위치 기준 */
 }
 
 /* JOURNAL sticky 패널 밀도 — 낮은 뷰포트(노트북/모바일 가로)에서 8개 포스트가 100vh 안에
