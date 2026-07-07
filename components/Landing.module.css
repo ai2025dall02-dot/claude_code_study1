@@ -811,24 +811,22 @@
   transform-origin: center; /* scaleY 0→1 로 제자리에서 펼쳐지며 밝은 영역을 덮음 */
   will-change: transform;
 }
-/* 모바일 CONTACT 전환 블라인드 — sticky 패널을 pin 해 '밝은(#f8f8f8)' 화면이 뷰포트를 채운 채로
-   검은 슬랫(.blind__slat)이 아래→위로 차오르게 한다. (예전 top-앵커 밴드는 아래 슬랫이 화면 밖이라
-   대비가 안 보였음 → sticky 로 뷰포트를 채워 '흰 배경 → 검은 차오름 → CONTACT 검정' 이 확실히 보임.)
-   scroller(150vh) 중 sticky(100vh) 를 뺀 ~50vh 동안 pin 되며 그 사이 슬랫이 채워짐. */
-.contactBlindScroller {
+/* 모바일 CONTACT 전환 블라인드 — 뷰포트에 들어오는 '밝은(#f8f8f8)' 밴드. 화면보다 작게(≈58vh) 잡아
+   밴드 전체가 화면에 보일 때 슬랫이 채워지므로 '아래→위 차오름'이 그대로 보인다(sticky pin 은
+   전역 body overflow 때문에 불안정 → 짧은 밴드로 단순화). 밴드 직후 바로 CONTACT 콘텐츠가 와서
+   큰 빈 공간 없음. pointer-events:none. */
+.contactBlind {
   position: relative;
-  height: 150vh;
-  pointer-events: none;
-}
-.contactBlindSticky {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  background: #f8f8f8; /* 밝은 배경 → 검은 슬랫이 대비로 확실히 보임 */
+  height: 58vh;
+  background: #f8f8f8; /* 밝은 배경 → 검은 슬랫 대비 */
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  pointer-events: none;
 }
+/* 슬랫을 '아래 모서리에서 위로' 키운다(transform-origin:bottom) + 순차 타이밍 → 검정이 바닥부터
+   틈 없이 연속으로 차오름(center 기준이면 슬랫마다 밝은 틈=흰 가로줄이 생겼음 → 제거). */
+.contactBlind .blind__slat { transform-origin: bottom; }
 /* 작업1: TRIONN 식 — 좌측 lead 가 두 행 세로 차지, 우측은 cta→contacts 순으로 쌓임 */
 .contactGrid {
   display: grid;
@@ -979,10 +977,14 @@
      (.lineup·.contact 은 원래 상단 border 없음) */
   .fm, .journal { border-block: none; }
 
-  /* CONTACT 전환 블라인드: 밝은 밴드가 직전 JOURNAL(밝음)과 바로 이어지도록 섹션 상단 여백 제거,
-     밴드 아래 CONTACT 콘텐츠엔 별도 상단 여백 부여 (블라인드 없는 reduce 도 콘텐츠 여백은 유지) */
-  .contact { padding-top: 0; }
-  .contact .inner { padding-top: clamp(2rem, 7vh, 3.25rem); }
+  /* CONTACT 전환 블라인드:
+     - overflow:visible → .contact 의 overflow:hidden 이 sticky 블라인드의 뷰포트 고정(pin)을 막던 문제
+       해소(이게 '검정 위 검정·큰 빈 공간'의 원인). 이제 밝은 sticky 패널이 화면에 고정된 채 슬랫이 참.
+     - border:none → 진입부 상단 '흰 가로줄' 제거.
+     - padding-top:0 + 콘텐츠 상단 여백 최소화 → 블라인드 직후 바로 헤더/리드가 오게(큰 여백 제거). */
+  .contact { padding-top: 0; overflow: visible; border: none; }
+  .contact .head { border-bottom: none; }
+  .contact .inner { padding-top: clamp(1rem, 3vh, 1.75rem); }
 
   /* [2] ABOUT: 모바일에선 pin(sticky·100vh·overflow) 해제 → 화면을 넘는 본문이 잘리지 않게
      일반 흐름으로. 원형 reveal 레이어(lineupReveal/aboutInvert)는 pin 이 없으면 불필요 → 미표시.
