@@ -15,18 +15,17 @@ import TypeTitle from "./TypeTitle";
 import styles from "./Landing.module.css";
 
 /* 영화제 초청·수상 (데모용 가상 정보)
-   image: 중앙에 노출되는 행사 이미지 — 임시로 posters-photo/m* 매핑
-   작업1: 5개 → 9개로 확장 (m9.jpg 는 프로젝트에 없어 타이베이 금마장은 m1 로 대체) */
+   image: 중앙 노출 이미지 — public 루트의 /festival_*.png 로 교체(영화제별 전용 이미지) */
 const FESTIVALS = [
-  { yr: "2024", name: "부산국제영화제", section: "한국영화의 오늘 — 비전", film: "조용한 망명", image: "/posters-photo/m3.jpg" },
-  { yr: "2024", name: "전주국제영화제", section: "국제경쟁", film: "여름의 잔상", image: "/posters-photo/m1.jpg" },
-  { yr: "2023", name: "로테르담 국제영화제", section: "Tiger Competition", film: "북위 48도", image: "/posters-photo/m4.jpg" },
-  { yr: "2023", name: "야마가타 다큐멘터리", section: "International Competition", film: "필름의 끝", image: "/posters-photo/m6.jpg" },
-  { yr: "2022", name: "산세바스티안 영화제", section: "New Directors", film: "소금사막", image: "/posters-photo/m8.jpg" },
-  { yr: "2022", name: "로카르노 영화제", section: "Concorso Cineasti del presente", film: "재의 계절", image: "/posters-photo/m2.jpg" },
-  { yr: "2022", name: "낭트 3대륙 영화제", section: "Compétition", film: "붉은 방", image: "/posters-photo/m5.jpg" },
-  { yr: "2021", name: "카를로비바리 영화제", section: "Proxima Competition", film: "겨울 우체국", image: "/posters-photo/m7.jpg" },
-  { yr: "2021", name: "타이베이 금마장", section: "International New Talent", film: "빛의 문", image: "/posters-photo/m1.jpg" },
+  { yr: "2024", name: "부산국제영화제", section: "한국영화의 오늘 — 비전", film: "조용한 망명", image: "/festival_1.png" },
+  { yr: "2024", name: "전주국제영화제", section: "국제경쟁", film: "여름의 잔상", image: "/festival_2.png" },
+  { yr: "2023", name: "로테르담 국제영화제", section: "Tiger Competition", film: "북위 48도", image: "/festival_3.png" },
+  { yr: "2023", name: "야마가타 다큐멘터리", section: "International Competition", film: "필름의 끝", image: "/festival_4.png" },
+  { yr: "2022", name: "산세바스티안 영화제", section: "New Directors", film: "소금사막", image: "/festival_5.png" },
+  { yr: "2022", name: "로카르노 영화제", section: "Concorso Cineasti del presente", film: "재의 계절", image: "/festival_6.png" },
+  { yr: "2022", name: "낭트 3대륙 영화제", section: "Compétition", film: "붉은 방", image: "/festival_7.png" },
+  { yr: "2021", name: "카를로비바리 영화제", section: "Proxima Competition", film: "겨울 우체국", image: "/festival_8.png" },
+  { yr: "2021", name: "타이베이 금마장", section: "International New Talent", film: "빛의 문", image: "/festival_9.png" },
 ];
 
 export default function Festivals() {

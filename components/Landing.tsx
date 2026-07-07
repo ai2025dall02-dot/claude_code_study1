@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   motion,
   useReducedMotion,
@@ -103,6 +103,45 @@ export default function Landing() {
   // 같은(스무딩된) 진행도로 올림. 블라인드보다 살짝 뒤(0.62)에서 시작해 이어서 따라 올라오는 시차.
   // [0.62, 1.0] 에서 y 100%(패널 아래) → 0%(제자리). 끝점 1.0 유지 → 트랙 끝에서 정확히 안착.
   const contactRevealY = useTransform(journalSmooth, [0.62, 1.0], ["100%", "0%"]);
+
+  // 작업1(모바일 ≤767px): JOURNAL 리스트를 5개만 먼저 노출 → 스크롤을 내리면 숨은 6~8번째가 아래에서
+  // 위로 올라오며 드러나고, 다 올라오면 하단 마스크가 사라진 뒤 sticky 로 잠깐 고정 → 블라인드로 이어짐.
+  // 데스크탑엔 이 리빌/마스크를 적용하지 않는다(구조·동작 그대로). isMobile 로만 게이팅.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const on = () => setIsMobile(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+
+  // 리스트 리빌 측정: 5개까지의 창 높이(winHeight)와, 숨은 3개를 끌어올릴 거리(revealDistance).
+  // .posts 그리드의 6번째 자식 상단(=5개 높이)을 창으로, 전체높이-창 을 이동거리로 사용(리사이즈 시 재측정).
+  const postsInnerRef = useRef<HTMLDivElement>(null);
+  const [winHeight, setWinHeight] = useState(0);
+  const [revealDistance, setRevealDistance] = useState(0);
+  useEffect(() => {
+    const measure = () => {
+      const inner = postsInnerRef.current;
+      if (!inner || inner.children.length < 6) return;
+      const top0 = (inner.children[0] as HTMLElement).offsetTop;
+      const top5 = (inner.children[5] as HTMLElement).offsetTop; // 6번째 상단 = 앞 5개 높이
+      const win = top5 - top0;
+      setWinHeight(win);
+      setRevealDistance(Math.max(0, inner.scrollHeight - win));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  // 모바일에서만 리빌 적용(reduce 접근성 폴백 제외). 데스크탑은 y:0·마스크 미표시로 현행 유지.
+  const applyReveal = !reduce && isMobile;
+  // 리빌 구간[0.05,0.42]: 숨은 리스트를 위(-revealDistance)로 끌어올림(스크롤 직결, 스무딩 없이 반응성 유지).
+  const listY = useTransform(journalProgress, [0.05, 0.42], [0, -revealDistance]);
+  // 마스크: 리빌 종료 지점[0.42,0.52]에서 투명화(아래로 사라짐). 이후 [0.52,0.56] sticky 유지 → 0.56~ 블라인드.
+  const maskOpacity = useTransform(journalProgress, [0.42, 0.52], [1, 0]);
 
   // 작업3: CONTACT 콘텐츠(헤더/그리드/footer). 오버레이(비-reduce)와 일반 섹션(reduce) 양쪽에서
   // 재사용. 내부 아이템 stagger(contentGroup/contentItem)는 그대로. slide-up 은 바깥 래퍼가 담당.
@@ -216,25 +255,45 @@ export default function Landing() {
                 <span className={styles.index}>개봉 · 인터뷰 · 상영회</span>
               </header>
 
-              {/* 리스트 stagger: 화면 중앙 근처(-40%)까지 올라오면 아래→위 순차 등장, once:true */}
-              <motion.div
-                className={styles.posts}
-                variants={postGroup}
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, margin: "0px 0px -40% 0px" }}
+              {/* 작업1(모바일): 리스트 창(.postsWin) — 모바일에선 max-height=5개·overflow:hidden 으로 5개만
+                  보이고, 안쪽 트랙(.postsTrack)이 listY 로 위로 올라오며 6~8번째가 드러남. 하단 마스크(.postsMask)
+                  가 항상 흰색 그라데이션으로 아래 리스트를 가리다 리빌 끝(maskOpacity)에서 사라짐. 데스크탑은
+                  maxHeight 미적용·마스크 display:none·y:0 이라 현행과 동일. */}
+              <div
+                className={styles.postsWin}
+                style={applyReveal && winHeight ? { maxHeight: winHeight } : undefined}
               >
-                {JOURNAL.map((p) => (
-                  <motion.a key={p.title} className={styles.post} href="#contact" variants={postItem}>
-                    <span className={styles.post__date}>{p.date}</span>
-                    <span>
-                      <span className={styles.post__cat}>{p.cat}</span>
-                      <span className={styles.post__title}>{p.title}</span>
-                    </span>
-                    <span className={styles.post__more}>READ →</span>
-                  </motion.a>
-                ))}
-              </motion.div>
+                <motion.div
+                  className={styles.postsTrack}
+                  style={{ y: applyReveal ? listY : 0 }}
+                >
+                  {/* 리스트 stagger: 화면 중앙 근처(-40%)까지 올라오면 아래→위 순차 등장, once:true */}
+                  <motion.div
+                    ref={postsInnerRef}
+                    className={styles.posts}
+                    variants={postGroup}
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, margin: "0px 0px -40% 0px" }}
+                  >
+                    {JOURNAL.map((p) => (
+                      <motion.a key={p.title} className={styles.post} href="#contact" variants={postItem}>
+                        <span className={styles.post__date}>{p.date}</span>
+                        <span>
+                          <span className={styles.post__cat}>{p.cat}</span>
+                          <span className={styles.post__title}>{p.title}</span>
+                        </span>
+                        <span className={styles.post__more}>READ →</span>
+                      </motion.a>
+                    ))}
+                  </motion.div>
+                </motion.div>
+                <motion.div
+                  className={styles.postsMask}
+                  aria-hidden="true"
+                  style={{ opacity: applyReveal ? maskOpacity : 0 }}
+                />
+              </div>
             </div>
 
             {/* 작업3: 비-reduce — CONTACT 를 sticky 패널 안 오버레이(z-index 블라인드 위)로. 블라인드가

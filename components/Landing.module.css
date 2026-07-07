@@ -568,6 +568,21 @@
 .journal .inner { width: 100%; } /* flex 안에서 full-width 유지 + margin auto 로 가운데 정렬 */
 /* 헤더 아래 구분선 제거 + 작업1: 헤더↔리스트 간격 축소해 리스트에 세로 공간 확보 */
 .journal .head { border-bottom: none; margin-bottom: clamp(1rem, 2.5vw, 1.8rem); }
+/* 작업1(모바일): 리스트 창 + 하단 마스크. 데스크탑은 overflow:visible·마스크 display:none 이라 무영향. */
+.postsWin { position: relative; }
+.postsTrack { will-change: transform; }
+.postsMask {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42%;
+  /* 투명 → #f8f8f8(JOURNAL 배경) 그라데이션으로 아래 리스트를 가림 */
+  background: linear-gradient(to bottom, rgba(248, 248, 248, 0) 0%, #f8f8f8 72%);
+  pointer-events: none;
+  z-index: 2;
+  display: none; /* 데스크탑: 마스크 없음 — 모바일에서만 표시 */
+}
 .posts { display: grid; gap: 0; }
 .post {
   display: grid;
@@ -1026,6 +1041,10 @@
      로 가려졌다 스크롤로 드러나고, sticky 로 잠깐 고정된 뒤 블라인드 전환으로 이어짐. */
   .journalSticky { padding-top: 68px; box-sizing: border-box; }
   .journal { align-items: flex-start; }
+  /* 작업1: 모바일에서만 리스트 창을 5개 높이로 클립(maxHeight 는 JS 측정값 인라인) + 하단 마스크 표시.
+     안쪽 트랙(.postsTrack)이 listY 로 올라오며 숨은 6~8번째가 드러나고, 리빌이 끝나면 마스크가 사라짐. */
+  .postsWin { overflow: hidden; }
+  .postsMask { display: block; }
 }
 
 /* JOURNAL sticky 패널 밀도 — 낮은 뷰포트(노트북/모바일 가로)에서 8개 포스트가 100vh 안에
