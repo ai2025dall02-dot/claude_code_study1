@@ -33,6 +33,10 @@ const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.075) + 20;
 const SPEED = 7; // deg/sec
 const FULL_DEG = 42; // ±이 범위 안은 opacity 1 (STEP=36 → 가운데+양옆 3장)
 const FADE_BAND = 30; // 그 바깥에서 1→0 으로 페이드되는 폭(deg)
+// 작업1(드래그 플릭 관성): 손으로 굴린 뒤 관성으로 감속하며 자동 회전으로 복귀시키는 튜닝값.
+const DRAG_FACTOR = 0.3; // 드래그 1px → 회전 각도(deg). 클수록 손맛 빠름
+const MAX_V = 520; // 관성 최대 속도(deg/s) 클램프 — 과한 스핀 방지
+const DECAY = 0.94; // 관성 감쇠(프레임당). 1에 가까울수록 오래 굴러감
 
 function norm(a: number) {
   const m = ((a % 360) + 360) % 360;
@@ -52,6 +56,12 @@ export default function FlowHero() {
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const pausedRef = useRef(false);
   const rotRef = useRef(0);
+  // 작업1: 드래그 플릭 관성 상태 — velocity(관성 속도) + 드래그 추적용 refs
+  const velocityRef = useRef(0); // 관성 속도(deg/s). rAF 에서 감쇠하며 rotRef 에 더함
+  const draggingRef = useRef(false); // 드래그 중 자동/관성 정지, rotRef 를 손으로 직접 갱신
+  const lastXRef = useRef(0); // 직전 포인터 x
+  const lastTRef = useRef(0); // 직전 포인터 timestamp(ms) — 속도 계산용
+  const reduceRef = useRef(false); // reduce-motion 이면 드래그 관성 생략
 
   useEffect(() => {
     const ring = ringRef.current;
@@ -66,10 +76,11 @@ export default function FlowHero() {
     };
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    reduceRef.current = reduce;
     if (reduce) {
       ring.style.transform = "rotateY(0deg)";
       applyOpacity();
-      return;
+      return; // 정지 유지 — 드래그 관성도 핸들러에서 reduceRef 로 생략
     }
 
     let raf = 0;
@@ -79,7 +90,18 @@ export default function FlowHero() {
       if (!last) last = t;
       const dt = (t - last) / 1000;
       last = t; // dt 누적 점프 방지
-      if (pausedRef.current) {
+
+      // 작업1: 드래그 중 — 자동 회전/관성 없이 rotRef(손 입력)만 즉시 반영
+      if (draggingRef.current) {
+        ring.style.transform = `rotateY(${rotRef.current}deg)`;
+        applyOpacity();
+        pausedWritten = false;
+        raf = requestAnimationFrame(frame);
+        return;
+      }
+
+      // 호버 정지: 단, 관성이 남아있으면 무시하고 계속 굴림(플릭 우선)
+      if (pausedRef.current && velocityRef.current === 0) {
         // paused 동안 ring transform/opacity 를 매 프레임 재기록하지 않고 진입 시 1회만
         if (!pausedWritten) {
           ring.style.transform = `rotateY(${rotRef.current}deg)`;
@@ -90,7 +112,12 @@ export default function FlowHero() {
         return;
       }
       pausedWritten = false;
-      rotRef.current += SPEED * dt;
+
+      // 작업1: 자동 회전(SPEED) + 관성(velocity, 매 프레임 감쇠). velocity→0 이면 기존 자동 회전만 남아
+      // 자연스럽게 원래 속도로 복귀. 방향/기본 속도는 이전과 동일.
+      rotRef.current += (SPEED + velocityRef.current) * dt;
+      velocityRef.current *= DECAY;
+      if (Math.abs(velocityRef.current) < 0.05) velocityRef.current = 0;
       ring.style.transform = `rotateY(${rotRef.current}deg)`;
       applyOpacity();
       raf = requestAnimationFrame(frame);
@@ -107,6 +134,33 @@ export default function FlowHero() {
   const onLeave = (e: React.MouseEvent<HTMLDivElement>) => {
     pausedRef.current = false;
     e.currentTarget.classList.remove(styles.hovered);
+  };
+
+  // 작업1: 드래그(플릭)로 원통 굴리기 — 지구본처럼. 마우스/터치 공통 pointer 이벤트 사용.
+  // 드래그 중엔 rotRef 를 손 이동량만큼 직접 갱신(즉각 반응), 놓으면 마지막 속도를 velocityRef 로
+  // 넘겨 rAF 가 관성 감쇠하며 자동 회전으로 복귀.
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (reduceRef.current) return; // reduce-motion: 관성 생략(정지 유지)
+    draggingRef.current = true;
+    velocityRef.current = 0;
+    lastXRef.current = e.clientX;
+    lastTRef.current = e.timeStamp;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return;
+    const dx = e.clientX - lastXRef.current;
+    const dts = Math.max(1, e.timeStamp - lastTRef.current) / 1000; // 초
+    const dDeg = dx * DRAG_FACTOR;
+    rotRef.current += dDeg; // 손으로 직접 회전
+    velocityRef.current = clamp(dDeg / dts, -MAX_V, MAX_V); // 놓았을 때 넘겨줄 관성 속도(deg/s)
+    lastXRef.current = e.clientX;
+    lastTRef.current = e.timeStamp;
+  };
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false; // velocityRef 유지 → rAF 관성으로 이어짐
+    e.currentTarget.releasePointerCapture(e.pointerId);
   };
 
   return (
@@ -172,8 +226,15 @@ export default function FlowHero() {
         </svg>
       </div>
 
-      {/* 원통형 3D 카드 덱 — 바깥=고정 기울기, 안쪽=rAF rotateY */}
-      <div className={styles.deck}>
+      {/* 원통형 3D 카드 덱 — 바깥=고정 기울기, 안쪽=rAF rotateY.
+          작업1: .deck 에 pointer 핸들러 → 드래그(플릭)로 굴리고 놓으면 관성. touch-action:none 은 CSS. */}
+      <div
+        className={styles.deck}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      >
         <div className={styles.deckTilt}>
           <div
             className={styles.deckRing}
@@ -198,17 +259,9 @@ export default function FlowHero() {
                   onMouseEnter={onEnter}
                   onMouseLeave={onLeave}
                 >
-                  <div className={styles.front}>
-                    <div className={styles.card__head}>
-                      <span className={styles.card__label}>{c.label}</span>
-                      <span className={styles.card__no}>
-                        {String((i % DECK_CARDS.length) + 1).padStart(2, "0")}
-                      </span>
-                    </div>
-                    <div className={styles.card__media}>
-                      <Image src={c.img} alt={c.caption} fill sizes="212px" priority={i < 6} />
-                    </div>
-                    <span className={styles.card__cap}>{c.caption}</span>
+                  {/* 작업2: 라벨/번호/캡션 제거 — 이미지가 카드 전체를 꽉 채움(여백 0) */}
+                  <div className={styles.card__media}>
+                    <Image src={c.img} alt={c.caption} fill sizes="212px" priority={i < 6} />
                   </div>
                 </div>
               </div>

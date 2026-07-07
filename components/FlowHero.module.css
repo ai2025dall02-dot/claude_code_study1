@@ -167,7 +167,12 @@
   top: 58%;
   z-index: 6;
   perspective: 1600px;
+  /* 작업1: 드래그(플릭) 입력 — 세로 스크롤/텍스트 선택 막고, 잡는 커서 표시 */
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
 }
+.deck:active { cursor: grabbing; }
 /* 바깥 래퍼: 고정 기울기(대각 스윕)만 — 회전과 분리 */
 .deckTilt {
   position: absolute;
@@ -199,13 +204,15 @@
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 3px;
 }
-/* 카드: 패널 위에서 각도 기반 opacity 로 연속 페이드 (opacity 는 JS가 매 프레임 설정) */
+/* 카드: 패널 위에서 각도 기반 opacity 로 연속 페이드 (opacity 는 JS가 매 프레임 설정).
+   작업2: 텍스트 제거 → 이미지가 카드를 꽉 채우도록 padding 0 + overflow:hidden(모서리 radius 클립). */
 .card {
   position: absolute;
   inset: 0;
   background: #fff;
   border-radius: 3px;
-  padding: 9px 9px 11px;
+  padding: 0; /* 작업2: 안쪽 여백 제거 — 이미지가 모서리까지 */
+  overflow: hidden; /* 작업2: 이미지를 카드 radius 로 클립 */
   display: flex;
   flex-direction: column;
   box-shadow: 0 26px 50px rgba(20, 20, 20, 0.22), 0 4px 14px rgba(20, 20, 20, 0.14);
@@ -222,48 +229,14 @@
   z-index: 50;
   box-shadow: 0 44px 90px rgba(20, 20, 20, 0.42), 0 12px 26px rgba(20, 20, 20, 0.3);
 }
-.front {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  flex-direction: column;
-}
-.card__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-.card__label {
-  font-family: "Arial Black", Helvetica, sans-serif;
-  font-weight: 900;
-  font-size: clamp(11px, 1vw, 14px);
-  letter-spacing: -0.01em;
-  color: #0c0c0c;
-}
-.card__no {
-  font-family: var(--font-meta, monospace);
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  color: #9a9a96;
-}
+/* 작업2: 이미지 미디어가 카드 전체를 채움(여백 0). radius 는 카드 overflow 로 클립. */
 .card__media {
   position: relative;
   flex: 1;
-  border-radius: 2px;
   overflow: hidden;
   background: #ddd;
 }
-.card__media img { object-fit: cover; filter: none; } /* 컬러 원본 유지 */
-.card__cap {
-  margin-top: 8px;
-  font-family: var(--font-meta, monospace);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #4a4a48;
-}
+.card__media img { object-fit: cover; filter: none; } /* 컬러 원본 유지, cover 로 꽉 채움 */
 
 /* ── 하단 러닝 라벨 ── */
 .tagline {
