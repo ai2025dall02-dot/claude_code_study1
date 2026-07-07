@@ -295,7 +295,7 @@
   position: relative;
   height: 450vh; /* 세로 스크롤 길이 — pitch 가 커진 만큼 스크롤 여유 확보 */
   background: #f8f8f8; /* #fff → #f8f8f8 (FESTIVALS 와 동일한 옅은 회색) */
-  border-block: 1px solid rgba(0, 0, 0, 0.08);
+  /* [1] 섹션 사이 가로 구분선 제거(전 브레이크포인트) */
 }
 .fmViewport {
   position: sticky;
@@ -558,7 +558,7 @@
   position: relative;
   height: 100%;
   background: #f8f8f8; /* #fff → #f8f8f8 (옅은 회색) */
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  /* [1] 섹션 사이 가로 구분선 제거(전 브레이크포인트) */
   display: flex;
   align-items: center;
   /* 작업1: .post 여백을 키운 대신 패널 위아래 여백을 줄여 8개가 100vh 에 들어가게 */
@@ -811,22 +811,25 @@
   transform-origin: center; /* scaleY 0→1 로 제자리에서 펼쳐지며 밝은 영역을 덮음 */
   will-change: transform;
 }
-/* 모바일 CONTACT 전환 블라인드 — 뷰포트에 들어오는 '밝은(#f8f8f8)' 밴드. 화면보다 작게(≈58vh) 잡아
-   밴드 전체가 화면에 보일 때 슬랫이 채워지므로 '아래→위 차오름'이 그대로 보인다(sticky pin 은
-   전역 body overflow 때문에 불안정 → 짧은 밴드로 단순화). 밴드 직후 바로 CONTACT 콘텐츠가 와서
-   큰 빈 공간 없음. pointer-events:none. */
-.contactBlind {
+/* 모바일 CONTACT 전환 블라인드 — JOURNAL 마지막을 지나면 '밝은(#f8f8f8)' 패널이 화면에 sticky 로
+   고정(item2: 잠깐 고정)된 채, 검은 슬랫이 화면 아래→위로 순차로 차오른다. 밝은 배경 위라 대비가
+   보이고, transform-origin:bottom + 순차 타이밍이라 슬랫 사이 밝은 틈(=흰 가로줄)이 없다.
+   scroller(130vh) 중 panel(100vh) 을 뺀 ~30vh 동안 pin 되며 그 사이 슬랫이 채워짐. pointer-events:none. */
+.contactBlindScroller {
   position: relative;
-  height: 58vh;
-  background: #f8f8f8; /* 밝은 배경 → 검은 슬랫 대비 */
+  height: 130vh;
+  pointer-events: none;
+}
+.contactBlindPanel {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: #f8f8f8;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  pointer-events: none;
 }
-/* 슬랫을 '아래 모서리에서 위로' 키운다(transform-origin:bottom) + 순차 타이밍 → 검정이 바닥부터
-   틈 없이 연속으로 차오름(center 기준이면 슬랫마다 밝은 틈=흰 가로줄이 생겼음 → 제거). */
-.contactBlind .blind__slat { transform-origin: bottom; }
+.contactBlindPanel .blind__slat { transform-origin: bottom; }
 /* 작업1: TRIONN 식 — 좌측 lead 가 두 행 세로 차지, 우측은 cta→contacts 순으로 쌓임 */
 .contactGrid {
   display: grid;
@@ -972,10 +975,6 @@
   .fest { grid-template-columns: 3rem 1fr; }
   .post { grid-template-columns: 1fr; }
   .ciList { grid-template-columns: 1fr; } /* 모바일 1열 */
-
-  /* [2] 섹션 사이 가로 구분선 제거 (모바일) — .fm(border-block)·.journal(border-top).
-     (.lineup·.contact 은 원래 상단 border 없음) */
-  .fm, .journal { border-block: none; }
 
   /* CONTACT 전환 블라인드:
      - overflow:visible → .contact 의 overflow:hidden 이 sticky 블라인드의 뷰포트 고정(pin)을 막던 문제

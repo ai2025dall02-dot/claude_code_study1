@@ -59,9 +59,9 @@ function RevealSlat({ index, progress }: { index: number; progress: MotionValue<
 // blindProgress 에 따라 검은 슬랫이 화면 '아래→위'로 차오른다. sticky 고정(pin) 구간은 스크롤러
 // 진행도 [0, ~0.33] 이므로, 그 안에서 채워지도록 타이밍을 앞쪽으로 압축한다.
 const C_SLATS = 6;
-// 밴드가 화면 중앙에 왔을 때(progress ≈ 0.4~0.66) 채워지도록. 겹침 없는 순차(window≈step) +
-// transform-origin:bottom → '틈 없이' 바닥부터 차오름.
-const C_BASE = 0.4; // 채우기 시작 진행도(밴드가 화면에 충분히 들어온 시점)
+// sticky pin 구간(진행도 ≈ 0~0.3)에 맞춰 앞쪽으로 압축. 겹침 없는 순차(window≈step) +
+// transform-origin:bottom → '틈 없이' 바닥부터 차오름(흰 가로줄 없음).
+const C_BASE = 0.02; // 채우기 시작 진행도
 const C_STEP = 0.04; // 슬랫 사이 시작 지연(아래부터)
 const C_WINDOW = 0.045; // 한 슬랫이 0→1 로 차는 구간
 function ContactSlat({ index, progress }: { index: number; progress: MotionValue<number> }) {
@@ -144,7 +144,7 @@ export default function Landing() {
   );
   const { scrollYProgress: blindProgress } = useScroll({
     target: blindTarget,
-    offset: ["start end", "end start"], // 밴드가 화면을 지나는 동안 0→1 (그 중앙 구간에서 슬랫이 참)
+    offset: ["start start", "end start"], // 스크롤러가 화면 상단을 지나는 동안(sticky pin 구간 포함) 0→1
   });
 
   // 작업3: CONTACT 콘텐츠(헤더/그리드/footer). 오버레이(비-reduce)와 일반 섹션(reduce) 양쪽에서
@@ -306,10 +306,12 @@ export default function Landing() {
       {flat && (
         <section className={`${styles.section} ${styles.contact}`} id="contact">
           {!reduce && isMobile && (
-            <div ref={setBlindEl} className={styles.contactBlind} aria-hidden="true">
-              {Array.from({ length: C_SLATS }).map((_, i) => (
-                <ContactSlat key={i} index={i} progress={blindProgress} />
-              ))}
+            <div ref={setBlindEl} className={styles.contactBlindScroller} aria-hidden="true">
+              <div className={styles.contactBlindPanel}>
+                {Array.from({ length: C_SLATS }).map((_, i) => (
+                  <ContactSlat key={i} index={i} progress={blindProgress} />
+                ))}
+              </div>
             </div>
           )}
           {contactInner}
