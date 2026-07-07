@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRef } from "react";
 import {
   motion,
   useReducedMotion,
@@ -55,41 +55,14 @@ function RevealSlat({ index, progress }: { index: number; progress: MotionValue<
   return <motion.span className={styles.blind__slat} style={{ scaleY }} />;
 }
 
-// 모바일 전용 CONTACT 블라인드 슬랫 — 밝은 sticky 패널(.contactBlindSticky)이 화면을 채운 채로
-// blindProgress 에 따라 검은 슬랫이 화면 '아래→위'로 차오른다. sticky 고정(pin) 구간은 스크롤러
-// 진행도 [0, ~0.33] 이므로, 그 안에서 채워지도록 타이밍을 앞쪽으로 압축한다.
-const C_SLATS = 6;
-// sticky pin 구간(진행도 ≈ 0~0.3)에 맞춰 앞쪽으로 압축. 겹침 없는 순차(window≈step) +
-// transform-origin:bottom → '틈 없이' 바닥부터 차오름(흰 가로줄 없음).
-const C_BASE = 0.02; // 채우기 시작 진행도
-const C_STEP = 0.04; // 슬랫 사이 시작 지연(아래부터)
-const C_WINDOW = 0.045; // 한 슬랫이 0→1 로 차는 구간
-function ContactSlat({ index, progress }: { index: number; progress: MotionValue<number> }) {
-  // 아래 슬랫(index=C_SLATS-1)이 먼저, 위로 갈수록 나중에 → 화면 아래에서 위로 차오르는 커튼
-  const start = C_BASE + (C_SLATS - 1 - index) * C_STEP;
-  const scaleY = useTransform(progress, [start, start + C_WINDOW], [0, 1]);
-  return <motion.span className={styles.blind__slat} style={{ scaleY }} />;
-}
-
 export default function Landing() {
   const reduce = useReducedMotion();
 
-  // 모바일(≤767)에서는 JOURNAL sticky 체류 구조(100vh·overflow hidden)를 해제하고 일반 흐름으로
-  // 렌더 → 8개 리스트가 잘리지 않고 다 보이게. 블라인드/오버레이도 미렌더(=reduce 폴백과 동일 경로).
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const sync = () => setIsMobile(mq.matches);
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, []);
-  // flat = "JOURNAL sticky 체류 + 블라인드 + CONTACT 슬라이드업 커튼" 을 끄는 조건(reduce 또는 모바일).
-  // ※ 이건 '구조(커튼/핀)'만 끄는 것. CONTACT 콘텐츠 등장(contentGroup/contentItem fade-up)은 아래
-  //   폴백 섹션의 contactInner 에 그대로 살아 있어 모바일에서도 whileInView 로 정상 발동한다.
-  //   fade-up 의 '이동량'만 reduce 에서 0 으로 죽임(contentItem: y = reduce ? 0 : 30) → 즉 모바일은
-  //   y 이동 포함 fade-up 유지, reduce 만 opacity 위주로 최소화(둘을 분리).
-  const flat = reduce || isMobile;
+  // 방향 전환: 모바일도 데스크탑과 '동일한 구조'(JOURNAL sticky 트랙 + 블라인드 + CONTACT 오버레이
+  // 커튼)를 그대로 사용한다. 그래야 데스크탑에서 정상 동작하는 "블라인드 아래→위 + CONTACT 내용이
+  // 같은 progress 로 함께 올라옴"이 모바일에서도 같은 코드로 동작한다(크기만 CSS 미디어쿼리로 조정).
+  // flat = 접근성(reduce) 일 때만 sticky/블라인드/커튼을 끄고 일반 흐름 폴백으로 렌더.
+  const flat = reduce;
 
   // 작업2: JOURNAL 리스트 등장 — 다른 섹션과 같은 stagger 컨테이너 + fade-up item 컨벤션
   const postGroup: Variants = {
@@ -130,22 +103,6 @@ export default function Landing() {
   // 같은(스무딩된) 진행도로 올림. 블라인드보다 살짝 뒤(0.62)에서 시작해 이어서 따라 올라오는 시차.
   // [0.62, 1.0] 에서 y 100%(패널 아래) → 0%(제자리). 끝점 1.0 유지 → 트랙 끝에서 정확히 안착.
   const contactRevealY = useTransform(journalSmooth, [0.62, 1.0], ["100%", "0%"]);
-
-  // 모바일 전용 CONTACT 블라인드: 데스크탑의 sticky 블라인드처럼, CONTACT 최상단에 '밝은(#f8f8f8)'
-  // sticky 패널을 두고 그 pin 스크롤(blindProgress) 동안 검은 슬랫이 화면 아래→위로 차오르게 한다.
-  // 이렇게 해야 밝은 패널이 화면을 채운 채 슬랫이 올라와 '흰 배경 → 검은 차오름 → CONTACT 검정' 대비가
-  // 확실히 보인다(예전 top-앵커 밴드는 아래 슬랫이 화면 밖이라 대비가 안 보였음 → 수정).
-  // offset ["start start","end start"] = 스크롤러가 화면 상단을 지나는 동안(=sticky 고정 구간) 0→1.
-  // ※ 스크롤러는 isMobile 이 켜진 뒤 마운트되므로 콜백 ref+state 로 useScroll 이 재측정되게 한다.
-  const [blindEl, setBlindEl] = useState<HTMLDivElement | null>(null);
-  const blindTarget = useMemo(
-    () => (blindEl ? { current: blindEl } : undefined),
-    [blindEl]
-  );
-  const { scrollYProgress: blindProgress } = useScroll({
-    target: blindTarget,
-    offset: ["start start", "end start"], // 스크롤러가 화면 상단을 지나는 동안(sticky pin 구간 포함) 0→1
-  });
 
   // 작업3: CONTACT 콘텐츠(헤더/그리드/footer). 오버레이(비-reduce)와 일반 섹션(reduce) 양쪽에서
   // 재사용. 내부 아이템 stagger(contentGroup/contentItem)는 그대로. slide-up 은 바깥 래퍼가 담당.
@@ -278,9 +235,6 @@ export default function Landing() {
                   </motion.a>
                 ))}
               </motion.div>
-              {/* 모바일: 리스트 하단에 사이트 배경색(#f8f8f8) 그라데이션 오버레이 → 아래쪽 항목이
-                  서서히 가려짐(페이드아웃). 일반 흐름 리스트는 전부 존재, pointer-events:none. */}
-              {isMobile && <div className={styles.journalFade} aria-hidden="true" />}
             </div>
 
             {/* 작업3: 비-reduce — CONTACT 를 sticky 패널 안 오버레이(z-index 블라인드 위)로. 블라인드가
@@ -299,21 +253,10 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* reduce·모바일 폴백: JOURNAL sticky/커튼 없이 CONTACT 를 일반 흐름 섹션으로. 단, 모바일(비-reduce)
-          에서는 CONTACT 전환 블라인드를 되살린다 — 섹션 최상단 100vh '밝은 밴드' 위로 검은 슬랫이
-          아래→위로 차올라(밝음→검정) CONTACT(검정)로 이어짐. 밝은 밴드라 '검정 위 검정' 안 됨.
-          블라인드는 pointer-events:none, reduce 면 미렌더, contactInner fade-up 은 그대로. */}
+      {/* reduce 폴백: sticky/블라인드/커튼 없이 CONTACT 를 일반 흐름 섹션으로(즉시 표시).
+          (모바일은 위 데스크탑 구조를 그대로 타므로 여기 안 옴 — reduce 전용) */}
       {flat && (
         <section className={`${styles.section} ${styles.contact}`} id="contact">
-          {!reduce && isMobile && (
-            <div ref={setBlindEl} className={styles.contactBlindScroller} aria-hidden="true">
-              <div className={styles.contactBlindPanel}>
-                {Array.from({ length: C_SLATS }).map((_, i) => (
-                  <ContactSlat key={i} index={i} progress={blindProgress} />
-                ))}
-              </div>
-            </div>
-          )}
           {contactInner}
         </section>
       )}
