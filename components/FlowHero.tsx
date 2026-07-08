@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { useIntroRevealed } from "./Intro";
 import styles from "./FlowHero.module.css";
 
@@ -44,23 +44,53 @@ function opacityAt(i: number, rot: number) {
   return clamp((FULL_DEG + FADE_BAND - dist) / FADE_BAND, 0, 1);
 }
 
-// 작업1·2: MOVIE(M·O·V·I·E) 를 좌측 하단에 옹기종기 겹쳐 쌓인 클러스터로 절대 배치(순서 무관).
-// x/y 는 em(글자 크기에 비례), rotate 제각각, 일부 오버랩. wobble=마지막에 기우뚱 튕기며 정착.
-type Pos = { ch: string; x: number; y: number; rotate: number; wobble?: boolean };
-// 작업2: 좌측 하단 클러스터 — 간격을 벌려 살짝만 겹치게(판독 가능), rotate 제각각.
+// MOVIE(M·O·V·I·E) 를 좌측 하단에 겹친 클러스터로 절대 배치(순서 무관). x/y 는 em, rotate 제각각.
+// stiffness/damping 을 글자마다 다르게 → "각자 다른 속도"로 낙하. wobble=마지막에 기우뚱(overshoot).
+type Pos = {
+  ch: string;
+  x: number;
+  y: number;
+  rotate: number;
+  stiffness: number;
+  damping: number;
+  wobble?: boolean;
+};
 const MOVIE: Pos[] = [
-  { ch: "M", x: 0.0, y: 0.14, rotate: -11 },
-  { ch: "O", x: 0.72, y: 0.55, rotate: 12 },
-  { ch: "V", x: 1.42, y: 0.0, rotate: -7 },
-  { ch: "I", x: 2.05, y: 0.46, rotate: 16, wobble: true },
-  { ch: "E", x: 1.68, y: 0.82, rotate: -13, wobble: true },
+  { ch: "M", x: 0.0, y: 0.14, rotate: -11, stiffness: 58, damping: 16 },
+  { ch: "O", x: 0.72, y: 0.55, rotate: 12, stiffness: 66, damping: 15 },
+  { ch: "V", x: 1.42, y: 0.0, rotate: -7, stiffness: 52, damping: 17 },
+  { ch: "I", x: 2.05, y: 0.46, rotate: 16, stiffness: 70, damping: 14, wobble: true },
+  { ch: "E", x: 1.68, y: 0.82, rotate: -13, stiffness: 60, damping: 16, wobble: true },
 ];
+
+// 작업1: 스크롤/공통 motion value 와 무관한 "마운트 1회 시간 기반" 낙하 — variants 컨테이너 stagger.
+const wordContainer: Variants = {
+  hidden: {},
+  // 작업2: staggerChildren(0.22) + delayChildren(0.1) → M 0, O .22, V .44, I .66, E .88 순차.
+  show: { transition: { staggerChildren: 0.22, delayChildren: 0.1 } },
+};
+// 자식 글자 variant — custom(p)로 글자별 rotate·spring 값 주입. 마지막 글자 rotate 는 언더댐프로 튕김.
+const letterVar: Variants = {
+  hidden: (p: Pos) => ({ y: -320, opacity: 0, rotate: p.wobble ? p.rotate - 34 : p.rotate }),
+  show: (p: Pos) => ({
+    y: 0,
+    opacity: 1,
+    rotate: p.rotate,
+    transition: {
+      y: { type: "spring", stiffness: p.stiffness, damping: p.damping },
+      opacity: { duration: 0.4 },
+      rotate: p.wobble
+        ? { type: "spring", stiffness: 62, damping: 6 } // 기우뚱 overshoot
+        : { type: "spring", stiffness: p.stiffness, damping: p.damping },
+    },
+  }),
+};
 
 function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
   const ref = useRef<HTMLHeadingElement>(null);
   const [hover, setHover] = useState(false);
 
-  // 작업5: 커서 좌표를 --mx/--my(워드마크 기준)로 추적 → 반전 원이 커서를 따라다님
+  // 커서 좌표를 --mx/--my(워드마크 기준)로 추적 → 반전 원이 커서를 따라다님
   const onMove = (e: React.MouseEvent<HTMLHeadingElement>) => {
     if (reduce) return;
     const el = ref.current;
@@ -80,39 +110,27 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
       onMouseLeave={() => setHover(false)}
       onMouseMove={onMove}
     >
-      {/* base: 검정 글자. 각 글자 화면 밖(위)에서 천천히·부드럽게 낙하, 마지막 2글자는 기우뚱(spring) 정착 */}
-      <span className={styles.wordLayer} aria-hidden="true">
+      {/* base: 검정 글자. 히어로 진입(revealed) 시 variants 컨테이너가 글자들을 하나씩 순차 낙하.
+          reduce 면 initial=false 로 즉시 최종 상태. (스크롤과 무관한 시간 기반 1회 재생) */}
+      <motion.span
+        className={styles.wordLayer}
+        aria-hidden="true"
+        variants={wordContainer}
+        initial={reduce ? false : "hidden"}
+        animate={revealed || reduce ? "show" : "hidden"}
+      >
         {MOVIE.map((p, i) => (
-          <span key={i} className={styles.letterPos} style={{ left: `${p.x}em`, top: `${p.y}em` }}>
-            <motion.span
-              className={styles.letter}
-              initial={
-                reduce ? false : { y: -1000, opacity: 0, rotate: p.wobble ? p.rotate - 34 : p.rotate }
-              }
-              animate={
-                revealed || reduce
-                  ? { y: 0, opacity: 1, rotate: p.rotate }
-                  : { y: -1000, opacity: 0, rotate: p.wobble ? p.rotate - 34 : p.rotate }
-              }
-              transition={
-                reduce
-                  ? { duration: 0 }
-                  : {
-                      // 작업3: 글자별 delay 를 확실히 벌려(0.1 + i*0.2) 하나씩 순차 낙하. y 는 부드러운
-                      // spring(부드럽게 감속), 마지막 글자 rotate 만 언더댐프 spring 으로 기우뚱 튕김.
-                      delay: 0.1 + i * 0.2,
-                      default: { type: "spring", stiffness: 60, damping: 15 },
-                      rotate: p.wobble
-                        ? { type: "spring", stiffness: 65, damping: 6 }
-                        : { type: "spring", stiffness: 60, damping: 15 },
-                    }
-              }
-            >
-              {p.ch}
-            </motion.span>
-          </span>
+          <motion.span
+            key={i}
+            className={styles.letterPos}
+            style={{ left: `${p.x}em`, top: `${p.y}em` }}
+            custom={p}
+            variants={letterVar}
+          >
+            {p.ch}
+          </motion.span>
         ))}
-      </span>
+      </motion.span>
 
       {/* invert: 커서 원(mask) 안에서만 보이는 반전 레이어 — 검은 배경 + 흰 글자. reduce 면 미렌더 */}
       {!reduce && (
@@ -120,10 +138,12 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
           <span className={styles.invertBg} />
           <span className={styles.wordLayer}>
             {MOVIE.map((p, i) => (
-              <span key={i} className={styles.letterPos} style={{ left: `${p.x}em`, top: `${p.y}em` }}>
-                <span className={styles.letter} style={{ transform: `rotate(${p.rotate}deg)` }}>
-                  {p.ch}
-                </span>
+              <span
+                key={i}
+                className={styles.letterPos}
+                style={{ left: `${p.x}em`, top: `${p.y}em`, transform: `rotate(${p.rotate}deg)` }}
+              >
+                {p.ch}
               </span>
             ))}
           </span>

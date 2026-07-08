@@ -81,12 +81,9 @@
   top: 0;
   left: 0;
 }
-/* 각 글자의 클러스터 내 위치(인라인 left/top em). 낙하 y·rotate 는 안쪽 .letter(framer) */
+/* 각 글자 = 클러스터 내 절대 위치(인라인 left/top em) + 낙하 y·rotate(framer variants) 대상 */
 .letterPos {
   position: absolute;
-  will-change: transform;
-}
-.letter {
   display: inline-block;
   line-height: 1;
   color: #0b0b0c; /* base = 검정 */
@@ -122,7 +119,7 @@
   top: var(--pad);
   left: var(--pad);
 }
-.wordInvert .letter { color: #f8f8f8; } /* 원 안 글자는 흰색 */
+.wordInvert .letterPos { color: #f8f8f8; } /* 원 안 글자는 흰색 */
 
 /* ── 원통형(3D 실린더) 카드 덱 — 각도(rotateZ -8·rotateX -20)·크기 기준 복원, 위치만 우측(미잘림) ── */
 .deck {
