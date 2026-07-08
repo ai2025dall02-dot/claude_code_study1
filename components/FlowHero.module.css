@@ -62,13 +62,14 @@
   left: clamp(1rem, 3vw, 3rem);
   bottom: clamp(2rem, 7vh, 5rem);
   top: auto;
-  width: 2.9em; /* 클러스터를 담는 박스(글자는 안에서 절대 배치·오버랩) */
-  height: 1.85em;
+  width: 2.75em; /* 클러스터를 담는 박스(글자는 안에서 절대 배치·오버랩) */
+  height: 2em;
   z-index: 2;
   margin: 0;
   font-family: "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
-  font-size: clamp(110px, 17vw, 260px);
+  /* 작업1: 글자 크기 상향(원통 덱 크기는 불변) → 좌측 하단을 시원하게 채움 */
+  font-size: clamp(140px, 22vw, 340px);
   line-height: 0.9;
   color: #0b0b0c;
   user-select: none;
@@ -127,9 +128,9 @@
 .deck {
   position: absolute;
   left: auto;
-  /* 작업4: 위치만 안쪽(중앙-우측)으로 이동. 각도/scale 은 절대 불변(.deckTilt 손대지 않음). */
-  right: clamp(4rem, 28vw, 26rem);
-  top: 50%;
+  /* 작업4: 위치만 우측 상단으로(네비 .nav 아래). 각도/scale 은 절대 불변(.deckTilt 손대지 않음). */
+  right: clamp(3rem, 22vw, 20rem);
+  top: 40%;
   z-index: 6;
   perspective: 1600px;
   /* 드래그(플릭) 입력 — 세로 스크롤/텍스트 선택 막고, 잡는 커서 표시 */
@@ -199,12 +200,12 @@
 
 /* 통일 브레이크포인트(1280 / 1024 / 767) — 덱 스케일·위치 단계 조정(우측 유지·미잘림).
    각도(rotateZ-8·rotateX-20)·드래그·자동회전은 불변. */
-@media (max-width: 1280px) { /* 노트북 — 위치만 안쪽으로(각도/scale 불변) */
-  .deck { right: clamp(2rem, 26vw, 22rem); top: 50%; }
+@media (max-width: 1280px) { /* 노트북 — 위치만 우측 상단(각도/scale 불변) */
+  .deck { right: clamp(2rem, 23vw, 20rem); top: 40%; }
   .deckTilt { --scale: 0.64; }
 }
-@media (max-width: 1024px) { /* 태블릿 — 위치만 안쪽으로(각도/scale 불변) */
-  .deck { right: clamp(1.5rem, 24vw, 16rem); top: 48%; }
+@media (max-width: 1024px) { /* 태블릿 — 위치만 우측 상단(각도/scale 불변) */
+  .deck { right: clamp(1.5rem, 23vw, 15rem); top: 38%; }
   .deckTilt { --scale: 0.52; }
 }
 @media (max-width: 767px) {

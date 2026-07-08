@@ -47,12 +47,13 @@ function opacityAt(i: number, rot: number) {
 // 작업1·2: MOVIE(M·O·V·I·E) 를 좌측 하단에 옹기종기 겹쳐 쌓인 클러스터로 절대 배치(순서 무관).
 // x/y 는 em(글자 크기에 비례), rotate 제각각, 일부 오버랩. wobble=마지막에 기우뚱 튕기며 정착.
 type Pos = { ch: string; x: number; y: number; rotate: number; wobble?: boolean };
+// 작업2: 좌측 하단 클러스터 — 간격을 벌려 살짝만 겹치게(판독 가능), rotate 제각각.
 const MOVIE: Pos[] = [
-  { ch: "M", x: 0.0, y: 0.2, rotate: -12 },
-  { ch: "O", x: 0.66, y: 0.58, rotate: 13 },
-  { ch: "V", x: 1.0, y: 0.02, rotate: -8 },
-  { ch: "I", x: 1.55, y: 0.4, rotate: 19, wobble: true },
-  { ch: "E", x: 1.12, y: 0.74, rotate: -14, wobble: true },
+  { ch: "M", x: 0.0, y: 0.14, rotate: -11 },
+  { ch: "O", x: 0.72, y: 0.55, rotate: 12 },
+  { ch: "V", x: 1.42, y: 0.0, rotate: -7 },
+  { ch: "I", x: 2.05, y: 0.46, rotate: 16, wobble: true },
+  { ch: "E", x: 1.68, y: 0.82, rotate: -13, wobble: true },
 ];
 
 function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
@@ -97,12 +98,13 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
                 reduce
                   ? { duration: 0 }
                   : {
-                      delay: i * 0.16,
-                      // 작업3: 낙하를 느리고 부드럽게(1.3s). 마지막 글자 rotate 는 spring 언더댐프로 기우뚱 튕김.
-                      default: { duration: 1.3, ease: [0.16, 1, 0.3, 1] },
+                      // 작업3: 글자별 delay 를 확실히 벌려(0.1 + i*0.2) 하나씩 순차 낙하. y 는 부드러운
+                      // spring(부드럽게 감속), 마지막 글자 rotate 만 언더댐프 spring 으로 기우뚱 튕김.
+                      delay: 0.1 + i * 0.2,
+                      default: { type: "spring", stiffness: 60, damping: 15 },
                       rotate: p.wobble
-                        ? { type: "spring", stiffness: 60, damping: 7 }
-                        : { duration: 1.3, ease: [0.16, 1, 0.3, 1] },
+                        ? { type: "spring", stiffness: 65, damping: 6 }
+                        : { type: "spring", stiffness: 60, damping: 15 },
                     }
               }
             >
