@@ -59,17 +59,17 @@
 /* ── 대형 볼드 워드마크 MOVIE — 좌측 하단에 글자들이 옹기종기 겹쳐 쌓인 클러스터(절대 배치) ── */
 .bigword {
   position: absolute;
-  left: clamp(1rem, 3vw, 3rem);
-  bottom: clamp(2rem, 7vh, 5rem);
+  /* 작업3: 좌측 하단 모서리에 딱 붙게(left:0/bottom:0). 글자는 박스 안에서 겹치지 않게 나란히 배치 */
+  left: 0;
+  bottom: 0;
   top: auto;
-  width: 2.75em; /* 클러스터를 담는 박스(글자는 안에서 절대 배치·오버랩) */
-  height: 2em;
+  width: 3.95em; /* 가로 5글자 블록을 담는 박스 */
+  height: 1.3em;
   z-index: 2;
   margin: 0;
   font-family: "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
-  /* 작업1: 글자 크기 상향(원통 덱 크기는 불변) → 좌측 하단을 시원하게 채움 */
-  font-size: clamp(140px, 22vw, 340px);
+  font-size: clamp(90px, 14vw, 210px);
   line-height: 0.9;
   color: #0b0b0c;
   user-select: none;
@@ -104,7 +104,7 @@
   --r: 0px;
   -webkit-mask: radial-gradient(circle var(--r) at calc(var(--mx, -9999px) + var(--pad)) calc(var(--my, -9999px) + var(--pad)), #000 0 98%, transparent 100%);
   mask: radial-gradient(circle var(--r) at calc(var(--mx, -9999px) + var(--pad)) calc(var(--my, -9999px) + var(--pad)), #000 0 98%, transparent 100%);
-  transition: --r 0.2s ease;
+  /* 작업1: --r transition 제거 → 호버 즉시 원이 뜸(커서 위치 --mx/--my 는 이미 transition 없이 즉각 추적) */
   pointer-events: none; /* 히트는 .bigword 가 받음 */
 }
 .bigword[data-hover="true"] .wordInvert { --r: 130px; } /* 호버 시 원 반경 */
@@ -125,8 +125,8 @@
 .deck {
   position: absolute;
   left: auto;
-  /* 작업4: 위치만 우측 상단으로(네비 .nav 아래). 각도/scale 은 절대 불변(.deckTilt 손대지 않음). */
-  right: clamp(3rem, 22vw, 20rem);
+  /* 작업4: 조금 더 좌측으로(right 값 확대) + scale 상향(.deckTilt). rotateZ·rotateX 각도는 불변. */
+  right: clamp(4rem, 27vw, 26rem);
   top: 40%;
   z-index: 6;
   perspective: 1600px;
@@ -141,7 +141,7 @@
   position: absolute;
   left: 0;
   top: 0;
-  --scale: 0.72;
+  --scale: 0.8; /* 작업4: 0.72→0.8 로 살짝 키움. 각도(rotateZ-8·rotateX-20)는 그대로 */
   transform: translate(-50%, -50%) rotateZ(-8deg) rotateX(-20deg) scale(var(--scale, 1));
   transform-style: preserve-3d;
 }
@@ -158,11 +158,11 @@
   position: absolute;
   inset: 0;
 }
-/* 빈 슬롯: 항상 깔리는 반투명 패널 */
+/* 빈 슬롯(이미지 없는 흰 셀): 반투명 패널 → 뒤 텍스트가 살짝 비침. 이미지 셀(.card)은 불투명 유지 */
 .panel {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.65); /* 작업5: 반투명 흰 셀 */
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 3px;
 }
@@ -197,13 +197,13 @@
 
 /* 통일 브레이크포인트(1280 / 1024 / 767) — 덱 스케일·위치 단계 조정(우측 유지·미잘림).
    각도(rotateZ-8·rotateX-20)·드래그·자동회전은 불변. */
-@media (max-width: 1280px) { /* 노트북 — 위치만 우측 상단(각도/scale 불변) */
-  .deck { right: clamp(2rem, 23vw, 20rem); top: 40%; }
-  .deckTilt { --scale: 0.64; }
+@media (max-width: 1280px) { /* 노트북 — 좌측으로 + scale 상향(각도 불변) */
+  .deck { right: clamp(2rem, 27vw, 22rem); top: 40%; }
+  .deckTilt { --scale: 0.72; }
 }
-@media (max-width: 1024px) { /* 태블릿 — 위치만 우측 상단(각도/scale 불변) */
-  .deck { right: clamp(1.5rem, 23vw, 15rem); top: 38%; }
-  .deckTilt { --scale: 0.52; }
+@media (max-width: 1024px) { /* 태블릿 — 좌측으로 + scale 상향(각도 불변) */
+  .deck { right: clamp(1.5rem, 26vw, 17rem); top: 38%; }
+  .deckTilt { --scale: 0.6; }
 }
 @media (max-width: 767px) {
   /* 모바일: 우측 배치 시 잘리므로 화면 중앙 상단으로 + 균일 축소 → 원통 전체가 보이게.

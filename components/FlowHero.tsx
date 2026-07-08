@@ -55,30 +55,30 @@ type Pos = {
   damping: number;
   wobble?: boolean;
 };
+// 작업3: 겹치지 않게 블록처럼 나란히(가로) 배치 + 약간의 rotate 로 리듬. 좌하단 모서리(컨테이너 left:0/bottom:0)에 몰림.
 const MOVIE: Pos[] = [
-  { ch: "M", x: 0.0, y: 0.14, rotate: -11, stiffness: 58, damping: 16 },
-  { ch: "O", x: 0.72, y: 0.55, rotate: 12, stiffness: 66, damping: 15 },
-  { ch: "V", x: 1.42, y: 0.0, rotate: -7, stiffness: 52, damping: 17 },
-  { ch: "I", x: 2.05, y: 0.46, rotate: 16, stiffness: 70, damping: 14, wobble: true },
-  { ch: "E", x: 1.68, y: 0.82, rotate: -13, stiffness: 60, damping: 16, wobble: true },
+  { ch: "M", x: 0.0, y: 0.14, rotate: -6, stiffness: 58, damping: 16 },
+  { ch: "O", x: 1.02, y: 0.0, rotate: 6, stiffness: 66, damping: 15 },
+  { ch: "V", x: 1.92, y: 0.12, rotate: -5, stiffness: 52, damping: 17 },
+  { ch: "I", x: 2.72, y: 0.02, rotate: 8, stiffness: 70, damping: 14, wobble: true },
+  { ch: "E", x: 3.06, y: 0.12, rotate: -4, stiffness: 60, damping: 16, wobble: true },
 ];
 
-// 작업1: 스크롤/공통 motion value 와 무관한 "마운트 1회 시간 기반" 낙하 — variants 컨테이너 stagger.
+// 스크롤/공통 motion value 와 무관한 "마운트 1회 시간 기반" 낙하 — variants 컨테이너 stagger.
 const wordContainer: Variants = {
   hidden: {},
-  // 작업2: staggerChildren(0.22) + delayChildren(0.1) → M 0, O .22, V .44, I .66, E .88 순차.
+  // staggerChildren(0.22) + delayChildren(0.1) → M 0, O .22, V .44, I .66, E .88 순차.
   show: { transition: { staggerChildren: 0.22, delayChildren: 0.1 } },
 };
 // 자식 글자 variant — custom(p)로 글자별 rotate·spring 값 주입. 마지막 글자 rotate 는 언더댐프로 튕김.
+// 작업2: opacity 애니메이션 제거 → 처음부터 보이며 y 이동(+rotate)만으로 낙하.
 const letterVar: Variants = {
-  hidden: (p: Pos) => ({ y: -320, opacity: 0, rotate: p.wobble ? p.rotate - 34 : p.rotate }),
+  hidden: (p: Pos) => ({ y: -320, rotate: p.wobble ? p.rotate - 34 : p.rotate }),
   show: (p: Pos) => ({
     y: 0,
-    opacity: 1,
     rotate: p.rotate,
     transition: {
       y: { type: "spring", stiffness: p.stiffness, damping: p.damping },
-      opacity: { duration: 0.4 },
       rotate: p.wobble
         ? { type: "spring", stiffness: 62, damping: 6 } // 기우뚱 overshoot
         : { type: "spring", stiffness: p.stiffness, damping: p.damping },
