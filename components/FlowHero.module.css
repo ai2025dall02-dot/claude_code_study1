@@ -1,5 +1,5 @@
 /* DAYONEDREAM 무드: 하이키 화이트 에디토리얼 + 블랙 볼드 타이포 +
-   부채꼴 컬러 카드 + 3D 원통 덱 + 좌측 낙하 기하 워드마크(호버 원형 반전) */
+   부채꼴 컬러 카드 + 3D 원통 덱 + 좌측 하단 낙하 볼드 워드마크(호버 원형 반전) */
 .stage {
   position: relative;
   height: 100vh;
@@ -44,62 +44,55 @@
   .nav__links { display: none; }
 }
 
-/* ── 인트로 등장 (카운트다운 후 하단에서 서서히). 워드마크는 글자 낙하(framer)가 담당하므로 제외 ── */
-.deck,
-.tagline {
+/* ── 인트로 등장 (카운트다운 후 하단에서). 워드마크는 글자 낙하(framer)가 담당하므로 제외 ── */
+.deck {
   transition: opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: 0.28s;
 }
-.deck { transition-delay: 0.28s; }
-.tagline { transition-delay: 0.56s; }
-
-.stage[data-revealed="false"] .deck { opacity: 0; transform: translateY(90px); }       /* 하단 */
-.stage[data-revealed="false"] .tagline { opacity: 0; transform: translateY(34px); }    /* 하단 */
+.stage[data-revealed="false"] .deck { opacity: 0; transform: translateY(90px); }
 
 @media (prefers-reduced-motion: reduce) {
-  .stage[data-revealed="false"] .deck,
-  .stage[data-revealed="false"] .tagline {
-    opacity: 1;
-    transform: none;
-  }
+  .stage[data-revealed="false"] .deck { opacity: 1; transform: none; }
 }
 
-/* ── 대형 기하 워드마크 FILM — 좌측에 글자(SVG path)가 화면 밖에서 떨어져 기울어진 채 안착 ──
-   작업3: 영역·간격을 키워 좌측에 크고 시원하게 배치. 글자 기하 모양(SVG)은 유지, 배치 각도만 기울임. */
+/* ── 대형 볼드 워드마크 FILM — 좌측 하단에 글자가 화면 밖(위)에서 천천히 떨어져 누운 채 안착 ── */
 .bigword {
   position: absolute;
-  left: clamp(1rem, 3vw, 3.25rem);
-  top: 19%;
+  left: clamp(1rem, 3vw, 3rem);
+  bottom: clamp(2rem, 7vh, 5rem);
+  top: auto;
   z-index: 2;
   margin: 0;
-  font-size: clamp(140px, 21vw, 330px); /* 글자 크기 기준(글자 SVG height = 1em) */
-  line-height: 1;
+  font-family: "Arial Black", Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: clamp(120px, 20vw, 300px);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
   color: #0b0b0c;
   user-select: none;
   cursor: default;
 }
-/* 글자 줄 — 넉넉한 gap 으로 간격 확보. base/invert 두 레이어에 동일 적용 */
+/* 글자 줄 — base/invert 두 레이어에 동일 적용(정렬 일치) */
 .wordLayer {
   display: inline-flex;
-  align-items: flex-start;
-  gap: 0.16em;
+  align-items: flex-end;
+  gap: 0.05em;
   white-space: nowrap;
 }
 .letterStep {
-  display: inline-block; /* 세로 흩뿌림(dy)은 인라인 style transform 으로 */
+  display: inline-block;
   will-change: transform;
 }
-.glyphMotion {
-  display: inline-block; /* 낙하 y + 기울기 rotate 가 적용되는 대상 */
+.letter {
+  display: inline-block;
+  line-height: 1;
+  color: #0b0b0c; /* base = 검정 */
   will-change: transform, opacity;
 }
-.glyph {
-  display: block;
-  height: 1em; /* 모든 글자 동일 스케일(viewBox 높이 통일) */
-  width: auto;
-}
 
-/* 호버 원형 색반전: 커서 원(--r) 안에서만 보이는 반전 레이어(검은 배경 + 흰 글자) */
+/* 작업5: 호버 원형 색반전 — 반전 레이어를 워드마크보다 --pad 만큼 확장(inset 음수)해 원이 글자
+   경계에서 잘리지 않고 온전한 원으로 커서를 따라다니게. 원 안: 검은 배경 + 흰 글자. */
 @property --r {
   syntax: "<length>";
   inherits: true;
@@ -107,11 +100,12 @@
 }
 .wordInvert {
   position: absolute;
-  inset: 0;
+  --pad: 190px; /* 원 반경(130) + 여유 → 원이 컨테이너 밖으로 온전히 나감 */
+  inset: calc(-1 * var(--pad));
   --r: 0px;
-  -webkit-mask: radial-gradient(circle var(--r) at var(--mx, -999px) var(--my, -999px), #000 0 98%, transparent 100%);
-  mask: radial-gradient(circle var(--r) at var(--mx, -999px) var(--my, -999px), #000 0 98%, transparent 100%);
-  transition: --r 0.22s ease;
+  -webkit-mask: radial-gradient(circle var(--r) at calc(var(--mx, -9999px) + var(--pad)) calc(var(--my, -9999px) + var(--pad)), #000 0 98%, transparent 100%);
+  mask: radial-gradient(circle var(--r) at calc(var(--mx, -9999px) + var(--pad)) calc(var(--my, -9999px) + var(--pad)), #000 0 98%, transparent 100%);
+  transition: --r 0.2s ease;
   pointer-events: none; /* 히트는 .bigword 가 받음 */
 }
 .bigword[data-hover="true"] .wordInvert { --r: 130px; } /* 호버 시 원 반경 */
@@ -120,18 +114,19 @@
   inset: 0;
   background: #0b0b0c; /* 원 안 배경을 검게 */
 }
+/* 흰 글자 레이어는 확장분(--pad)만큼 안으로 밀어 base 글자와 위치 일치 */
 .wordInvert .wordLayer {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: var(--pad);
+  left: var(--pad);
 }
+.wordInvert .letter { color: #f8f8f8; } /* 원 안 글자는 흰색 */
 
-/* ── 원통형(3D 실린더) 카드 덱 — 형태·각도 불변, 위치/스케일만(우측·미(未)잘림) ── */
+/* ── 원통형(3D 실린더) 카드 덱 — 각도(rotateZ -8·rotateX -20)·크기 기준 복원, 위치만 우측(미잘림) ── */
 .deck {
   position: absolute;
-  /* 작업5: 우측이되 화면 안에 원통 전체가 들어오도록 여백 확보 + 스케일 축소 */
   left: auto;
-  right: clamp(3rem, 15vw, 15rem);
+  right: clamp(3rem, 21vw, 20rem);
   top: 50%;
   z-index: 6;
   perspective: 1600px;
@@ -141,12 +136,12 @@
   cursor: grab;
 }
 .deck:active { cursor: grabbing; }
-/* 바깥 래퍼: 고정 기울기(대각 스윕)만 — 회전과 분리. 작업5: 데스크탑 스케일 0.8→0.62(잘림 방지) */
+/* 바깥 래퍼: 고정 기울기(대각 스윕)만 — 회전과 분리. 작업4: 각도 rotateZ-8·rotateX-20 유지, 스케일 복원 */
 .deckTilt {
   position: absolute;
   left: 0;
   top: 0;
-  --scale: 0.5;
+  --scale: 0.72;
   transform: translate(-50%, -50%) rotateZ(-8deg) rotateX(-20deg) scale(var(--scale, 1));
   transform-style: preserve-3d;
 }
@@ -156,15 +151,14 @@
   width: var(--cw);
   height: var(--ch);
   transform-style: preserve-3d;
-  /* 회전은 컴포넌트의 requestAnimationFrame 이 rotateY 로 직접 구동 */
   will-change: transform;
 }
-/* 셀: 원기둥 옆면 배치 (rotateY(θ) translateZ(radius)) — backface 대신 각도 기반 판정 */
+/* 셀: 원기둥 옆면 배치 (rotateY(θ) translateZ(radius)) */
 .cell {
   position: absolute;
   inset: 0;
 }
-/* 빈 슬롯: 항상 깔리는 반투명 패널 (뒤 줄무늬 글자가 비침) */
+/* 빈 슬롯: 항상 깔리는 반투명 패널 */
 .panel {
   position: absolute;
   inset: 0;
@@ -172,7 +166,7 @@
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 3px;
 }
-/* 카드: 패널 위에서 각도 기반 opacity 로 연속 페이드. 이미지가 카드를 꽉 채움(padding 0 + overflow) */
+/* 카드: 각도 기반 opacity 페이드. 이미지가 카드를 꽉 채움(padding 0 + overflow) */
 .card {
   position: absolute;
   inset: 0;
@@ -188,7 +182,6 @@
   transform: translateZ(0);
   transition: transform 0.25s ease;
 }
-/* 개별 카드 호버 확대 (.cell 이 아니라 .card 에 → 배치 유지) */
 .card.hovered {
   transform: scale(1.16) translateZ(0);
   z-index: 50;
@@ -202,35 +195,21 @@
 }
 .card__media img { object-fit: cover; filter: none; }
 
-/* ── 하단 러닝 라벨 ── */
-.tagline {
-  position: absolute;
-  left: clamp(1.4rem, 4vw, 3rem);
-  bottom: clamp(1.3rem, 3vw, 2rem);
-  z-index: 8;
-  font-family: var(--font-meta, monospace);
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: #6c6c68;
-}
-
-/* 통일 브레이크포인트(1280 / 1024 / 767) — 덱 스케일·위치 단계 조정(잘리지 않게).
-   덱 3D 각도·드래그·자동회전 동작은 불변 — 크기/위치만. */
+/* 통일 브레이크포인트(1280 / 1024 / 767) — 덱 스케일·위치 단계 조정(우측 유지·미잘림).
+   각도(rotateZ-8·rotateX-20)·드래그·자동회전은 불변. */
 @media (max-width: 1280px) { /* 노트북 */
-  .deck { right: clamp(2rem, 17vw, 15rem); top: 50%; }
-  .deckTilt { --scale: 0.48; }
+  .deck { right: clamp(2rem, 22vw, 18rem); top: 50%; }
+  .deckTilt { --scale: 0.64; }
 }
 @media (max-width: 1024px) { /* 태블릿 */
-  .deck { right: clamp(1.5rem, 17vw, 12rem); top: 48%; }
-  .deckTilt { --scale: 0.4; }
+  .deck { right: clamp(1.5rem, 22vw, 14rem); top: 48%; }
+  .deckTilt { --scale: 0.52; }
 }
 @media (max-width: 767px) {
-  /* 작업5: 모바일은 우측 배치 시 잘리므로 화면 중앙 상단으로 + 균일 축소 → 원통 전체가 보이게.
-     .deck 를 화면 중앙(left:50%)에 두고 scale 로만 줄여 각도(rotateZ -8·rotateX -20)는 그대로. */
+  /* 모바일: 우측 배치 시 잘리므로 화면 중앙 상단으로 + 균일 축소 → 원통 전체가 보이게.
+     각도(rotateZ-8·rotateX-20)는 그대로, .deck 자체를 scale 로만 축소. */
   .deck { left: 50%; right: auto; top: 30%; transform: scale(0.5); transform-origin: center; }
-  .deckTilt { --scale: 0.8; } /* 태블릿(0.5) 상속 방지 — 데스크탑 지오메트리로 복귀 후 .deck scale 로 축소 */
-  /* 워드마크: 하단 좌측에 축소 배치(글자 SVG 유지) */
-  .bigword { top: auto; bottom: 9%; font-size: clamp(88px, 27vw, 150px); }
-  .tagline { font-size: 10px; letter-spacing: 0.14em; }
+  .deckTilt { --scale: 0.72; } /* 태블릿(0.52) 상속 방지 — 기준 스케일 복귀 후 .deck scale 로 축소 */
+  /* 워드마크: 하단 좌측 축소 배치 */
+  .bigword { font-size: clamp(88px, 26vw, 150px); bottom: 7%; }
 }

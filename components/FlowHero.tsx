@@ -26,9 +26,9 @@ const COUNT = DECK.length;
 const STEP = 360 / COUNT;
 const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.075) + 20;
 const SPEED = 7; // deg/sec
-const FULL_DEG = 42; // ±이 범위 안은 opacity 1 (STEP=36 → 가운데+양옆 3장)
-const FADE_BAND = 30; // 그 바깥에서 1→0 으로 페이드되는 폭(deg)
-// 드래그 플릭 관성: 손으로 굴린 뒤 관성으로 감속하며 자동 회전으로 복귀시키는 튜닝값.
+const FULL_DEG = 42;
+const FADE_BAND = 30;
+// 드래그 플릭 관성 튜닝값
 const DRAG_FACTOR = 0.3;
 const MAX_V = 520;
 const DECAY = 0.94;
@@ -44,74 +44,19 @@ function opacityAt(i: number, rot: number) {
   return clamp((FULL_DEG + FADE_BAND - dist) / FADE_BAND, 0, 1);
 }
 
-// 작업1·2: FILM 글자를 기하 SVG path 그대로 유지하되, 글자마다 개별 SVG(같은 좌표계 viewBox 크롭)로
-// 쪼개 낙하(화면 밖 위→제자리)·기울기(rotate)를 개별 적용. viewBox 높이(150)를 통일해 스케일 일치.
-// render(fill, pid): fill 색으로 그림(검정 base / 흰색 invert), pid 는 I 해칭 패턴 id 중복 방지.
-type Glyph = {
-  key: string;
-  vb: string;
-  rotate: number; // 작업2: 글자별 기울기(불규칙)
-  dy: string; // 세로 흩뿌림(엎어진 듯)
-  render: (fill: string, pid: string) => React.ReactNode;
-};
-const GLYPHS: Glyph[] = [
-  {
-    key: "F",
-    vb: "-6 -11 80 150",
-    rotate: -8,
-    dy: "0.02em",
-    render: (f) => (
-      <path
-        d="M0 32 A20 20 0 0 1 20 12 L66 12 L66 35 L26 35 L26 57 L54 57 L54 80 L26 80 L26 116 L0 116 Z"
-        fill={f}
-      />
-    ),
-  },
-  {
-    key: "I",
-    vb: "88 -11 46 150",
-    rotate: 10,
-    dy: "0.14em",
-    render: (f, pid) => (
-      <>
-        <defs>
-          <pattern id={pid} width="8" height="24" patternUnits="userSpaceOnUse">
-            <rect x="0" y="0" width="3.6" height="24" fill={f} />
-          </pattern>
-        </defs>
-        <rect x="96" y="12" width="30" height="104" fill={`url(#${pid})`} />
-      </>
-    ),
-  },
-  {
-    key: "L",
-    vb: "144 -11 84 150",
-    rotate: -13,
-    dy: "0.2em",
-    render: (f) => <path d="M150 12 L176 12 L176 93 L220 93 L220 116 L150 116 Z" fill={f} />,
-  },
-  {
-    key: "M",
-    vb: "236 -11 166 150",
-    rotate: 8,
-    dy: "0em",
-    render: (f) => (
-      <path
-        d="M256 116 L256 12 L318 86 L380 12 L380 116"
-        fill="none"
-        stroke={f}
-        strokeWidth="26"
-        strokeLinejoin="miter"
-      />
-    ),
-  },
+// 작업1·2: FILM 을 일반 볼드 텍스트로. 각 글자를 span 으로 쪼개 개별 낙하 + 글자별 큰 rotate(누움).
+const LETTERS: { ch: string; rotate: number }[] = [
+  { ch: "F", rotate: -18 },
+  { ch: "I", rotate: 14 },
+  { ch: "L", rotate: -10 },
+  { ch: "M", rotate: 8 },
 ];
 
 function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
   const ref = useRef<HTMLHeadingElement>(null);
   const [hover, setHover] = useState(false);
 
-  // 작업4: 커서 좌표를 --mx/--my(워드마크 기준)로 추적 → 반전 원이 커서를 따라다님
+  // 작업5: 커서 좌표를 --mx/--my(워드마크 기준)로 추적 → 반전 원이 커서를 따라다님
   const onMove = (e: React.MouseEvent<HTMLHeadingElement>) => {
     if (reduce) return;
     const el = ref.current;
@@ -131,25 +76,23 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
       onMouseLeave={() => setHover(false)}
       onMouseMove={onMove}
     >
-      {/* base: 밝은 배경 위 검정 글자. 각 글자 화면 밖(위)에서 시차를 두고 부드럽게 낙하 */}
+      {/* base: 밝은 배경 위 검정 글자. 각 글자 화면 밖(위)에서 천천히·부드럽게 낙하해 누운 채 안착 */}
       <span className={styles.wordLayer} aria-hidden="true">
-        {GLYPHS.map((g, i) => (
-          <span key={g.key} className={styles.letterStep} style={{ transform: `translateY(${g.dy})` }}>
+        {LETTERS.map((l, i) => (
+          <span key={i} className={styles.letterStep}>
             <motion.span
-              className={styles.glyphMotion}
-              initial={reduce ? false : { y: -820, opacity: 0, rotate: g.rotate }}
+              className={styles.letter}
+              initial={reduce ? false : { y: -1000, opacity: 0, rotate: l.rotate }}
               animate={
                 revealed || reduce
-                  ? { y: 0, opacity: 1, rotate: g.rotate }
-                  : { y: -820, opacity: 0, rotate: g.rotate }
+                  ? { y: 0, opacity: 1, rotate: l.rotate }
+                  : { y: -1000, opacity: 0, rotate: l.rotate }
               }
               transition={
-                reduce ? { duration: 0 } : { delay: i * 0.13, duration: 1.0, ease: [0.16, 1, 0.3, 1] }
+                reduce ? { duration: 0 } : { delay: i * 0.14, duration: 1.1, ease: [0.16, 1, 0.3, 1] }
               }
             >
-              <svg className={styles.glyph} viewBox={g.vb} aria-hidden="true">
-                {g.render("#0b0b0c", `b${i}`)}
-              </svg>
+              {l.ch}
             </motion.span>
           </span>
         ))}
@@ -160,12 +103,10 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
         <span className={styles.wordInvert} aria-hidden="true">
           <span className={styles.invertBg} />
           <span className={styles.wordLayer}>
-            {GLYPHS.map((g, i) => (
-              <span key={g.key} className={styles.letterStep} style={{ transform: `translateY(${g.dy})` }}>
-                <span className={styles.glyphMotion} style={{ transform: `rotate(${g.rotate}deg)` }}>
-                  <svg className={styles.glyph} viewBox={g.vb} aria-hidden="true">
-                    {g.render("#f8f8f8", `w${i}`)}
-                  </svg>
+            {LETTERS.map((l, i) => (
+              <span key={i} className={styles.letterStep}>
+                <span className={styles.letter} style={{ transform: `rotate(${l.rotate}deg)` }}>
+                  {l.ch}
                 </span>
               </span>
             ))}
@@ -183,7 +124,6 @@ export default function FlowHero() {
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const pausedRef = useRef(false);
   const rotRef = useRef(0);
-  // 드래그 플릭 관성 상태
   const velocityRef = useRef(0);
   const draggingRef = useRef(false);
   const lastXRef = useRef(0);
@@ -226,7 +166,7 @@ export default function FlowHero() {
         return;
       }
 
-      // 호버 정지: 단, 관성이 남아있으면 무시하고 계속 굴림(플릭 우선)
+      // 호버 정지: 관성이 남아있으면 무시하고 계속 굴림(플릭 우선)
       if (pausedRef.current && velocityRef.current === 0) {
         if (!pausedWritten) {
           ring.style.transform = `rotateY(${rotRef.current}deg)`;
@@ -238,7 +178,7 @@ export default function FlowHero() {
       }
       pausedWritten = false;
 
-      // 자동 회전 + 관성(감쇠). velocity→0 이면 기존 자동 회전만 남아 자연 복귀.
+      // 자동 회전 + 관성(감쇠) → velocity→0 이면 기존 자동 회전만 남아 자연 복귀
       rotRef.current += (SPEED + velocityRef.current) * dt;
       velocityRef.current *= DECAY;
       if (Math.abs(velocityRef.current) < 0.05) velocityRef.current = 0;
@@ -286,7 +226,7 @@ export default function FlowHero() {
 
   return (
     <section className={styles.stage} id="home" data-revealed={revealed}>
-      {/* 대형 기하 워드마크 FILM — 좌측 낙하(화면 밖→제자리)·기울기 + 호버 원형 색반전 */}
+      {/* 대형 볼드 워드마크 FILM — 좌측 하단 낙하(화면 밖→제자리)·누움 + 호버 원형 색반전 */}
       <FilmWordmark revealed={revealed} reduce={!!reduce} />
 
       {/* 원통형 3D 카드 덱(우측, 미잘림) — 바깥=고정 기울기, 안쪽=rAF rotateY */}
@@ -328,8 +268,6 @@ export default function FlowHero() {
           </div>
         </div>
       </div>
-
-      <p className={styles.tagline}>Film Nouvelle — One Reel In Infinite Flow</p>
     </section>
   );
 }
