@@ -67,11 +67,13 @@ type Pos = {
 // 목표 배치(이미지1): 하단행 M(살짝기욺)·V(크게 뒤집힘)·E(정방향), 상단행 O(정방향)·I(오른쪽으로 크게 눕듯).
 // 배열 순서 = 낙하 순서라 하단(M·V·E) 먼저, 상단(O·I) 나중. 하단행은 밑변/꼭짓점(origin 바닥)으로 바닥 접촉.
 const MOVIE: Pos[] = [
-  { ch: "M", x: 0.0, by: -0.1, rotate: -8, stiffness: 56, damping: 15, origin: "50% 100%" }, // 하단 좌
-  { ch: "V", x: 0.86, by: -0.08, rotate: -15, stiffness: 52, damping: 16, roll: true, origin: "50% 100%" }, // 하단 중, 정방향 낙하 후 살짝 기욺
-  { ch: "E", x: 1.5, by: -0.1, rotate: 3, stiffness: 60, damping: 15, origin: "50% 100%" }, // 하단 우, 정방향
-  { ch: "O", x: 0.05, by: 0.96, rotate: -2, stiffness: 64, damping: 15 }, // 상단 좌 — 아래변이 M 윗변에 맞닿게
-  { ch: "I", x: 0.75, by: 1.17, rotate: 60, stiffness: 70, damping: 14, roll: true, origin: "left bottom" }, // 상단 우, 눕듯 — 아래변이 V 윗변에 맞닿게
+  // 하단행(M·V·E): 바닥 접촉(by 음수, origin 바닥) + 글자 폭(M≈.83·V≈.72·E≈.63em)만큼 x 를 좁혀 변끼리 맞닿게.
+  { ch: "M", x: 0.0, by: -0.08, rotate: -8, stiffness: 56, damping: 15, origin: "50% 100%" }, // 하단 좌
+  { ch: "V", x: 1.08, by: -0.06, rotate: -15, stiffness: 52, damping: 16, roll: true, origin: "50% 100%" }, // 하단 중
+  { ch: "E", x: 1.72, by: -0.08, rotate: 3, stiffness: 60, damping: 15, origin: "50% 100%" }, // 하단 우
+  // 상단행(O·I): 아래변이 하단행 윗변에 맞닿게 by 낮춰 얹음. O 는 M 위, I 는 V 위.
+  { ch: "O", x: 0.02, by: 0.98, rotate: -2, stiffness: 64, damping: 15 }, // 상단 좌(M 위)
+  { ch: "I", x: 1.15, by: 1.22, rotate: 60, stiffness: 70, damping: 14, roll: true, origin: "left bottom" }, // 상단 우(V 위), 눕듯
 ];
 // 작업2(낙하 시작): 화면 최상단 밖(완전히 안 보이는 값).
 const FALL_FROM = -1400;
@@ -84,33 +86,27 @@ const wordContainer: Variants = {
 };
 // 자식 글자 variant — custom(p)로 글자별 값 주입. opacity 없이 y(+rotate)만으로 낙하.
 // 작업3: roll 글자는 2단계(낙하 → 착지 후 데굴 구르며 x 이동·rotate 마저 돌아 정착) 키프레임.
+const FALL_EASE = [0.55, 0, 1, 0.45] as const; // 천천히 시작 → 부드럽게 가속(중력), 단일 구간
+const FALL_DUR = 1.4;
 const letterVar: Variants = {
   // roll 글자는 정방향(rotate 0)으로 낙하 → 착지 후에만 살짝 기우뚱
-  hidden: (p: Pos) => ({ y: FALL_FROM, x: 0, rotate: p.roll ? 0 : p.rotate }),
+  hidden: (p: Pos) => ({ y: FALL_FROM, rotate: p.roll ? 0 : p.rotate }),
   show: (p: Pos) =>
     p.roll
       ? {
-          // 작업1·3: 정방향으로 중력 가속(ease-in) 낙하 → 착지 후에만 rotate 로 살짝 기우뚱하며 정착.
-          y: [FALL_FROM, 0, 0],
-          x: [0, 0, p.rollX ?? 0],
-          rotate: [0, 0, p.rotate],
-          transition: {
-            duration: 1.4,
-            times: [0, 0.62, 1],
-            ease: [
-              [0.4, 0, 1, 1], // 낙하: 천천히 시작→가속(중력)
-              [0.34, 1.3, 0.64, 1], // 착지 후 기울기: 살짝 튕겨 안착
-            ],
-          },
-        }
-      : {
-          // 작업3: 중력처럼 천천히 시작해 가속(ease-in)하며 떨어져 안착. rotate 는 소폭이라 낙하와 함께.
+          // 작업2: 낙하는 단일 ease-in 구간(y). 착지(≈FALL_DUR) 후에만 rotate 로 살짝 기우뚱(약한 튕김) — 분리.
           y: 0,
           rotate: p.rotate,
           transition: {
-            duration: 1.15,
-            ease: [0.4, 0, 1, 1],
+            y: { duration: FALL_DUR, ease: FALL_EASE },
+            rotate: { delay: FALL_DUR - 0.1, duration: 0.55, ease: [0.34, 1.15, 0.64, 1] },
           },
+        }
+      : {
+          // 일반: 동일한 단일 ease-in 낙하(rotate 소폭이라 낙하와 함께 고정).
+          y: 0,
+          rotate: p.rotate,
+          transition: { duration: FALL_DUR, ease: FALL_EASE },
         },
 };
 
