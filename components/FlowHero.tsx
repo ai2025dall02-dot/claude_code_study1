@@ -49,11 +49,11 @@ function opacityAt(i: number, rot: number) {
 type Pos = {
   ch: string;
   x: number; // 좌측 위치(em)
-  by: number; // 하단 위치(em). 작업1: 바닥행은 음수로 글자 밑변을 뷰포트 최하단에 딱 맞춤(descent 흡수)
+  by: number; // 하단 위치(em). 바닥행은 음수로 글자 밑변(회전 후 최하단)을 뷰포트 바닥에 딱 맞춤
   rotate: number;
   stiffness: number;
   damping: number;
-  roll?: boolean; // 작업3: 착지 후 균형 잃고 한쪽 모서리로 넘어지며 구르는 글자
+  roll?: boolean; // 착지 후 균형 잃고 한쪽 모서리로 넘어지며 구르는 글자
   rollX?: number; // 구르는 방향 가로 이동(px)
   origin?: string; // 넘어지는 회전축(글자 아래 모서리)
 };
@@ -61,12 +61,15 @@ type Pos = {
 // 불규칙하게. 겹치진 않되(세로 gap) 리듬감. 작업3: 마지막에 떨어지는 I·E 가 착지 후 넘어지며 구름.
 // 작업1·2: 겹치지 않게 여백 두고 2단 블록 배치. 바닥행(M·I·E, by≈0 → 지면에 딱, M x=0 → 좌측 끝에 딱)
 // + 위층(O·V, 세로 gap 넉넉). 회전해도 바운딩 안 겹치도록 글자 사이 간격 확보.
+// 작업1: 배열 순서 = 낙하 순서(staggerChildren 이 배열 순서로 delay 부여). 최종 위치가 아래(by 작은)인
+// 바닥행(M·I·E) 을 먼저, 위에 얹히는(by 큰) O·V 를 뒤에 두어 "아래부터 깔리고 위가 나중에" 순으로 낙하.
+// 글자는 x/by 로 절대 배치되므로 배열/DOM 순서는 위치에 영향 없음(형태 유지).
 const MOVIE: Pos[] = [
-  { ch: "M", x: 0.0, by: -0.06, rotate: -6, stiffness: 56, damping: 15 }, // 바닥 좌(좌측 끝)
-  { ch: "O", x: 0.4, by: 1.08, rotate: 8, stiffness: 64, damping: 15 }, // 위 좌
-  { ch: "V", x: 1.32, by: 1.05, rotate: -6, stiffness: 52, damping: 16 }, // 위 우
-  { ch: "I", x: 1.12, by: -0.05, rotate: -9, stiffness: 70, damping: 14, roll: true, rollX: -6, origin: "left bottom" }, // 바닥 중, 왼쪽 넘어짐
-  { ch: "E", x: 1.62, by: -0.06, rotate: 10, stiffness: 60, damping: 15, roll: true, rollX: 6, origin: "right bottom" }, // 바닥 우, 오른쪽 넘어짐
+  { ch: "M", x: 0.0, by: -0.12, rotate: -6, stiffness: 56, damping: 15 }, // 바닥 좌(좌측 끝)
+  { ch: "I", x: 1.12, by: -0.1, rotate: -9, stiffness: 70, damping: 14, roll: true, rollX: -6, origin: "left bottom" }, // 바닥 중, 왼쪽 넘어짐
+  { ch: "E", x: 1.62, by: -0.12, rotate: 10, stiffness: 60, damping: 15, roll: true, rollX: 6, origin: "right bottom" }, // 바닥 우, 오른쪽 넘어짐
+  { ch: "V", x: 1.32, by: 1.05, rotate: -6, stiffness: 52, damping: 16 }, // 위 우(나중)
+  { ch: "O", x: 0.4, by: 1.08, rotate: 8, stiffness: 64, damping: 15 }, // 위 좌(가장 나중)
 ];
 // 작업2(낙하 시작): 화면 최상단 밖(완전히 안 보이는 값).
 const FALL_FROM = -1400;
@@ -74,8 +77,8 @@ const FALL_FROM = -1400;
 // 스크롤/공통 motion value 와 무관한 "마운트 1회 시간 기반" 낙하 — variants 컨테이너 stagger.
 const wordContainer: Variants = {
   hidden: {},
-  // staggerChildren(0.22) + delayChildren(0.1) → M 0, O .22, V .44, I .66, E .88 순차.
-  show: { transition: { staggerChildren: 0.22, delayChildren: 0.1 } },
+  // 작업1: 배열 순서(=by 오름차순, 바닥 먼저)대로 stagger delay 부여.
+  show: { transition: { staggerChildren: 0.18, delayChildren: 0.12 } },
 };
 // 자식 글자 variant — custom(p)로 글자별 값 주입. opacity 없이 y(+rotate)만으로 낙하.
 // 작업3: roll 글자는 2단계(낙하 → 착지 후 데굴 구르며 x 이동·rotate 마저 돌아 정착) 키프레임.
