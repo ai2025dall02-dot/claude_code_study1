@@ -63,8 +63,8 @@
   left: 0;
   bottom: 0;
   top: auto;
-  width: 2.45em; /* 좌하단 2단 블록(바닥 M·I·E / 위 O·V)을 담는 박스 */
-  height: 2.2em;
+  width: 2.9em; /* 좌하단 2행(하단 M·V·E / 상단 O·I) 목표 배치를 담는 박스 */
+  height: 2.35em;
   z-index: 2;
   margin: 0;
   font-family: "Arial Black", Helvetica, sans-serif;

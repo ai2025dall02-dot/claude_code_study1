@@ -64,12 +64,14 @@ type Pos = {
 // 작업1: 배열 순서 = 낙하 순서(staggerChildren 이 배열 순서로 delay 부여). 최종 위치가 아래(by 작은)인
 // 바닥행(M·I·E) 을 먼저, 위에 얹히는(by 큰) O·V 를 뒤에 두어 "아래부터 깔리고 위가 나중에" 순으로 낙하.
 // 글자는 x/by 로 절대 배치되므로 배열/DOM 순서는 위치에 영향 없음(형태 유지).
+// 목표 배치(이미지1): 하단행 M(살짝기욺)·V(크게 뒤집힘)·E(정방향), 상단행 O(정방향)·I(오른쪽으로 크게 눕듯).
+// 배열 순서 = 낙하 순서라 하단(M·V·E) 먼저, 상단(O·I) 나중. 하단행은 밑변/꼭짓점(origin 바닥)으로 바닥 접촉.
 const MOVIE: Pos[] = [
-  { ch: "M", x: 0.0, by: -0.12, rotate: -6, stiffness: 56, damping: 15 }, // 바닥 좌(좌측 끝)
-  { ch: "I", x: 1.12, by: -0.1, rotate: -9, stiffness: 70, damping: 14, roll: true, rollX: -6, origin: "left bottom" }, // 바닥 중, 왼쪽 넘어짐
-  { ch: "E", x: 1.62, by: -0.12, rotate: 10, stiffness: 60, damping: 15, roll: true, rollX: 6, origin: "right bottom" }, // 바닥 우, 오른쪽 넘어짐
-  { ch: "V", x: 1.32, by: 1.05, rotate: -6, stiffness: 52, damping: 16 }, // 위 우(나중)
-  { ch: "O", x: 0.4, by: 1.08, rotate: 8, stiffness: 64, damping: 15 }, // 위 좌(가장 나중)
+  { ch: "M", x: 0.0, by: -0.1, rotate: -10, stiffness: 56, damping: 15, origin: "50% 100%" }, // 하단 좌
+  { ch: "V", x: 1.32, by: -0.05, rotate: -30, stiffness: 52, damping: 16, roll: true, origin: "50% 100%" }, // 하단 중, 크게 기욺(뒤집힌 느낌)
+  { ch: "E", x: 2.12, by: -0.1, rotate: 3, stiffness: 60, damping: 15, origin: "50% 100%" }, // 하단 우, 정방향
+  { ch: "O", x: 0.15, by: 1.16, rotate: -4, stiffness: 64, damping: 15 }, // 상단 좌, 정방향
+  { ch: "I", x: 1.2, by: 1.26, rotate: 68, stiffness: 70, damping: 14, roll: true, origin: "left bottom" }, // 상단 우, 오른쪽으로 크게 눕듯
 ];
 // 작업2(낙하 시작): 화면 최상단 밖(완전히 안 보이는 값).
 const FALL_FROM = -1400;
