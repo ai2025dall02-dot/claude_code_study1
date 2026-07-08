@@ -63,14 +63,14 @@
   left: 0;
   bottom: 0;
   top: auto;
-  width: 4em; /* 가로 5글자 블록을 담는 박스 */
-  height: 1.4em;
+  width: 2.85em; /* 테트리스 2단 블록(바닥 M·O·V / 위 I·E)을 담는 박스 */
+  height: 1.95em;
   z-index: 2;
   margin: 0;
   font-family: "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
-  /* 작업1: 크게 */
-  font-size: clamp(120px, 17vw, 260px);
+  /* 작업1: 과감하게 키움 → 좌측 절반~2/3 영역감 */
+  font-size: clamp(150px, 24vw, 400px);
   line-height: 0.9;
   color: #0b0b0c;
   user-select: none;
@@ -126,8 +126,8 @@
 .deck {
   position: absolute;
   left: auto;
-  /* 작업5: 위치만 조금 더 좌측으로(right 값 확대). 형태·각도·크기(scale)는 유지. */
-  right: clamp(4rem, 31vw, 29rem);
+  /* 작업4: 위치만 조금 더 좌측으로(right 값 확대). 형태·각도·크기(scale)는 유지. */
+  right: clamp(4rem, 34vw, 32rem);
   top: 40%;
   z-index: 6;
   perspective: 1600px;
@@ -199,11 +199,11 @@
 /* 통일 브레이크포인트(1280 / 1024 / 767) — 덱 스케일·위치 단계 조정(우측 유지·미잘림).
    각도(rotateZ-8·rotateX-20)·드래그·자동회전은 불변. */
 @media (max-width: 1280px) { /* 노트북 — 위치만 조금 더 좌측(각도·scale 유지) */
-  .deck { right: clamp(2rem, 30vw, 24rem); top: 40%; }
+  .deck { right: clamp(2rem, 33vw, 26rem); top: 40%; }
   .deckTilt { --scale: 0.72; }
 }
 @media (max-width: 1024px) { /* 태블릿 — 위치만 조금 더 좌측(각도·scale 유지) */
-  .deck { right: clamp(1.5rem, 29vw, 19rem); top: 38%; }
+  .deck { right: clamp(1.5rem, 31vw, 20rem); top: 38%; }
   .deckTilt { --scale: 0.6; }
 }
 @media (max-width: 767px) {
@@ -211,6 +211,6 @@
      각도(rotateZ-8·rotateX-20)는 그대로, .deck 자체를 scale 로만 축소. */
   .deck { left: 50%; right: auto; top: 30%; transform: scale(0.5); transform-origin: center; }
   .deckTilt { --scale: 0.72; } /* 태블릿(0.52) 상속 방지 — 기준 스케일 복귀 후 .deck scale 로 축소 */
-  /* 워드마크: 좁은 화면에서 가로 5글자가 안 잘리게 축소 + 바닥에 딱(bottom:0) */
-  .bigword { font-size: clamp(56px, 18vw, 88px); bottom: 0; }
+  /* 워드마크: 좁은 화면에서 테트리스 블록(2.85em)이 안 잘리게 축소 + 바닥에 딱(bottom:0) */
+  .bigword { font-size: clamp(80px, 26vw, 128px); bottom: 0; }
 }

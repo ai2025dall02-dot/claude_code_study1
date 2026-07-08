@@ -56,14 +56,17 @@ type Pos = {
   roll?: boolean; // 작업3: 착지 후 데굴 구르며 정착
   rollX?: number; // 구를 때 가로 이동(px)
 };
-// 작업1: 크게 + 방향 제각각(큰 rotate). 작업2: by=0 근처(바닥에 딱). 작업3: 일부(I·E) roll.
+// 작업1·3: 훨씬 크게(폰트↑) + 좌측 하단에 테트리스처럼 2단으로 딱 붙여 쌓음(바닥 M·O·V, 그 위 I·E).
+// 겹치지 않게(세로 gap) 나란히, rotate 살짝 제각각. by=행 높이(em). roll=착지 후 데굴 정착.
 const MOVIE: Pos[] = [
-  { ch: "M", x: 0.0, by: 0.05, rotate: -12, stiffness: 58, damping: 15 },
-  { ch: "O", x: 1.0, by: 0.0, rotate: 8, stiffness: 66, damping: 15 },
-  { ch: "V", x: 1.92, by: 0.06, rotate: -6, stiffness: 52, damping: 16 },
-  { ch: "I", x: 2.7, by: 0.0, rotate: 14, stiffness: 70, damping: 14, roll: true, rollX: -16 },
-  { ch: "E", x: 3.04, by: 0.05, rotate: -10, stiffness: 60, damping: 15, roll: true, rollX: 20 },
+  { ch: "M", x: 0.0, by: 0.0, rotate: -5, stiffness: 58, damping: 15 },
+  { ch: "O", x: 0.98, by: 0.0, rotate: 7, stiffness: 66, damping: 15 },
+  { ch: "V", x: 1.9, by: 0.02, rotate: -7, stiffness: 52, damping: 16 },
+  { ch: "I", x: 0.5, by: 0.92, rotate: 9, stiffness: 70, damping: 14, roll: true, rollX: -14 },
+  { ch: "E", x: 1.32, by: 0.92, rotate: -5, stiffness: 60, damping: 15, roll: true, rollX: 18 },
 ];
+// 작업2: 화면 최상단 밖(완전히 안 보이는 값)에서 낙하 시작.
+const FALL_FROM = -1400;
 
 // 스크롤/공통 motion value 와 무관한 "마운트 1회 시간 기반" 낙하 — variants 컨테이너 stagger.
 const wordContainer: Variants = {
@@ -74,11 +77,11 @@ const wordContainer: Variants = {
 // 자식 글자 variant — custom(p)로 글자별 값 주입. opacity 없이 y(+rotate)만으로 낙하.
 // 작업3: roll 글자는 2단계(낙하 → 착지 후 데굴 구르며 x 이동·rotate 마저 돌아 정착) 키프레임.
 const letterVar: Variants = {
-  hidden: (p: Pos) => ({ y: -320, x: 0, rotate: p.roll ? p.rotate - 50 : p.rotate }),
+  hidden: (p: Pos) => ({ y: FALL_FROM, x: 0, rotate: p.roll ? p.rotate - 50 : p.rotate }),
   show: (p: Pos) =>
     p.roll
       ? {
-          y: [-320, 0, 0],
+          y: [FALL_FROM, 0, 0],
           x: [0, 0, p.rollX ?? 0],
           rotate: [p.rotate - 50, p.rotate - 50, p.rotate], // 낙하 중엔 기운 채 → 착지 후 굴러 정착
           transition: { duration: 1.5, times: [0, 0.5, 1], ease: [0.22, 1, 0.36, 1] },
