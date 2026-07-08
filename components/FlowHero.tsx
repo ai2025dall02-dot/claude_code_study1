@@ -59,12 +59,14 @@ type Pos = {
 };
 // 작업1·2: 좌측 하단에 자연스럽게 쌓인 더미 — 바닥행(M·I·E, by≈0)과 그 위 얹힌(O·V) 을 x/y·rotate
 // 불규칙하게. 겹치진 않되(세로 gap) 리듬감. 작업3: 마지막에 떨어지는 I·E 가 착지 후 넘어지며 구름.
+// 작업1·2: 겹치지 않게 여백 두고 2단 블록 배치. 바닥행(M·I·E, by≈0 → 지면에 딱, M x=0 → 좌측 끝에 딱)
+// + 위층(O·V, 세로 gap 넉넉). 회전해도 바운딩 안 겹치도록 글자 사이 간격 확보.
 const MOVIE: Pos[] = [
-  { ch: "M", x: 0.0, by: -0.06, rotate: -7, stiffness: 56, damping: 15 }, // 바닥
-  { ch: "O", x: 0.5, by: 0.82, rotate: 9, stiffness: 64, damping: 15 }, // 위에 얹힘
-  { ch: "V", x: 1.25, by: 0.78, rotate: -6, stiffness: 52, damping: 16 }, // 위에 얹힘
-  { ch: "I", x: 0.86, by: -0.05, rotate: -10, stiffness: 70, damping: 14, roll: true, rollX: -8, origin: "left bottom" }, // 바닥, 왼쪽으로 넘어짐
-  { ch: "E", x: 1.66, by: -0.06, rotate: 11, stiffness: 60, damping: 15, roll: true, rollX: 8, origin: "right bottom" }, // 바닥, 오른쪽으로 넘어짐
+  { ch: "M", x: 0.0, by: -0.06, rotate: -6, stiffness: 56, damping: 15 }, // 바닥 좌(좌측 끝)
+  { ch: "O", x: 0.4, by: 1.08, rotate: 8, stiffness: 64, damping: 15 }, // 위 좌
+  { ch: "V", x: 1.32, by: 1.05, rotate: -6, stiffness: 52, damping: 16 }, // 위 우
+  { ch: "I", x: 1.12, by: -0.05, rotate: -9, stiffness: 70, damping: 14, roll: true, rollX: -6, origin: "left bottom" }, // 바닥 중, 왼쪽 넘어짐
+  { ch: "E", x: 1.62, by: -0.06, rotate: 10, stiffness: 60, damping: 15, roll: true, rollX: 6, origin: "right bottom" }, // 바닥 우, 오른쪽 넘어짐
 ];
 // 작업2(낙하 시작): 화면 최상단 밖(완전히 안 보이는 값).
 const FALL_FROM = -1400;

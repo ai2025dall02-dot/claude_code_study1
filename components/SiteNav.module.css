@@ -22,8 +22,9 @@
 }
 
 .brand {
-  font-family: "Arial Black", Helvetica, sans-serif;
-  font-weight: 900;
+  /* 작업3: Arial Black(항상 최대 굵기)은 weight 가 안 먹어 일반 산세리프로 바꾸고 굵기 낮춤 */
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: 600;
   font-size: clamp(15px, 1.7vw, 20px);
   letter-spacing: -0.02em;
   color: #0c0c0c;
@@ -55,8 +56,9 @@
   gap: clamp(1rem, 2.4vw, 2.6rem);
 }
 .links a {
-  font-family: "Arial Black", Helvetica, sans-serif;
-  font-weight: 800;
+  /* 작업3: 일반 산세리프 + weight 낮춰 얇게(가독성 유지) */
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: 500;
   font-size: clamp(11px, 1vw, 13px);
   letter-spacing: 0.04em;
   color: #0c0c0c;
