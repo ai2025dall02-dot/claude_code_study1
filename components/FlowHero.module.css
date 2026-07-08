@@ -63,8 +63,8 @@
   left: 0;
   bottom: 0;
   top: auto;
-  width: 2.85em; /* 테트리스 2단 블록(바닥 M·O·V / 위 I·E)을 담는 박스 */
-  height: 1.95em;
+  width: 2.4em; /* 좌하단 더미(바닥 M·I·E / 위 O·V)를 담는 박스 */
+  height: 1.9em;
   z-index: 2;
   margin: 0;
   font-family: "Arial Black", Helvetica, sans-serif;

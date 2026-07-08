@@ -49,23 +49,24 @@ function opacityAt(i: number, rot: number) {
 type Pos = {
   ch: string;
   x: number; // 좌측 위치(em)
-  by: number; // 하단 위치(em) — 작업2: bottom 기준 배치로 바닥에 딱 붙게
+  by: number; // 하단 위치(em). 작업1: 바닥행은 음수로 글자 밑변을 뷰포트 최하단에 딱 맞춤(descent 흡수)
   rotate: number;
   stiffness: number;
   damping: number;
-  roll?: boolean; // 작업3: 착지 후 데굴 구르며 정착
-  rollX?: number; // 구를 때 가로 이동(px)
+  roll?: boolean; // 작업3: 착지 후 균형 잃고 한쪽 모서리로 넘어지며 구르는 글자
+  rollX?: number; // 구르는 방향 가로 이동(px)
+  origin?: string; // 넘어지는 회전축(글자 아래 모서리)
 };
-// 작업1·3: 훨씬 크게(폰트↑) + 좌측 하단에 테트리스처럼 2단으로 딱 붙여 쌓음(바닥 M·O·V, 그 위 I·E).
-// 겹치지 않게(세로 gap) 나란히, rotate 살짝 제각각. by=행 높이(em). roll=착지 후 데굴 정착.
+// 작업1·2: 좌측 하단에 자연스럽게 쌓인 더미 — 바닥행(M·I·E, by≈0)과 그 위 얹힌(O·V) 을 x/y·rotate
+// 불규칙하게. 겹치진 않되(세로 gap) 리듬감. 작업3: 마지막에 떨어지는 I·E 가 착지 후 넘어지며 구름.
 const MOVIE: Pos[] = [
-  { ch: "M", x: 0.0, by: 0.0, rotate: -5, stiffness: 58, damping: 15 },
-  { ch: "O", x: 0.98, by: 0.0, rotate: 7, stiffness: 66, damping: 15 },
-  { ch: "V", x: 1.9, by: 0.02, rotate: -7, stiffness: 52, damping: 16 },
-  { ch: "I", x: 0.5, by: 0.92, rotate: 9, stiffness: 70, damping: 14, roll: true, rollX: -14 },
-  { ch: "E", x: 1.32, by: 0.92, rotate: -5, stiffness: 60, damping: 15, roll: true, rollX: 18 },
+  { ch: "M", x: 0.0, by: -0.06, rotate: -7, stiffness: 56, damping: 15 }, // 바닥
+  { ch: "O", x: 0.5, by: 0.82, rotate: 9, stiffness: 64, damping: 15 }, // 위에 얹힘
+  { ch: "V", x: 1.25, by: 0.78, rotate: -6, stiffness: 52, damping: 16 }, // 위에 얹힘
+  { ch: "I", x: 0.86, by: -0.05, rotate: -10, stiffness: 70, damping: 14, roll: true, rollX: -8, origin: "left bottom" }, // 바닥, 왼쪽으로 넘어짐
+  { ch: "E", x: 1.66, by: -0.06, rotate: 11, stiffness: 60, damping: 15, roll: true, rollX: 8, origin: "right bottom" }, // 바닥, 오른쪽으로 넘어짐
 ];
-// 작업2: 화면 최상단 밖(완전히 안 보이는 값)에서 낙하 시작.
+// 작업2(낙하 시작): 화면 최상단 밖(완전히 안 보이는 값).
 const FALL_FROM = -1400;
 
 // 스크롤/공통 motion value 와 무관한 "마운트 1회 시간 기반" 낙하 — variants 컨테이너 stagger.
@@ -77,14 +78,21 @@ const wordContainer: Variants = {
 // 자식 글자 variant — custom(p)로 글자별 값 주입. opacity 없이 y(+rotate)만으로 낙하.
 // 작업3: roll 글자는 2단계(낙하 → 착지 후 데굴 구르며 x 이동·rotate 마저 돌아 정착) 키프레임.
 const letterVar: Variants = {
-  hidden: (p: Pos) => ({ y: FALL_FROM, x: 0, rotate: p.roll ? p.rotate - 50 : p.rotate }),
+  // roll 글자는 거의 세운 채 낙하 → 착지 후 넘어지며 구름
+  hidden: (p: Pos) => ({ y: FALL_FROM, x: 0, rotate: p.roll ? 0 : p.rotate }),
   show: (p: Pos) =>
     p.roll
       ? {
-          y: [FALL_FROM, 0, 0],
-          x: [0, 0, p.rollX ?? 0],
-          rotate: [p.rotate - 50, p.rotate - 50, p.rotate], // 낙하 중엔 기운 채 → 착지 후 굴러 정착
-          transition: { duration: 1.5, times: [0, 0.5, 1], ease: [0.22, 1, 0.36, 1] },
+          // 작업3: 낙하(세운 채) → 착지 → 아래 모서리(origin) 기준 천천히 기울다 → 넘어가며 가속·구름 → 안착
+          y: [FALL_FROM, 0, 0, 0],
+          x: [0, 0, 0, p.rollX ?? 0],
+          rotate: [0, 0, p.rotate * 0.45, p.rotate],
+          transition: {
+            duration: 1.7,
+            times: [0, 0.42, 0.68, 1],
+            // 착지(감속) → 기울기 시작(천천히) → 넘어가며 가속 후 살짝 튕겨 안착
+            ease: ["easeOut", "easeIn", [0.34, 1.25, 0.64, 1]],
+          },
         }
       : {
           y: 0,
@@ -133,7 +141,7 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
           <motion.span
             key={i}
             className={styles.letterPos}
-            style={{ left: `${p.x}em`, bottom: `${p.by}em` }}
+            style={{ left: `${p.x}em`, bottom: `${p.by}em`, transformOrigin: p.origin }}
             custom={p}
             variants={letterVar}
           >
@@ -154,7 +162,8 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
                 style={{
                   left: `${p.x}em`,
                   bottom: `${p.by}em`,
-                  // base 의 최종 안착 상태와 동일(roll 은 x 이동 포함)
+                  transformOrigin: p.origin,
+                  // base 의 최종 안착 상태와 동일(roll 은 x 이동 + origin 기준 rotate)
                   transform: `translateX(${p.rollX ?? 0}px) rotate(${p.rotate}deg)`,
                 }}
               >
