@@ -1,5 +1,5 @@
 /* DAYONEDREAM 무드: 하이키 화이트 에디토리얼 + 블랙 볼드 타이포 +
-   부채꼴 컬러 카드 + 3D 원통 덱 + 좌측 낙하 대형 워드마크(호버 원형 반전) */
+   부채꼴 컬러 카드 + 3D 원통 덱 + 좌측 낙하 기하 워드마크(호버 원형 반전) */
 .stage {
   position: relative;
   height: 100vh;
@@ -64,38 +64,42 @@
   }
 }
 
-/* ── 대형 워드마크 FILM — 좌측에 글자가 낙하 후 계단식으로 쌓임 + 호버 원형 색반전 ── */
+/* ── 대형 기하 워드마크 FILM — 좌측에 글자(SVG path)가 화면 밖에서 떨어져 기울어진 채 안착 ──
+   작업3: 영역·간격을 키워 좌측에 크고 시원하게 배치. 글자 기하 모양(SVG)은 유지, 배치 각도만 기울임. */
 .bigword {
   position: absolute;
-  left: clamp(1rem, 3vw, 3.5rem);
-  top: 22%;
+  left: clamp(1rem, 3vw, 3.25rem);
+  top: 19%;
   z-index: 2;
   margin: 0;
-  font-family: "Arial Black", Helvetica, sans-serif;
-  font-weight: 900;
-  font-size: clamp(120px, 22vw, 320px);
-  line-height: 0.82;
-  letter-spacing: -0.04em;
+  font-size: clamp(140px, 21vw, 330px); /* 글자 크기 기준(글자 SVG height = 1em) */
+  line-height: 1;
   color: #0b0b0c;
   user-select: none;
   cursor: default;
 }
-/* 글자 줄(계단/겹침은 .letterStep 의 정적 transform·margin). base/invert 두 레이어에 동일 적용 */
+/* 글자 줄 — 넉넉한 gap 으로 간격 확보. base/invert 두 레이어에 동일 적용 */
 .wordLayer {
   display: inline-flex;
   align-items: flex-start;
+  gap: 0.16em;
   white-space: nowrap;
 }
 .letterStep {
-  display: inline-block;
+  display: inline-block; /* 세로 흩뿌림(dy)은 인라인 style transform 으로 */
   will-change: transform;
 }
-.letterSolid {
-  display: inline-block;
-  color: #0b0b0c; /* 밝은 배경 위 솔리드 검정 */
+.glyphMotion {
+  display: inline-block; /* 낙하 y + 기울기 rotate 가 적용되는 대상 */
   will-change: transform, opacity;
 }
-/* 반전 레이어: 커서 원(--r) 안에서만 보이도록 mask. 원 안 = 검은 배경 + 아웃라인(획만) 글자 */
+.glyph {
+  display: block;
+  height: 1em; /* 모든 글자 동일 스케일(viewBox 높이 통일) */
+  width: auto;
+}
+
+/* 호버 원형 색반전: 커서 원(--r) 안에서만 보이는 반전 레이어(검은 배경 + 흰 글자) */
 @property --r {
   syntax: "<length>";
   inherits: true;
@@ -110,7 +114,7 @@
   transition: --r 0.22s ease;
   pointer-events: none; /* 히트는 .bigword 가 받음 */
 }
-.bigword[data-hover="true"] .wordInvert { --r: 140px; } /* 호버 시 원 반경 */
+.bigword[data-hover="true"] .wordInvert { --r: 130px; } /* 호버 시 원 반경 */
 .invertBg {
   position: absolute;
   inset: 0;
@@ -121,18 +125,13 @@
   top: 0;
   left: 0;
 }
-.letterOutline {
-  display: inline-block;
-  color: transparent;
-  -webkit-text-stroke: 2.5px #f8f8f8; /* 검은 배경 위 밝은 라인(아웃라인) */
-}
 
-/* ── 원통형(3D 실린더) 카드 덱 — 형태 불변, 위치만 우측 ── */
+/* ── 원통형(3D 실린더) 카드 덱 — 형태·각도 불변, 위치/스케일만(우측·미(未)잘림) ── */
 .deck {
   position: absolute;
-  /* 작업4: 우측 배치(네비 아래). 3D 각도·구조·드래그·자동회전은 불변, left/right·top 만 조정 */
+  /* 작업5: 우측이되 화면 안에 원통 전체가 들어오도록 여백 확보 + 스케일 축소 */
   left: auto;
-  right: clamp(3rem, 10vw, 11rem);
+  right: clamp(3rem, 15vw, 15rem);
   top: 50%;
   z-index: 6;
   perspective: 1600px;
@@ -142,12 +141,12 @@
   cursor: grab;
 }
 .deck:active { cursor: grabbing; }
-/* 바깥 래퍼: 고정 기울기(대각 스윕)만 — 회전과 분리 */
+/* 바깥 래퍼: 고정 기울기(대각 스윕)만 — 회전과 분리. 작업5: 데스크탑 스케일 0.8→0.62(잘림 방지) */
 .deckTilt {
   position: absolute;
   left: 0;
   top: 0;
-  --scale: 0.8;
+  --scale: 0.5;
   transform: translate(-50%, -50%) rotateZ(-8deg) rotateX(-20deg) scale(var(--scale, 1));
   transform-style: preserve-3d;
 }
@@ -173,23 +172,20 @@
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 3px;
 }
-/* 카드: 패널 위에서 각도 기반 opacity 로 연속 페이드 (opacity 는 JS가 매 프레임 설정).
-   텍스트 제거 → 이미지가 카드를 꽉 채우도록 padding 0 + overflow:hidden(모서리 radius 클립). */
+/* 카드: 패널 위에서 각도 기반 opacity 로 연속 페이드. 이미지가 카드를 꽉 채움(padding 0 + overflow) */
 .card {
   position: absolute;
   inset: 0;
   background: #fff;
   border-radius: 3px;
-  padding: 0; /* 안쪽 여백 제거 — 이미지가 모서리까지 */
-  overflow: hidden; /* 이미지를 카드 radius 로 클립 */
+  padding: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   box-shadow: 0 26px 50px rgba(20, 20, 20, 0.22), 0 4px 14px rgba(20, 20, 20, 0.14);
-  /* GPU 합성 레이어로 분리 → 페이드/호버 부드럽게 */
   will-change: transform, opacity;
   backface-visibility: hidden;
   transform: translateZ(0);
-  /* transform 만 transition (opacity 는 rAF 가 직접 구동) */
   transition: transform 0.25s ease;
 }
 /* 개별 카드 호버 확대 (.cell 이 아니라 .card 에 → 배치 유지) */
@@ -198,14 +194,13 @@
   z-index: 50;
   box-shadow: 0 44px 90px rgba(20, 20, 20, 0.42), 0 12px 26px rgba(20, 20, 20, 0.3);
 }
-/* 이미지 미디어가 카드 전체를 채움(여백 0). radius 는 카드 overflow 로 클립. */
 .card__media {
   position: relative;
   flex: 1;
   overflow: hidden;
   background: #ddd;
 }
-.card__media img { object-fit: cover; filter: none; } /* 컬러 원본 유지, cover 로 꽉 채움 */
+.card__media img { object-fit: cover; filter: none; }
 
 /* ── 하단 러닝 라벨 ── */
 .tagline {
@@ -220,23 +215,22 @@
   color: #6c6c68;
 }
 
-/* 통일 브레이크포인트(1280 / 1024 / 767)로 원통 덱 스케일·위치 단계 조정.
-   (덱 3D 각도·드래그·자동회전 동작은 불변 — 크기/위치만. 우측 유지 + 네비 안 가림) */
-@media (max-width: 1280px) { /* 노트북 축소 */
-  .deck { right: clamp(2rem, 8vw, 8rem); top: 50%; }
-  .deckTilt { --scale: 0.78; }
+/* 통일 브레이크포인트(1280 / 1024 / 767) — 덱 스케일·위치 단계 조정(잘리지 않게).
+   덱 3D 각도·드래그·자동회전 동작은 불변 — 크기/위치만. */
+@media (max-width: 1280px) { /* 노트북 */
+  .deck { right: clamp(2rem, 17vw, 15rem); top: 50%; }
+  .deckTilt { --scale: 0.48; }
 }
-@media (max-width: 1024px) { /* 태블릿 — 우측 유지, 화면 안으로 */
-  .deck { right: clamp(1rem, 5vw, 5rem); top: 48%; }
-  .deckTilt { --scale: 0.6; }
+@media (max-width: 1024px) { /* 태블릿 */
+  .deck { right: clamp(1.5rem, 17vw, 12rem); top: 48%; }
+  .deckTilt { --scale: 0.4; }
 }
 @media (max-width: 767px) {
-  /* 원통 카드덱: perspective 안에서 scale 하면 원근 왜곡(각도 달라 보임) → .deckTilt 는 데스크탑
-     지오메트리(--scale 0.8)를 그대로 두고, perspective 컨테이너 .deck 자체를 균일 축소(scale)로
-     각도(rotateZ -8·rotateX -20) 픽셀 단위 동일 유지. 위치는 우측 상단(브랜드 로고 아래). */
-  .deck { left: auto; right: -6%; top: 34%; transform: scale(0.55); transform-origin: top right; }
-  .deckTilt { --scale: 0.8; } /* 태블릿(0.6) 상속 방지 — 데스크탑 지오메트리로 복귀 */
-  /* 워드마크 상한 축소(좌측 유지) */
-  .bigword { font-size: clamp(96px, 30vw, 150px); top: auto; bottom: 12%; }
+  /* 작업5: 모바일은 우측 배치 시 잘리므로 화면 중앙 상단으로 + 균일 축소 → 원통 전체가 보이게.
+     .deck 를 화면 중앙(left:50%)에 두고 scale 로만 줄여 각도(rotateZ -8·rotateX -20)는 그대로. */
+  .deck { left: 50%; right: auto; top: 30%; transform: scale(0.5); transform-origin: center; }
+  .deckTilt { --scale: 0.8; } /* 태블릿(0.5) 상속 방지 — 데스크탑 지오메트리로 복귀 후 .deck scale 로 축소 */
+  /* 워드마크: 하단 좌측에 축소 배치(글자 SVG 유지) */
+  .bigword { top: auto; bottom: 9%; font-size: clamp(88px, 27vw, 150px); }
   .tagline { font-size: 10px; letter-spacing: 0.14em; }
 }
