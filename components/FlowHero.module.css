@@ -56,32 +56,33 @@
   .stage[data-revealed="false"] .deck { opacity: 1; transform: none; }
 }
 
-/* ── 대형 볼드 워드마크 FILM — 좌측 하단에 글자가 화면 밖(위)에서 천천히 떨어져 누운 채 안착 ── */
+/* ── 대형 볼드 워드마크 MOVIE — 좌측 하단에 글자들이 옹기종기 겹쳐 쌓인 클러스터(절대 배치) ── */
 .bigword {
   position: absolute;
   left: clamp(1rem, 3vw, 3rem);
   bottom: clamp(2rem, 7vh, 5rem);
   top: auto;
+  width: 2.9em; /* 클러스터를 담는 박스(글자는 안에서 절대 배치·오버랩) */
+  height: 1.85em;
   z-index: 2;
   margin: 0;
   font-family: "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
-  font-size: clamp(120px, 20vw, 300px);
+  font-size: clamp(110px, 17vw, 260px);
   line-height: 0.9;
-  letter-spacing: -0.03em;
   color: #0b0b0c;
   user-select: none;
   cursor: default;
 }
-/* 글자 줄 — base/invert 두 레이어에 동일 적용(정렬 일치) */
+/* 글자 레이어 — 절대 배치의 기준점(top-left). base/invert 두 레이어 원점 일치 → 글자 정렬 일치 */
 .wordLayer {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 0.05em;
-  white-space: nowrap;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
-.letterStep {
-  display: inline-block;
+/* 각 글자의 클러스터 내 위치(인라인 left/top em). 낙하 y·rotate 는 안쪽 .letter(framer) */
+.letterPos {
+  position: absolute;
   will-change: transform;
 }
 .letter {
@@ -126,7 +127,8 @@
 .deck {
   position: absolute;
   left: auto;
-  right: clamp(3rem, 21vw, 20rem);
+  /* 작업4: 위치만 안쪽(중앙-우측)으로 이동. 각도/scale 은 절대 불변(.deckTilt 손대지 않음). */
+  right: clamp(4rem, 28vw, 26rem);
   top: 50%;
   z-index: 6;
   perspective: 1600px;
@@ -197,12 +199,12 @@
 
 /* 통일 브레이크포인트(1280 / 1024 / 767) — 덱 스케일·위치 단계 조정(우측 유지·미잘림).
    각도(rotateZ-8·rotateX-20)·드래그·자동회전은 불변. */
-@media (max-width: 1280px) { /* 노트북 */
-  .deck { right: clamp(2rem, 22vw, 18rem); top: 50%; }
+@media (max-width: 1280px) { /* 노트북 — 위치만 안쪽으로(각도/scale 불변) */
+  .deck { right: clamp(2rem, 26vw, 22rem); top: 50%; }
   .deckTilt { --scale: 0.64; }
 }
-@media (max-width: 1024px) { /* 태블릿 */
-  .deck { right: clamp(1.5rem, 22vw, 14rem); top: 48%; }
+@media (max-width: 1024px) { /* 태블릿 — 위치만 안쪽으로(각도/scale 불변) */
+  .deck { right: clamp(1.5rem, 24vw, 16rem); top: 48%; }
   .deckTilt { --scale: 0.52; }
 }
 @media (max-width: 767px) {

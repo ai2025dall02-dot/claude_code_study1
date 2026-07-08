@@ -44,12 +44,15 @@ function opacityAt(i: number, rot: number) {
   return clamp((FULL_DEG + FADE_BAND - dist) / FADE_BAND, 0, 1);
 }
 
-// 작업1·2: FILM 을 일반 볼드 텍스트로. 각 글자를 span 으로 쪼개 개별 낙하 + 글자별 큰 rotate(누움).
-const LETTERS: { ch: string; rotate: number }[] = [
-  { ch: "F", rotate: -18 },
-  { ch: "I", rotate: 14 },
-  { ch: "L", rotate: -10 },
-  { ch: "M", rotate: 8 },
+// 작업1·2: MOVIE(M·O·V·I·E) 를 좌측 하단에 옹기종기 겹쳐 쌓인 클러스터로 절대 배치(순서 무관).
+// x/y 는 em(글자 크기에 비례), rotate 제각각, 일부 오버랩. wobble=마지막에 기우뚱 튕기며 정착.
+type Pos = { ch: string; x: number; y: number; rotate: number; wobble?: boolean };
+const MOVIE: Pos[] = [
+  { ch: "M", x: 0.0, y: 0.2, rotate: -12 },
+  { ch: "O", x: 0.66, y: 0.58, rotate: 13 },
+  { ch: "V", x: 1.0, y: 0.02, rotate: -8 },
+  { ch: "I", x: 1.55, y: 0.4, rotate: 19, wobble: true },
+  { ch: "E", x: 1.12, y: 0.74, rotate: -14, wobble: true },
 ];
 
 function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
@@ -70,29 +73,40 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     <h1
       ref={ref}
       className={styles.bigword}
-      aria-label="FILM"
+      aria-label="MOVIE"
       data-hover={hover}
       onMouseEnter={() => !reduce && setHover(true)}
       onMouseLeave={() => setHover(false)}
       onMouseMove={onMove}
     >
-      {/* base: 밝은 배경 위 검정 글자. 각 글자 화면 밖(위)에서 천천히·부드럽게 낙하해 누운 채 안착 */}
+      {/* base: 검정 글자. 각 글자 화면 밖(위)에서 천천히·부드럽게 낙하, 마지막 2글자는 기우뚱(spring) 정착 */}
       <span className={styles.wordLayer} aria-hidden="true">
-        {LETTERS.map((l, i) => (
-          <span key={i} className={styles.letterStep}>
+        {MOVIE.map((p, i) => (
+          <span key={i} className={styles.letterPos} style={{ left: `${p.x}em`, top: `${p.y}em` }}>
             <motion.span
               className={styles.letter}
-              initial={reduce ? false : { y: -1000, opacity: 0, rotate: l.rotate }}
+              initial={
+                reduce ? false : { y: -1000, opacity: 0, rotate: p.wobble ? p.rotate - 34 : p.rotate }
+              }
               animate={
                 revealed || reduce
-                  ? { y: 0, opacity: 1, rotate: l.rotate }
-                  : { y: -1000, opacity: 0, rotate: l.rotate }
+                  ? { y: 0, opacity: 1, rotate: p.rotate }
+                  : { y: -1000, opacity: 0, rotate: p.wobble ? p.rotate - 34 : p.rotate }
               }
               transition={
-                reduce ? { duration: 0 } : { delay: i * 0.14, duration: 1.1, ease: [0.16, 1, 0.3, 1] }
+                reduce
+                  ? { duration: 0 }
+                  : {
+                      delay: i * 0.16,
+                      // 작업3: 낙하를 느리고 부드럽게(1.3s). 마지막 글자 rotate 는 spring 언더댐프로 기우뚱 튕김.
+                      default: { duration: 1.3, ease: [0.16, 1, 0.3, 1] },
+                      rotate: p.wobble
+                        ? { type: "spring", stiffness: 60, damping: 7 }
+                        : { duration: 1.3, ease: [0.16, 1, 0.3, 1] },
+                    }
               }
             >
-              {l.ch}
+              {p.ch}
             </motion.span>
           </span>
         ))}
@@ -103,10 +117,10 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
         <span className={styles.wordInvert} aria-hidden="true">
           <span className={styles.invertBg} />
           <span className={styles.wordLayer}>
-            {LETTERS.map((l, i) => (
-              <span key={i} className={styles.letterStep}>
-                <span className={styles.letter} style={{ transform: `rotate(${l.rotate}deg)` }}>
-                  {l.ch}
+            {MOVIE.map((p, i) => (
+              <span key={i} className={styles.letterPos} style={{ left: `${p.x}em`, top: `${p.y}em` }}>
+                <span className={styles.letter} style={{ transform: `rotate(${p.rotate}deg)` }}>
+                  {p.ch}
                 </span>
               </span>
             ))}
