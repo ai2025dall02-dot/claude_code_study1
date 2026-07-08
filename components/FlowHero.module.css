@@ -1,5 +1,5 @@
 /* DAYONEDREAM 무드: 하이키 화이트 에디토리얼 + 블랙 볼드 타이포 +
-   부채꼴 컬러 카드 + 원형 회전 텍스트 + 3D 큐브 + 줄무늬 디졸브 대형 글자 */
+   부채꼴 컬러 카드 + 3D 원통 덱 + 좌측 낙하 대형 워드마크(호버 원형 반전) */
 .stage {
   position: relative;
   height: 100vh;
@@ -44,130 +44,99 @@
   .nav__links { display: none; }
 }
 
-/* ── 인트로 등장 (카운트다운 후 좌·우·하단에서 서서히) ── */
-.bigword,
-.outline,
-.ringText,
+/* ── 인트로 등장 (카운트다운 후 하단에서 서서히). 워드마크는 글자 낙하(framer)가 담당하므로 제외 ── */
 .deck,
-.reelWrap,
 .tagline {
   transition: opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.bigword { transition-delay: 0.05s; }
-.outline { transition-delay: 0.18s; }
 .deck { transition-delay: 0.28s; }
-.ringText { transition-delay: 0.4s; }
-.reelWrap { transition-delay: 0.46s; }
 .tagline { transition-delay: 0.56s; }
 
-.stage[data-revealed="false"] .bigword { opacity: 0; transform: translateX(-9vw); }   /* 좌 */
-.stage[data-revealed="false"] .outline { opacity: 0; transform: translateX(9vw); }    /* 우 */
-.stage[data-revealed="false"] .ringText { opacity: 0; }                                /* 우(스핀 보존 → 페이드) */
 .stage[data-revealed="false"] .deck { opacity: 0; transform: translateY(90px); }       /* 하단 */
-.stage[data-revealed="false"] .reelWrap { opacity: 0; transform: translateY(70px); }   /* 하단 */
 .stage[data-revealed="false"] .tagline { opacity: 0; transform: translateY(34px); }    /* 하단 */
 
 @media (prefers-reduced-motion: reduce) {
-  .stage[data-revealed="false"] .bigword,
-  .stage[data-revealed="false"] .outline,
-  .stage[data-revealed="false"] .ringText,
   .stage[data-revealed="false"] .deck,
-  .stage[data-revealed="false"] .reelWrap,
   .stage[data-revealed="false"] .tagline {
     opacity: 1;
     transform: none;
   }
 }
 
-/* ── 거대 줄무늬 디졸브 글자 ── */
+/* ── 대형 워드마크 FILM — 좌측에 글자가 낙하 후 계단식으로 쌓임 + 호버 원형 색반전 ── */
 .bigword {
   position: absolute;
-  left: -0.06em;
-  top: 4%;
+  left: clamp(1rem, 3vw, 3.5rem);
+  top: 22%;
   z-index: 2;
   margin: 0;
   font-family: "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
-  font-size: clamp(150px, 30vw, 440px);
-  line-height: 0.8;
+  font-size: clamp(120px, 22vw, 320px);
+  line-height: 0.82;
   letter-spacing: -0.04em;
   color: #0b0b0c;
-  white-space: nowrap;
   user-select: none;
+  cursor: default;
 }
-/* FILM 기하 워드마크 */
-.filmMark {
-  display: block;
-  width: min(90vw, 1040px);
-  height: auto;
+/* 글자 줄(계단/겹침은 .letterStep 의 정적 transform·margin). base/invert 두 레이어에 동일 적용 */
+.wordLayer {
+  display: inline-flex;
+  align-items: flex-start;
+  white-space: nowrap;
 }
-
-/* ── 우측 REEL — 각진 아웃라인(라인) 대형 글자 ── */
-.outline {
+.letterStep {
+  display: inline-block;
+  will-change: transform;
+}
+.letterSolid {
+  display: inline-block;
+  color: #0b0b0c; /* 밝은 배경 위 솔리드 검정 */
+  will-change: transform, opacity;
+}
+/* 반전 레이어: 커서 원(--r) 안에서만 보이도록 mask. 원 안 = 검은 배경 + 아웃라인(획만) 글자 */
+@property --r {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+.wordInvert {
   position: absolute;
-  right: -1.5%;
-  bottom: 1%;
-  z-index: 1;
-  margin: 0;
-  font-family: "Arial Black", Helvetica, sans-serif;
-  font-weight: 900;
-  font-size: clamp(140px, 26vw, 380px);
-  line-height: 0.8;
-  letter-spacing: -0.03em;
+  inset: 0;
+  --r: 0px;
+  -webkit-mask: radial-gradient(circle var(--r) at var(--mx, -999px) var(--my, -999px), #000 0 98%, transparent 100%);
+  mask: radial-gradient(circle var(--r) at var(--mx, -999px) var(--my, -999px), #000 0 98%, transparent 100%);
+  transition: --r 0.22s ease;
+  pointer-events: none; /* 히트는 .bigword 가 받음 */
+}
+.bigword[data-hover="true"] .wordInvert { --r: 140px; } /* 호버 시 원 반경 */
+.invertBg {
+  position: absolute;
+  inset: 0;
+  background: #0b0b0c; /* 원 안 배경을 검게 */
+}
+.wordInvert .wordLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.letterOutline {
+  display: inline-block;
   color: transparent;
-  -webkit-text-stroke: 1.4px #c9c7c2;
-  white-space: nowrap;
-  user-select: none;
+  -webkit-text-stroke: 2.5px #f8f8f8; /* 검은 배경 위 밝은 라인(아웃라인) */
 }
 
-/* ── 원형 회전 텍스트 ── */
-.ringText {
-  position: absolute;
-  right: clamp(-90px, -4vw, -40px);
-  top: 58%;
-  transform: translateY(-50%);
-  z-index: 3;
-  width: clamp(220px, 28vw, 340px);
-  height: clamp(220px, 28vw, 340px);
-  animation: spin 24s linear infinite;
-}
-.ringText text {
-  font-family: "Arial Black", Helvetica, sans-serif;
-  font-size: 12.5px;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  fill: #0c0c0c;
-}
-@keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
-
-/* ── 회전하는 필름 릴 — 라인아트(reel.png 스타일) ── */
-.reelWrap {
-  position: absolute;
-  left: 7%;
-  bottom: 15%;
-  z-index: 4;
-  width: 158px;
-  height: 158px;
-}
-.reel {
-  width: 100%;
-  height: 100%;
-  transform-origin: 50% 50%;
-  animation: reelspin 11s linear infinite;
-}
-@keyframes reelspin {
-  to { transform: rotate(360deg); }
-}
-
-/* ── 원통형(3D 실린더) 카드 덱 ── */
+/* ── 원통형(3D 실린더) 카드 덱 — 형태 불변, 위치만 우측 ── */
 .deck {
   position: absolute;
-  left: 50%;
-  top: 58%;
+  /* 작업4: 우측 배치(네비 아래). 3D 각도·구조·드래그·자동회전은 불변, left/right·top 만 조정 */
+  left: auto;
+  right: clamp(3rem, 10vw, 11rem);
+  top: 50%;
   z-index: 6;
   perspective: 1600px;
-  /* 작업1: 드래그(플릭) 입력 — 세로 스크롤/텍스트 선택 막고, 잡는 커서 표시 */
+  /* 드래그(플릭) 입력 — 세로 스크롤/텍스트 선택 막고, 잡는 커서 표시 */
   touch-action: none;
   user-select: none;
   cursor: grab;
@@ -205,14 +174,14 @@
   border-radius: 3px;
 }
 /* 카드: 패널 위에서 각도 기반 opacity 로 연속 페이드 (opacity 는 JS가 매 프레임 설정).
-   작업2: 텍스트 제거 → 이미지가 카드를 꽉 채우도록 padding 0 + overflow:hidden(모서리 radius 클립). */
+   텍스트 제거 → 이미지가 카드를 꽉 채우도록 padding 0 + overflow:hidden(모서리 radius 클립). */
 .card {
   position: absolute;
   inset: 0;
   background: #fff;
   border-radius: 3px;
-  padding: 0; /* 작업2: 안쪽 여백 제거 — 이미지가 모서리까지 */
-  overflow: hidden; /* 작업2: 이미지를 카드 radius 로 클립 */
+  padding: 0; /* 안쪽 여백 제거 — 이미지가 모서리까지 */
+  overflow: hidden; /* 이미지를 카드 radius 로 클립 */
   display: flex;
   flex-direction: column;
   box-shadow: 0 26px 50px rgba(20, 20, 20, 0.22), 0 4px 14px rgba(20, 20, 20, 0.14);
@@ -223,13 +192,13 @@
   /* transform 만 transition (opacity 는 rAF 가 직접 구동) */
   transition: transform 0.25s ease;
 }
-/* [4] 개별 카드 호버 확대 (.cell 이 아니라 .card 에 → 배치 유지) */
+/* 개별 카드 호버 확대 (.cell 이 아니라 .card 에 → 배치 유지) */
 .card.hovered {
   transform: scale(1.16) translateZ(0);
   z-index: 50;
   box-shadow: 0 44px 90px rgba(20, 20, 20, 0.42), 0 12px 26px rgba(20, 20, 20, 0.3);
 }
-/* 작업2: 이미지 미디어가 카드 전체를 채움(여백 0). radius 는 카드 overflow 로 클립. */
+/* 이미지 미디어가 카드 전체를 채움(여백 0). radius 는 카드 overflow 로 클립. */
 .card__media {
   position: relative;
   flex: 1;
@@ -251,33 +220,23 @@
   color: #6c6c68;
 }
 
-/* 통일 브레이크포인트(1280 / 1024 / 767)로 히어로 3D 카드덱·릴 스케일 단계 조정.
-   (스핀/등장 트랜지션 등 애니메이션 동작은 불변 — 크기/위치만) */
+/* 통일 브레이크포인트(1280 / 1024 / 767)로 원통 덱 스케일·위치 단계 조정.
+   (덱 3D 각도·드래그·자동회전 동작은 불변 — 크기/위치만. 우측 유지 + 네비 안 가림) */
 @media (max-width: 1280px) { /* 노트북 축소 */
+  .deck { right: clamp(2rem, 8vw, 8rem); top: 50%; }
   .deckTilt { --scale: 0.78; }
 }
-@media (max-width: 1024px) { /* 태블릿 */
-  .deck { left: 56%; }
+@media (max-width: 1024px) { /* 태블릿 — 우측 유지, 화면 안으로 */
+  .deck { right: clamp(1rem, 5vw, 5rem); top: 48%; }
   .deckTilt { --scale: 0.6; }
-  .reelWrap { width: 104px; height: 104px; bottom: 10%; }
 }
-/* ── 모바일 (≤767): 숨김 없이 크기·위치만 ──────────────
-   [복구] 회전 링 텍스트를 지우지 않고 축소·안쪽 배치 → stage(overflow:hidden) 안에 들어와
-          가로 스크롤 없이 장식 유지
-   [크기] 하단 러닝 라벨(.tagline) 살짝 축소로 밀도 정리 (레이아웃/애니메이션 구조는 유지) */
 @media (max-width: 767px) {
-  /* [1] 원통 카드덱: 데스크탑과 '동일한 각도'로 보이게 하려면 perspective 안에서 scale 하면
-     안 됨(원근 왜곡으로 기울기가 달라 보임). 그래서 .deckTilt 는 데스크탑 지오메트리(--scale 0.8)를
-     그대로 두고, perspective 컨테이너인 .deck 자체를 균일 축소(scale 0.5) → 투영 결과가 통째로
-     작아질 뿐 각도(rotateZ -8·rotateX -20)는 픽셀 단위로 동일. left 도 데스크탑과 같은 50%. */
-  .deck { left: 50%; transform: scale(0.65); transform-origin: center; } /* 원통덱 확대(0.5→0.65), 각도·left 유지 */
+  /* 원통 카드덱: perspective 안에서 scale 하면 원근 왜곡(각도 달라 보임) → .deckTilt 는 데스크탑
+     지오메트리(--scale 0.8)를 그대로 두고, perspective 컨테이너 .deck 자체를 균일 축소(scale)로
+     각도(rotateZ -8·rotateX -20) 픽셀 단위 동일 유지. 위치는 우측 상단(브랜드 로고 아래). */
+  .deck { left: auto; right: -6%; top: 34%; transform: scale(0.55); transform-origin: top right; }
   .deckTilt { --scale: 0.8; } /* 태블릿(0.6) 상속 방지 — 데스크탑 지오메트리로 복귀 */
-  /* [2] 회전 릴 + 원형 회전 텍스트(ringText) 모바일 삭제 */
-  .reelWrap { display: none; }
-  .ringText { display: none; }
+  /* 워드마크 상한 축소(좌측 유지) */
+  .bigword { font-size: clamp(96px, 30vw, 150px); top: auto; bottom: 12%; }
   .tagline { font-size: 10px; letter-spacing: 0.14em; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ringText, .reel { animation: none; }
 }
