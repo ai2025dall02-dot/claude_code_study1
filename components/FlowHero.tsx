@@ -67,11 +67,11 @@ type Pos = {
 // 목표 배치(이미지1): 하단행 M(살짝기욺)·V(크게 뒤집힘)·E(정방향), 상단행 O(정방향)·I(오른쪽으로 크게 눕듯).
 // 배열 순서 = 낙하 순서라 하단(M·V·E) 먼저, 상단(O·I) 나중. 하단행은 밑변/꼭짓점(origin 바닥)으로 바닥 접촉.
 const MOVIE: Pos[] = [
-  { ch: "M", x: 0.0, by: -0.1, rotate: -10, stiffness: 56, damping: 15, origin: "50% 100%" }, // 하단 좌
-  { ch: "V", x: 1.32, by: -0.05, rotate: -30, stiffness: 52, damping: 16, roll: true, origin: "50% 100%" }, // 하단 중, 크게 기욺(뒤집힌 느낌)
-  { ch: "E", x: 2.12, by: -0.1, rotate: 3, stiffness: 60, damping: 15, origin: "50% 100%" }, // 하단 우, 정방향
-  { ch: "O", x: 0.15, by: 1.16, rotate: -4, stiffness: 64, damping: 15 }, // 상단 좌, 정방향
-  { ch: "I", x: 1.2, by: 1.26, rotate: 68, stiffness: 70, damping: 14, roll: true, origin: "left bottom" }, // 상단 우, 오른쪽으로 크게 눕듯
+  { ch: "M", x: 0.0, by: -0.1, rotate: -8, stiffness: 56, damping: 15, origin: "50% 100%" }, // 하단 좌
+  { ch: "V", x: 0.72, by: 0.07, rotate: 160, stiffness: 52, damping: 16, roll: true }, // 하단 중, 뒤집힘(회전축 중심 → by 로 바닥 접촉)
+  { ch: "E", x: 1.5, by: -0.1, rotate: 3, stiffness: 60, damping: 15, origin: "50% 100%" }, // 하단 우, 정방향
+  { ch: "O", x: 0.05, by: 0.78, rotate: -2, stiffness: 64, damping: 15 }, // 상단 좌, 정방향
+  { ch: "I", x: 0.75, by: 0.82, rotate: 60, stiffness: 70, damping: 14, roll: true, origin: "left bottom" }, // 상단 우, 오른쪽으로 크게 눕듯
 ];
 // 작업2(낙하 시작): 화면 최상단 밖(완전히 안 보이는 값).
 const FALL_FROM = -1400;
