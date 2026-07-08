@@ -63,23 +63,23 @@
   left: 0;
   bottom: 0;
   top: auto;
-  width: 3.95em; /* 가로 5글자 블록을 담는 박스 */
-  height: 1.3em;
+  width: 4em; /* 가로 5글자 블록을 담는 박스 */
+  height: 1.4em;
   z-index: 2;
   margin: 0;
   font-family: "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
-  font-size: clamp(90px, 14vw, 210px);
+  /* 작업1: 크게 */
+  font-size: clamp(120px, 17vw, 260px);
   line-height: 0.9;
   color: #0b0b0c;
   user-select: none;
   cursor: default;
 }
-/* 글자 레이어 — 절대 배치의 기준점(top-left). base/invert 두 레이어 원점 일치 → 글자 정렬 일치 */
+/* 글자 레이어 — 박스 전체를 채워(inset 0) 글자 bottom 기준 배치의 기준(바닥) 제공. base/invert 원점 일치 */
 .wordLayer {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
 }
 /* 각 글자 = 클러스터 내 절대 위치(인라인 left/top em) + 낙하 y·rotate(framer variants) 대상 */
 .letterPos {
@@ -104,7 +104,9 @@
   --r: 0px;
   -webkit-mask: radial-gradient(circle var(--r) at calc(var(--mx, -9999px) + var(--pad)) calc(var(--my, -9999px) + var(--pad)), #000 0 98%, transparent 100%);
   mask: radial-gradient(circle var(--r) at calc(var(--mx, -9999px) + var(--pad)) calc(var(--my, -9999px) + var(--pad)), #000 0 98%, transparent 100%);
-  /* 작업1: --r transition 제거 → 호버 즉시 원이 뜸(커서 위치 --mx/--my 는 이미 transition 없이 즉각 추적) */
+  /* 작업4: 원 반경(--r)이 0→130 으로 부드럽게 커지도록 ease-out(빠른 시작·유연한 정착). 아웃 시 부드럽게 0.
+     (커서 위치 --mx/--my 는 transition 없이 즉각 추적 → 위치 지연 없음) */
+  transition: --r 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none; /* 히트는 .bigword 가 받음 */
 }
 .bigword[data-hover="true"] .wordInvert { --r: 130px; } /* 호버 시 원 반경 */
@@ -113,11 +115,10 @@
   inset: 0;
   background: #0b0b0c; /* 원 안 배경을 검게 */
 }
-/* 흰 글자 레이어는 확장분(--pad)만큼 안으로 밀어 base 글자와 위치 일치 */
+/* 흰 글자 레이어는 확장분(--pad)만큼 inset → base 워드마크 박스와 정확히 겹침(글자 위치 일치) */
 .wordInvert .wordLayer {
   position: absolute;
-  top: var(--pad);
-  left: var(--pad);
+  inset: var(--pad);
 }
 .wordInvert .letterPos { color: #f8f8f8; } /* 원 안 글자는 흰색 */
 
@@ -125,8 +126,8 @@
 .deck {
   position: absolute;
   left: auto;
-  /* 작업4: 조금 더 좌측으로(right 값 확대) + scale 상향(.deckTilt). rotateZ·rotateX 각도는 불변. */
-  right: clamp(4rem, 27vw, 26rem);
+  /* 작업5: 위치만 조금 더 좌측으로(right 값 확대). 형태·각도·크기(scale)는 유지. */
+  right: clamp(4rem, 31vw, 29rem);
   top: 40%;
   z-index: 6;
   perspective: 1600px;
@@ -197,12 +198,12 @@
 
 /* 통일 브레이크포인트(1280 / 1024 / 767) — 덱 스케일·위치 단계 조정(우측 유지·미잘림).
    각도(rotateZ-8·rotateX-20)·드래그·자동회전은 불변. */
-@media (max-width: 1280px) { /* 노트북 — 좌측으로 + scale 상향(각도 불변) */
-  .deck { right: clamp(2rem, 27vw, 22rem); top: 40%; }
+@media (max-width: 1280px) { /* 노트북 — 위치만 조금 더 좌측(각도·scale 유지) */
+  .deck { right: clamp(2rem, 30vw, 24rem); top: 40%; }
   .deckTilt { --scale: 0.72; }
 }
-@media (max-width: 1024px) { /* 태블릿 — 좌측으로 + scale 상향(각도 불변) */
-  .deck { right: clamp(1.5rem, 26vw, 17rem); top: 38%; }
+@media (max-width: 1024px) { /* 태블릿 — 위치만 조금 더 좌측(각도·scale 유지) */
+  .deck { right: clamp(1.5rem, 29vw, 19rem); top: 38%; }
   .deckTilt { --scale: 0.6; }
 }
 @media (max-width: 767px) {
@@ -210,6 +211,6 @@
      각도(rotateZ-8·rotateX-20)는 그대로, .deck 자체를 scale 로만 축소. */
   .deck { left: 50%; right: auto; top: 30%; transform: scale(0.5); transform-origin: center; }
   .deckTilt { --scale: 0.72; } /* 태블릿(0.52) 상속 방지 — 기준 스케일 복귀 후 .deck scale 로 축소 */
-  /* 워드마크: 하단 좌측 축소 배치 */
-  .bigword { font-size: clamp(88px, 26vw, 150px); bottom: 7%; }
+  /* 워드마크: 좁은 화면에서 가로 5글자가 안 잘리게 축소 + 바닥에 딱(bottom:0) */
+  .bigword { font-size: clamp(56px, 18vw, 88px); bottom: 0; }
 }

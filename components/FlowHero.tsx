@@ -48,20 +48,21 @@ function opacityAt(i: number, rot: number) {
 // stiffness/damping 을 글자마다 다르게 → "각자 다른 속도"로 낙하. wobble=마지막에 기우뚱(overshoot).
 type Pos = {
   ch: string;
-  x: number;
-  y: number;
+  x: number; // 좌측 위치(em)
+  by: number; // 하단 위치(em) — 작업2: bottom 기준 배치로 바닥에 딱 붙게
   rotate: number;
   stiffness: number;
   damping: number;
-  wobble?: boolean;
+  roll?: boolean; // 작업3: 착지 후 데굴 구르며 정착
+  rollX?: number; // 구를 때 가로 이동(px)
 };
-// 작업3: 겹치지 않게 블록처럼 나란히(가로) 배치 + 약간의 rotate 로 리듬. 좌하단 모서리(컨테이너 left:0/bottom:0)에 몰림.
+// 작업1: 크게 + 방향 제각각(큰 rotate). 작업2: by=0 근처(바닥에 딱). 작업3: 일부(I·E) roll.
 const MOVIE: Pos[] = [
-  { ch: "M", x: 0.0, y: 0.14, rotate: -6, stiffness: 58, damping: 16 },
-  { ch: "O", x: 1.02, y: 0.0, rotate: 6, stiffness: 66, damping: 15 },
-  { ch: "V", x: 1.92, y: 0.12, rotate: -5, stiffness: 52, damping: 17 },
-  { ch: "I", x: 2.72, y: 0.02, rotate: 8, stiffness: 70, damping: 14, wobble: true },
-  { ch: "E", x: 3.06, y: 0.12, rotate: -4, stiffness: 60, damping: 16, wobble: true },
+  { ch: "M", x: 0.0, by: 0.05, rotate: -12, stiffness: 58, damping: 15 },
+  { ch: "O", x: 1.0, by: 0.0, rotate: 8, stiffness: 66, damping: 15 },
+  { ch: "V", x: 1.92, by: 0.06, rotate: -6, stiffness: 52, damping: 16 },
+  { ch: "I", x: 2.7, by: 0.0, rotate: 14, stiffness: 70, damping: 14, roll: true, rollX: -16 },
+  { ch: "E", x: 3.04, by: 0.05, rotate: -10, stiffness: 60, damping: 15, roll: true, rollX: 20 },
 ];
 
 // 스크롤/공통 motion value 와 무관한 "마운트 1회 시간 기반" 낙하 — variants 컨테이너 stagger.
@@ -70,20 +71,26 @@ const wordContainer: Variants = {
   // staggerChildren(0.22) + delayChildren(0.1) → M 0, O .22, V .44, I .66, E .88 순차.
   show: { transition: { staggerChildren: 0.22, delayChildren: 0.1 } },
 };
-// 자식 글자 variant — custom(p)로 글자별 rotate·spring 값 주입. 마지막 글자 rotate 는 언더댐프로 튕김.
-// 작업2: opacity 애니메이션 제거 → 처음부터 보이며 y 이동(+rotate)만으로 낙하.
+// 자식 글자 variant — custom(p)로 글자별 값 주입. opacity 없이 y(+rotate)만으로 낙하.
+// 작업3: roll 글자는 2단계(낙하 → 착지 후 데굴 구르며 x 이동·rotate 마저 돌아 정착) 키프레임.
 const letterVar: Variants = {
-  hidden: (p: Pos) => ({ y: -320, rotate: p.wobble ? p.rotate - 34 : p.rotate }),
-  show: (p: Pos) => ({
-    y: 0,
-    rotate: p.rotate,
-    transition: {
-      y: { type: "spring", stiffness: p.stiffness, damping: p.damping },
-      rotate: p.wobble
-        ? { type: "spring", stiffness: 62, damping: 6 } // 기우뚱 overshoot
-        : { type: "spring", stiffness: p.stiffness, damping: p.damping },
-    },
-  }),
+  hidden: (p: Pos) => ({ y: -320, x: 0, rotate: p.roll ? p.rotate - 50 : p.rotate }),
+  show: (p: Pos) =>
+    p.roll
+      ? {
+          y: [-320, 0, 0],
+          x: [0, 0, p.rollX ?? 0],
+          rotate: [p.rotate - 50, p.rotate - 50, p.rotate], // 낙하 중엔 기운 채 → 착지 후 굴러 정착
+          transition: { duration: 1.5, times: [0, 0.5, 1], ease: [0.22, 1, 0.36, 1] },
+        }
+      : {
+          y: 0,
+          rotate: p.rotate,
+          transition: {
+            y: { type: "spring", stiffness: p.stiffness, damping: p.damping },
+            rotate: { type: "spring", stiffness: p.stiffness, damping: p.damping },
+          },
+        },
 };
 
 function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
@@ -123,7 +130,7 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
           <motion.span
             key={i}
             className={styles.letterPos}
-            style={{ left: `${p.x}em`, top: `${p.y}em` }}
+            style={{ left: `${p.x}em`, bottom: `${p.by}em` }}
             custom={p}
             variants={letterVar}
           >
@@ -141,7 +148,12 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
               <span
                 key={i}
                 className={styles.letterPos}
-                style={{ left: `${p.x}em`, top: `${p.y}em`, transform: `rotate(${p.rotate}deg)` }}
+                style={{
+                  left: `${p.x}em`,
+                  bottom: `${p.by}em`,
+                  // base 의 최종 안착 상태와 동일(roll 은 x 이동 포함)
+                  transform: `translateX(${p.rollX ?? 0}px) rotate(${p.rotate}deg)`,
+                }}
               >
                 {p.ch}
               </span>
