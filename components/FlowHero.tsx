@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { useIntroRevealed } from "./Intro";
@@ -117,6 +117,9 @@ const letterVar: Variants = {
 function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
   const ref = useRef<HTMLHeadingElement>(null);
   const [hover, setHover] = useState(false);
+  // 상단행(O·I) 세로 보정값(px). em 추정이 clamp 폰트에서 어긋나므로 실측(getBoundingClientRect)으로 결정.
+  const [topDy, setTopDy] = useState<{ O: number; I: number }>({ O: 0, I: 0 });
+  const baseRefs = useRef<Record<string, HTMLSpanElement | null>>({}); // 글자별 base span (측정용)
 
   // 커서 좌표를 --mx/--my(워드마크 기준)로 추적 → 반전 원이 커서를 따라다님
   const onMove = (e: React.MouseEvent<HTMLHeadingElement>) => {
@@ -127,6 +130,54 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     el.style.setProperty("--mx", `${e.clientX - r.left}px`);
     el.style.setProperty("--my", `${e.clientY - r.top}px`);
   };
+
+  // 실측 보정: 상단행 아래변(회전 후 실제 AABB bottom)이 하단행 윗변(top)에 GAP 만 두고 닿게 by 보정.
+  // bottom(px) ↑ = 위로(화면 y ↓) 이므로, 목표(top-GAP)와 현재 bottom 차이만큼 dy 를 반대로 이동.
+  const measureTopRow = useCallback(() => {
+    const b = baseRefs.current;
+    if (!b.M || !b.V || !b.E || !b.O || !b.I) return;
+    const GAP = 1.5; // 닿되 절대 안 겹치게 1~2px 여유
+    const rM = b.M.getBoundingClientRect();
+    const rV = b.V.getBoundingClientRect();
+    const rE = b.E.getBoundingClientRect();
+    const rO = b.O.getBoundingClientRect();
+    const rI = b.I.getBoundingClientRect();
+    setTopDy((prev) => {
+      const nO = prev.O - (rM.top - GAP - rO.bottom); // O 아래변 → M 윗변
+      const nI = prev.I - (Math.min(rV.top, rE.top) - GAP - rI.bottom); // I 아래변 → V·E 중 더 높은 윗변
+      if (Math.abs(nO - prev.O) < 0.5 && Math.abs(nI - prev.I) < 0.5) return prev; // 수렴 시 재렌더 억제
+      return { O: nO, I: nI };
+    });
+  }, []);
+
+  // 낙하 완료(마지막 글자 ≈ stagger 1.0s + FALL_DUR) 후 측정. reduce 면 즉시(다음 프레임).
+  useEffect(() => {
+    if (reduce) {
+      const raf = requestAnimationFrame(measureTopRow);
+      return () => cancelAnimationFrame(raf);
+    }
+    if (!revealed) return;
+    const t = setTimeout(measureTopRow, (FALL_DUR + 1.3) * 1000);
+    return () => clearTimeout(t);
+  }, [revealed, reduce, measureTopRow]);
+
+  // 리사이즈 시 재계산(clamp 폰트 크기 변동) — rAF 디바운스
+  useEffect(() => {
+    let raf = 0;
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(measureTopRow);
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      cancelAnimationFrame(raf);
+    };
+  }, [measureTopRow]);
+
+  // 상단행에만 보정 dy 를 얹어 bottom 계산(하단행은 0). base/invert 동일 적용.
+  const dyFor = (ch: string) => (ch === "O" ? topDy.O : ch === "I" ? topDy.I : 0);
+  const bottomFor = (p: Pos) => `calc(${p.by}em + ${dyFor(p.ch)}px)`;
 
   return (
     <h1
@@ -150,8 +201,17 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
         {MOVIE.map((p, i) => (
           <motion.span
             key={i}
+            ref={(el) => {
+              baseRefs.current[p.ch] = el;
+            }}
             className={styles.letterPos}
-            style={{ left: `${p.x}em`, bottom: `${p.by}em`, transformOrigin: p.origin }}
+            // 보정 dy 는 bottom(transform 아닌 CSS) 에 얹어 낙하(transform y)와 충돌 없이, transition 으로 부드럽게 안착.
+            style={{
+              left: `${p.x}em`,
+              bottom: bottomFor(p),
+              transformOrigin: p.origin,
+              transition: "bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
             custom={p}
             variants={letterVar}
           >
@@ -171,9 +231,8 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
                 className={styles.letterPos}
                 style={{
                   left: `${p.x}em`,
-                  bottom: `${p.by}em`,
+                  bottom: bottomFor(p), // base 와 동일한 보정 → 반전 글자도 정확히 겹침
                   transformOrigin: p.origin,
-                  // base 의 최종 안착 상태와 동일(roll 은 x 이동 + origin 기준 rotate)
                   transform: `translateX(${p.rollX ?? 0}px) rotate(${p.rotate}deg)`,
                 }}
               >
