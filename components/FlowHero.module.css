@@ -90,7 +90,7 @@
   transition: r 0.4s cubic-bezier(0.16, 1, 0.3, 1); /* 반경만 부드럽게(커서 위치는 즉각 추적) */
 }
 .wordmark[data-hover="true"] .maskCircle {
-  r: 230px; /* 호버 시 원 반경(viewBox 단위) */
+  r: 110px; /* 호버 시 원 반경(viewBox 단위) — 커서 주변 국소 원(텍스트 전체 안 덮게) */
 }
 
 /* ── 원통형(3D 실린더) 카드 덱 — 각도(rotateZ -8·rotateX -20)·크기 기준 복원, 위치만 우측(미잘림) ── */

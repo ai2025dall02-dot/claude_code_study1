@@ -55,54 +55,33 @@ type Glyph = {
   y: number; // 최종 중심 Y(viewBox)
   rot: number; // 각도(°, +시계)
   size: number; // font-size(viewBox 단위)
-  slideX?: number; // I: 낙하 연출 — 시작 가로 오프셋(최종 대비, 음수=왼쪽)
-  landY?: number; // I: E 윗변 착지 지점 Y 오프셋(최종 대비, 음수=위)
 };
 const VB_W = 1000;
 const VB_H = 720;
-// 하단행(M·V·E)을 viewBox 바닥에 밀착·맞물림, O 는 M·V 골에 끼움, I 는 E 오른쪽 바닥. (각도 유지)
+// 하단행(M·V·E)을 viewBox 바닥(=화면 바닥)에 밀착·맞물림, O 는 M·V 골에 끼움, I 는 E 오른쪽 바닥. (각도 유지)
 const GLYPHS: Glyph[] = [
-  { ch: "M", x: 165, y: 520, rot: -6, size: 250 },
-  { ch: "V", x: 350, y: 560, rot: 75, size: 250 },
-  { ch: "E", x: 560, y: 545, rot: 65, size: 250 },
-  { ch: "O", x: 300, y: 360, rot: -5, size: 240 },
-  { ch: "I", x: 760, y: 535, rot: 32, size: 240, slideX: -150, landY: -230 },
+  { ch: "M", x: 175, y: 530, rot: -6, size: 300 },
+  { ch: "V", x: 385, y: 572, rot: 75, size: 300 },
+  { ch: "E", x: 635, y: 552, rot: 65, size: 300 },
+  { ch: "O", x: 425, y: 275, rot: -5, size: 285 },
+  { ch: "I", x: 850, y: 556, rot: 32, size: 285 },
 ];
 
-const FALL_FROM = -1000; // viewBox 위쪽 화면 밖(완전히 안 보이는 값)
+const FALL_FROM = -1100; // viewBox 위쪽 화면 밖(완전히 안 보이는 값)
 const STAGGER = 0.22;
 const DELAY_CHILDREN = 0.12;
 const FALL_EASE = [0.33, 0, 0.2, 1]; // 천천히 시작→가속→착지 감속
 const FALL_DUR = 1.5;
-const ROLL_SLIDE = 0.55; // I 가 E 경사로 굴러 내리는 마지막 구간(초)
 
 const wordContainer: Variants = {
   hidden: {},
   show: { transition: { staggerChildren: STAGGER, delayChildren: DELAY_CHILDREN } },
 };
-// 각 글자 <g> — 화면 밖 위 → 최종 위치로 낙하(착지=최종). framer 는 translate(y/x)만 애니메이트하고,
-// 회전은 <text> 자체 transform(rotate about 중심)으로 고정 → SVG 회전 원점 문제 없이 제자리 회전.
-// I 만 E 위 착지 후 오른쪽 아래로 굴러(translate x+y) 미끄러져 E 옆 바닥에 정착.
+// 각 글자 <g> — 화면 밖 위 → 최종 위치로 단순 낙하(착지=최종, 착지 후 이동/흔들림 없음).
+// framer 는 translate(y)만 애니메이트, 회전은 <text> 자체 transform(rotate about 중심)으로 고정.
 const letterVar: Variants = {
-  hidden: (g: Glyph) => ({ y: FALL_FROM, x: g.slideX ?? 0 }),
-  show: (g: Glyph) =>
-    g.slideX !== undefined
-      ? {
-          // I: 화면 밖 → E 윗변 착지(landY) → E 경사로 굴러 오른쪽 아래로 미끄러져 정착(x·y 동시, 관성 감속).
-          y: [FALL_FROM, g.landY ?? 0, 0],
-          x: [g.slideX, g.slideX, 0],
-          transition: {
-            duration: FALL_DUR + ROLL_SLIDE,
-            times: [0, FALL_DUR / (FALL_DUR + ROLL_SLIDE), 1],
-            ease: [FALL_EASE, [0.22, 1, 0.36, 1]],
-          },
-        }
-      : {
-          // 일반(M·O·V·E): 화면 밖 → 최종 위치로 낙하(각도 고정, 착지=최종, 착지 후 흔들림 없음).
-          y: 0,
-          x: 0,
-          transition: { duration: FALL_DUR, ease: FALL_EASE },
-        },
+  hidden: { y: FALL_FROM },
+  show: { y: 0, transition: { duration: FALL_DUR, ease: FALL_EASE } },
 };
 
 function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
@@ -152,7 +131,7 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
         animate={revealed || reduce ? "show" : "hidden"}
       >
         {GLYPHS.map((g) => (
-          <motion.g key={g.ch} custom={g} variants={letterVar}>
+          <motion.g key={g.ch} variants={letterVar}>
             <text
               x={g.x}
               y={g.y}
