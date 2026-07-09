@@ -56,6 +56,9 @@ type Pos = {
   roll?: boolean; // 착지 후 균형 잃고 한쪽 모서리로 넘어지며 구르는 글자
   rollX?: number; // 구르는 방향 가로 이동(px)
   origin?: string; // 넘어지는 회전축(글자 아래 모서리)
+  // I 전용 낙하 연출(최종 좌표 대비 오프셋, 실측으로 주입): E 윗변 착지 지점 landY(음수=위), 시작 가로 slideX(음수=왼쪽)
+  landY?: number;
+  slideX?: number;
 };
 // 작업1·2: 좌측 하단에 자연스럽게 쌓인 더미 — 바닥행(M·I·E, by≈0)과 그 위 얹힌(O·V) 을 x/y·rotate
 // 불규칙하게. 겹치진 않되(세로 gap) 리듬감. 작업3: 마지막에 떨어지는 I·E 가 착지 후 넘어지며 구름.
@@ -88,39 +91,43 @@ const wordContainer: Variants = {
   // 작업1: 배열 순서(=by 오름차순, 바닥 먼저)대로 stagger delay 부여.
   show: { transition: { staggerChildren: STAGGER, delayChildren: DELAY_CHILDREN } },
 };
-// 자식 글자 variant — custom(p)로 글자별 값 주입. opacity 없이 y(+rotate)만으로 낙하.
-// 작업3: roll 글자는 2단계(낙하 → 착지 후 데굴 구르며 x 이동·rotate 마저 돌아 정착) 키프레임.
+// 자식 글자 variant — custom(p)로 글자별 값 주입. opacity 없이 위치/회전만. 착지=최종(재보정 없음).
+// left/bottom 은 낙하 전 실측으로 최종 확정 → 여기선 "화면 밖 → 최종 위치"로 transform(y/x/rotate)만 이동.
 const FALL_EASE = [0.33, 0, 0.2, 1]; // 천천히 시작→가속→착지에서 부드럽게 감속(ease-in-out)
 const FALL_DUR = 1.55;
-// 마지막 글자 착지 시점(초). 이때 실측 접촉 보정을 시작 → 낙하 꼬리(미끄러짐)와 겹쳐 자연스럽게 안착.
-const LAND_TIME = DELAY_CHILDREN + (MOVIE.length - 1) * STAGGER + FALL_DUR;
+const ROLL_SLIDE = 0.55; // I 가 E 경사로 굴러 내리는 마지막 구간(초)
 const letterVar: Variants = {
-  // roll 글자는 rotate 0 에서 낙하하며 최종값 근처까지 돌고, 착지 직전 아주 살짝 오버슈트(×1.02) 후 정착.
-  hidden: (p: Pos) => ({ y: FALL_FROM, rotate: p.roll ? 0 : p.rotate }),
+  // roll 글자는 rotate 0 에서 시작. I 는 시작 가로(slideX)에서 출발해 굴러 오른쪽 아래로 정착.
+  hidden: (p: Pos) => ({ y: FALL_FROM, x: p.slideX ?? 0, rotate: p.roll ? 0 : p.rotate }),
   show: (p: Pos) =>
-    p.roll
+    p.slideX !== undefined
       ? {
-          // 낙하하며 rotate 최종값(×1.02 오버슈트)으로 정착. rollX 있으면(I) 착지 후 x 로 옆으로 미끄러짐.
-          // 아래로 흘러내림(dy)은 measure() 접촉 보정이 담당(이중 흔들림 방지 — 미끄러짐은 위치 이동으로만).
-          y: 0,
-          x: p.rollX ?? 0,
-          rotate: [0, p.rotate * 1.02, p.rotate],
+          // I: 화면 밖 → E 윗변 착지(landY) → E 경사에 균형 잃고 오른쪽 아래로 굴러 미끄러져 바닥 근처 정착(x·y·rotate 동시).
+          y: [FALL_FROM, p.landY ?? 0, 0],
+          x: [p.slideX, p.slideX, 0],
+          rotate: [0, p.rotate * 0.9, p.rotate],
           transition: {
-            y: { duration: FALL_DUR, ease: FALL_EASE },
-            x: { delay: FALL_DUR - 0.05, duration: 0.6, ease: [0.22, 1, 0.36, 1] }, // 착지 후 옆으로 미끄러짐(관성 감속)
-            rotate: {
-              duration: FALL_DUR,
-              times: [0, 0.82, 1],
-              ease: [FALL_EASE, [0.34, 1.02, 0.64, 1]], // 낙하 회전 → 오버슈트 되돌림(거의 없음)
-            },
+            duration: FALL_DUR + ROLL_SLIDE,
+            times: [0, FALL_DUR / (FALL_DUR + ROLL_SLIDE), 1],
+            ease: [FALL_EASE, [0.22, 1, 0.36, 1]], // 낙하 → 굴러 내림(관성 감속, 튕김 없음)
           },
         }
-      : {
-          // 일반(M·O·E): 단일 ease-in-out 낙하(rotate 소폭이라 낙하와 함께 고정).
-          y: 0,
-          rotate: p.rotate,
-          transition: { duration: FALL_DUR, ease: FALL_EASE },
-        },
+      : p.roll
+        ? {
+            // V: 낙하 후 최종 각도로 안착(아주 작은 오버슈트). 착지 후 위치 변경 없음.
+            y: 0,
+            rotate: [0, p.rotate * 1.02, p.rotate],
+            transition: {
+              y: { duration: FALL_DUR, ease: FALL_EASE },
+              rotate: { duration: FALL_DUR, times: [0, 0.82, 1], ease: [FALL_EASE, [0.34, 1.02, 0.64, 1]] },
+            },
+          }
+        : {
+            // 일반(M·O·E): 화면 밖 → 최종 위치로 낙하(각도 고정, 착지=최종).
+            y: 0,
+            rotate: p.rotate,
+            transition: { duration: FALL_DUR, ease: FALL_EASE },
+          },
 };
 
 // ── 글리프 잉크(실제 먹칠) 경계 실측 ──────────────────────────────────────────
@@ -203,8 +210,7 @@ function inkAABB(el: HTMLElement, host: HTMLElement, hostRect: DOMRect): InkBox 
 function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
   const ref = useRef<HTMLHeadingElement>(null);
   const [hover, setHover] = useState(false);
-  // 실측 보정값(px): 글자별 가로(dx)·세로(dy). 정적 em 추정도, line-height 박스(글자 여백 포함)도
-  // 어긋나므로(상단행 뜸·마진), 낙하 완료 후 실제 잉크 경계(inkAABB)로 마진 0 접촉을 결정.
+  // 낙하 전 실측으로 확정한 "최종 접촉 좌표"(px offset). 착지=최종 → 착지 후 재보정/미끄러짐 없음.
   const [adj, setAdj] = useState<Record<string, { dx: number; dy: number }>>(() => ({
     M: { dx: 0, dy: 0 },
     V: { dx: 0, dy: 0 },
@@ -212,8 +218,9 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     O: { dx: 0, dy: 0 },
     I: { dx: 0, dy: 0 },
   }));
-  const [ready, setReady] = useState(false); // 낙하 완료(또는 reduce) → 실측 시작 신호
-  const baseRefs = useRef<Record<string, HTMLSpanElement | null>>({}); // 글자별 base span (측정용)
+  // I 낙하 연출 오프셋(최종 대비): E 윗변 착지 지점 landY, 시작 가로 slideX (실측으로 갱신)
+  const [roll, setRoll] = useState<{ landY: number; slideX: number }>({ landY: -160, slideX: -60 });
+  const baseRefs = useRef<Record<string, HTMLSpanElement | null>>({}); // 숨김 측정 레이어 span (실측용)
 
   // 커서 좌표를 --mx/--my(워드마크 기준)로 추적 → 반전 원이 커서를 따라다님
   const onMove = (e: React.MouseEvent<HTMLHeadingElement>) => {
@@ -225,17 +232,18 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     el.style.setProperty("--my", `${e.clientY - r.top}px`);
   };
 
-  // 실측 마진 0 접촉(정적 em 추정 금지). 낙하 완료 후 모든 글자의 실제 잉크 경계(inkAABB)로:
-  //  · 가로(하단행 M·V·E): M 을 앵커로 V.left=M.right, E.left=V.right 가 되게 dx 보정(변끼리 맞닿음).
-  //  · 세로(상단행 O·I): O.bottom=M.top, I.bottom=E.top 가 되게 dy 보정(아래 글자 위에 얹힘).
-  // 회전 글자(V·I)는 잉크 AABB 기준. left/bottom(px)→화면 px 1:1(스케일 조상 없음)이라 단일 패스로 정확.
-  // 보정은 transform(framer 낙하) 과 충돌 없게 left/bottom(CSS)에 얹음. GAP=0(잉크끼리 맞닿아 흰 마진 0).
+  // 낙하 전(및 리사이즈) 실측 — "숨김 측정 레이어"(y=0·최종 rotate, visibility:hidden)의 잉크 AABB 로
+  // 최종 접촉 좌표를 계산. transform(낙하)과 분리된 정적 레이어라 낙하 잔여와 섞이지 않아 정확.
+  //  · 바닥: M·V·E 잉크 최하단을 뷰포트 바닥선(innerHeight-PAD)에 밀착(공통 dyFloor). 공중부양·잘림 0.
+  //  · 가로: M 앵커 → V.left=M.right, E.left=V.right (면끼리 맞닿음, 겹침 0).
+  //  · O: M·V 골(접합부≈M.right)에 끼움 — 가로 중심 정렬 + 더 높은 윗변에 얹힘(두 면에 기댐, 겹침 0).
+  //  · I: E 오른쪽 바닥 근처 정착(굴러 내림 최종점). landY/slideX 는 낙하 연출용 상대 오프셋.
   const measure = useCallback(() => {
     const b = baseRefs.current;
     const host = ref.current;
     if (!b.M || !b.V || !b.E || !b.O || !b.I || !host) return;
-    const GAP = 0;
-    const FLOOR_PAD = 12; // 화면 최하단에서 살짝 위(밀착 + 잘림 방지 여유)
+    const GAP = 1; // 맞닿되 겹침 0(최대 1px 여유)
+    const FLOOR_PAD = 12;
     const hostRect = host.getBoundingClientRect();
     const rM = inkAABB(b.M, host, hostRect);
     const rV = inkAABB(b.V, host, hostRect);
@@ -243,62 +251,49 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     const rO = inkAABB(b.O, host, hostRect);
     const rI = inkAABB(b.I, host, hostRect);
 
-    // [1] 바닥 클램핑 — 하단행(M·V·E) 잉크 최하단을 "화면 바닥선(뷰포트 하단)"에 정렬(공중부양 0·잘림 0).
-    // 주의: host(.bigword)는 height:2.35em 로 박스 하단이 화면 최하단이 아니라 클러스터 중간 → 기준으로 쓰면
-    // dyFloor 가 어긋나 글자가 뜬다. .stage(height:100vh)는 뷰포트 하단까지 닿으므로 innerHeight 를 바닥선으로.
     const floorY = window.innerHeight - FLOOR_PAD;
-    const maxBottom = Math.max(rM.bottom, rV.bottom, rE.bottom);
-    const dyFloor = maxBottom - floorY;
-    // 가로 접촉(하단행) — M 고정 → 오른쪽으로 순차 밀착. E 는 V 이동분(ddxV) 반영한 예측 right 사용.
+    const dyFloor = Math.max(rM.bottom, rV.bottom, rE.bottom) - floorY;
     const ddxV = rM.right + GAP - rV.left;
     const ddxE = rV.right + ddxV + GAP - rE.left;
-    // 세로 접촉(상단행) — 바닥 클램핑으로 하단행이 dyFloor 만큼 이동하므로 이동 후 윗변(top - dyFloor)에 얹힘.
-    const ddyO = rO.bottom - (rM.top - dyFloor) + GAP;
-    const ddyI = rI.bottom - (rE.top - dyFloor) + GAP;
+    // O — M·V 골에 끼움: 왼쪽면을 M 우측면에 붙이고(O.left=M.right) 아래변을 V 윗변에 얹힘(O.bottom=V.top).
+    // M 은 크고(윗변 높음) V 는 낮으므로, O 를 낮은 V 윗변에 내려 앉히면 M 우측면·V 위에 동시에 기댄 "끼인" 형태.
+    const ddxO = rM.right + GAP - rO.left;
+    const ddyO = rO.bottom - (rV.top - dyFloor) + GAP;
+    // I — E 오른쪽 바닥 근처: 가로 E.right 옆, 세로 바닥선
+    const ddxI = rE.right + ddxE + GAP - rI.left;
+    const ddyI = rI.bottom - floorY;
+    // I 낙하 연출(최종 대비): E 윗변 착지 y 오프셋(음수=위), 시작 가로(E 중앙쯤=왼쪽, 음수)
+    const landY = rE.top - dyFloor - floorY;
+    const slideX = (rE.left + rE.right) / 2 - (rE.right + ddxE + GAP);
 
+    setRoll((prev) =>
+      Math.abs(prev.landY - landY) < 0.5 && Math.abs(prev.slideX - slideX) < 0.5 ? prev : { landY, slideX }
+    );
     setAdj((prev) => {
-      // 수렴(잔차 <0.5px) 시 재렌더 억제
-      if (
-        Math.abs(ddxV) < 0.5 &&
-        Math.abs(ddxE) < 0.5 &&
-        Math.abs(ddyO) < 0.5 &&
-        Math.abs(ddyI) < 0.5 &&
-        Math.abs(dyFloor) < 0.5
-      ) {
-        return prev;
-      }
-      return {
+      const next = {
         M: { dx: prev.M.dx, dy: prev.M.dy + dyFloor },
         V: { dx: prev.V.dx + ddxV, dy: prev.V.dy + dyFloor },
         E: { dx: prev.E.dx + ddxE, dy: prev.E.dy + dyFloor },
-        O: { dx: 0, dy: prev.O.dy + ddyO },
-        I: { dx: 0, dy: prev.I.dy + ddyI },
+        O: { dx: prev.O.dx + ddxO, dy: prev.O.dy + ddyO },
+        I: { dx: prev.I.dx + ddxI, dy: prev.I.dy + ddyI },
       };
+      const keys = Object.keys(next) as (keyof typeof next)[];
+      const converged = keys.every(
+        (k) => Math.abs(next[k].dx - prev[k].dx) < 0.5 && Math.abs(next[k].dy - prev[k].dy) < 0.5,
+      );
+      return converged ? prev : next; // 수렴 시 재렌더 억제
     });
   }, []);
 
-  // 낙하 완료 신호(ready): reduce 면 즉시, 아니면 마지막 글자 착지(LAND_TIME)쯤 시작 → 접촉 보정(settle)이
-  // 낙하 꼬리(미끄러짐)와 겹쳐 자연스럽게 이어짐. onAnimationComplete 는 백업(idempotent).
+  // 마운트 후 실측 → adj 변화 시 다음 프레임 재측정(수렴 시 measure 가 prev 반환 → 자동 정지).
+  // 숨김 레이어는 항상 y=0·최종 위치라 낙하 애니메이션과 무관하게 안정적으로 측정됨.
   useEffect(() => {
-    if (reduce) {
-      setReady(true);
-      return;
-    }
-    if (!revealed) return;
-    const t = setTimeout(() => setReady(true), (LAND_TIME + 0.08) * 1000);
-    return () => clearTimeout(t);
-  }, [reduce, revealed]);
-
-  // ready 후 1회 실측(analytic 접촉 보정 → 단일 패스로 정확). left/bottom transition 으로 부드럽게 안착.
-  useEffect(() => {
-    if (!ready) return;
     const raf = requestAnimationFrame(measure);
     return () => cancelAnimationFrame(raf);
-  }, [ready, measure]);
+  }, [adj, measure]);
 
-  // 리사이즈 재계산(clamp 폰트 크기 변동) — 150ms 디바운스. 잔차만 보정(단일 패스).
+  // 리사이즈 재계산(clamp 폰트 변동) — 150ms 디바운스
   useEffect(() => {
-    if (!ready) return;
     let t = 0;
     const onResize = () => {
       clearTimeout(t);
@@ -309,15 +304,13 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
       window.removeEventListener("resize", onResize);
       clearTimeout(t);
     };
-  }, [ready, measure]);
+  }, [measure]);
 
-  // 실측 보정(dx/dy)을 left/bottom 에 얹음. base/invert 동일 적용 → 반전 글자도 정확히 겹침.
+  // 최종 접촉 좌표를 left/bottom 에 얹음. 숨김/base/invert 동일 적용 → 낙하 착지 = 이 좌표(재보정 없음).
   const leftFor = (p: Pos) => `calc(${p.x}em + ${adj[p.ch].dx}px)`;
   const bottomFor = (p: Pos) => `calc(${p.by}em + ${adj[p.ch].dy}px)`;
-  // reduce: 애니메이션 없이 즉시 1회 적용. 아니면 접촉 보정을 0.65s 관성 감속(균형 잃고 미끄러져 안착)으로.
-  const settle = reduce
-    ? "none"
-    : "left 0.65s cubic-bezier(0.22, 1, 0.36, 1), bottom 0.65s cubic-bezier(0.22, 1, 0.36, 1)";
+  // 정지(최종) 시 transform 은 rotate 만 — 가로는 left(dx)로 확정(낙하 중 x 는 framer 가 slideX→0 으로 연출).
+  const restTransform = (p: Pos) => `rotate(${p.rotate}deg)`;
 
   return (
     <h1
@@ -329,39 +322,72 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
       onMouseLeave={() => setHover(false)}
       onMouseMove={onMove}
     >
-      {/* base: 검정 글자. 히어로 진입(revealed) 시 variants 컨테이너가 글자들을 하나씩 순차 낙하.
-          낙하 완료(onAnimationComplete) → 실측 마진 0 접촉 보정. reduce 면 initial=false 로 즉시 최종. */}
-      <motion.span
-        className={styles.wordLayer}
-        aria-hidden="true"
-        variants={wordContainer}
-        initial={reduce ? false : "hidden"}
-        animate={revealed || reduce ? "show" : "hidden"}
-        onAnimationComplete={() => (revealed || reduce) && setReady(true)}
-      >
+      {/* 숨김 측정 레이어 — y=0·최종 rotate 로 항상 렌더(visibility:hidden). 낙하 전/리사이즈 실측 기준. */}
+      <span className={styles.wordLayer} aria-hidden="true" style={{ visibility: "hidden" }}>
         {MOVIE.map((p, i) => (
-          <motion.span
+          <span
             key={i}
             ref={(el) => {
               baseRefs.current[p.ch] = el;
             }}
             className={styles.letterPos}
-            // 보정 dx/dy 는 left/bottom(CSS)에 얹어 낙하(transform y/rotate)와 충돌 없이 부드럽게 안착.
             style={{
               left: leftFor(p),
               bottom: bottomFor(p),
               transformOrigin: p.origin,
-              transition: settle,
+              transform: restTransform(p),
             }}
-            custom={p}
-            variants={letterVar}
           >
             {p.ch}
-          </motion.span>
+          </span>
         ))}
-      </motion.span>
+      </span>
 
-      {/* invert: 커서 원(mask) 안에서만 보이는 반전 레이어 — 검은 배경 + 흰 글자. base 와 동일 보정. reduce 면 미렌더 */}
+      {/* base(보이는) 레이어 — reduce: 즉시 최종상태. 아니면 화면 밖 → 최종 좌표로 낙하(착지=최종, 재보정 없음). */}
+      {reduce ? (
+        <span className={styles.wordLayer} aria-hidden="true">
+          {MOVIE.map((p, i) => (
+            <span
+              key={i}
+              className={styles.letterPos}
+              style={{
+                left: leftFor(p),
+                bottom: bottomFor(p),
+                transformOrigin: p.origin,
+                transform: restTransform(p),
+              }}
+            >
+              {p.ch}
+            </span>
+          ))}
+        </span>
+      ) : (
+        <motion.span
+          className={styles.wordLayer}
+          aria-hidden="true"
+          variants={wordContainer}
+          initial="hidden"
+          animate={revealed ? "show" : "hidden"}
+        >
+          {MOVIE.map((p, i) => {
+            // I 만 실측 낙하 연출(landY/slideX) 주입 — 나머지는 그대로.
+            const cp = p.ch === "I" ? { ...p, landY: roll.landY, slideX: roll.slideX } : p;
+            return (
+              <motion.span
+                key={i}
+                className={styles.letterPos}
+                style={{ left: leftFor(p), bottom: bottomFor(p), transformOrigin: p.origin }}
+                custom={cp}
+                variants={letterVar}
+              >
+                {p.ch}
+              </motion.span>
+            );
+          })}
+        </motion.span>
+      )}
+
+      {/* invert: 커서 원(mask) 안에서만 보이는 반전 레이어 — 검은 배경 + 흰 글자. 최종 좌표 동일. reduce 면 미렌더 */}
       {!reduce && (
         <span className={styles.wordInvert} aria-hidden="true">
           <span className={styles.invertBg} />
@@ -371,11 +397,10 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
                 key={i}
                 className={styles.letterPos}
                 style={{
-                  left: leftFor(p), // base 와 동일한 dx/dy 보정 → 반전 글자도 정확히 겹침
+                  left: leftFor(p), // base 와 동일한 최종 좌표 → 반전 글자도 정확히 겹침
                   bottom: bottomFor(p),
                   transformOrigin: p.origin,
-                  transform: `translateX(${p.rollX ?? 0}px) rotate(${p.rotate}deg)`,
-                  transition: settle,
+                  transform: restTransform(p),
                 }}
               >
                 {p.ch}
