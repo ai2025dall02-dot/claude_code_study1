@@ -60,11 +60,11 @@ const VB_W = 1000;
 const VB_H = 920;
 // 하단행(M·V·E)을 viewBox 바닥(=화면 바닥)에 밀착·맞물림, 상단행 O·I 를 그 위에 얹음(아래변 접촉). (각도 유지)
 const GLYPHS: Glyph[] = [
-  { ch: "M", x: 185, y: 714, rot: -6, size: 340 },
-  { ch: "V", x: 430, y: 757, rot: 75, size: 340 },
-  { ch: "E", x: 690, y: 734, rot: 65, size: 340 },
-  { ch: "O", x: 370, y: 504, rot: -5, size: 320 },
-  { ch: "I", x: 715, y: 554, rot: -32, size: 320 },
+  { ch: "M", x: 205, y: 697, rot: -6, size: 365 },
+  { ch: "V", x: 455, y: 742, rot: 75, size: 365 },
+  { ch: "E", x: 700, y: 720, rot: 65, size: 365 },
+  { ch: "O", x: 405, y: 482, rot: -5, size: 350 },
+  { ch: "I", x: 640, y: 520, rot: -32, size: 350 },
 ];
 
 const FALL_FROM = -1100; // viewBox 위쪽 화면 밖(완전히 안 보이는 값)
@@ -77,9 +77,10 @@ const wordContainer: Variants = {
   hidden: {},
   show: { transition: { staggerChildren: STAGGER, delayChildren: DELAY_CHILDREN } },
 };
-// 각 글자 <g> — 화면 밖 위 → 최종 위치로 단순 낙하(착지=최종, 착지 후 이동/흔들림 없음).
-// framer 는 translate(y)만 애니메이트, 회전은 <text> 자체 transform(rotate about 중심)으로 고정.
-const letterVar: Variants = {
+// 각 글자 <g> — 화면 밖 위 → 최종 위치로 낙하(framer translate y). 착지=최종.
+// 낙하 중 살짝 회전(rot-20 → 최종 rot)은 <text> 의 CSS 애니메이션(fhRot)이 담당 — framer 는 SVG 회전
+// 원점을 글자 중심으로 못 잡으므로(0,0 고정), 회전만 CSS(transform-box:fill-box; transform-origin:center)로.
+const fallVar: Variants = {
   hidden: { y: FALL_FROM },
   show: { y: 0, transition: { duration: FALL_DUR, ease: FALL_EASE } },
 };
@@ -88,8 +89,9 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
   const svgRef = useRef<SVGSVGElement>(null);
   const [hover, setHover] = useState(false);
 
-  // 커서 좌표를 viewBox 좌표(--mx/--my)로 변환 → SVG mask 원이 커서를 따라다님
-  const onMove = (e: React.MouseEvent<SVGSVGElement>) => {
+  // 커서 좌표를 viewBox 좌표(--mx/--my)로 변환 → SVG mask 원이 커서를 따라다님.
+  // 글자(<text>) 위에서만 호출되므로(pointer-events:visiblePainted) 빈 영역에선 미발동.
+  const onMove = (e: React.MouseEvent<SVGTextElement>) => {
     if (reduce) return;
     const svg = svgRef.current;
     if (!svg) return;
@@ -99,10 +101,8 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     const scale = Math.min(r.width / VB_W, r.height / VB_H);
     const offX = 0; // xMin
     const offY = r.height - VB_H * scale; // YMax(하단 정렬)
-    const vx = (e.clientX - r.left - offX) / scale;
-    const vy = (e.clientY - r.top - offY) / scale;
-    svg.style.setProperty("--mx", `${vx}px`);
-    svg.style.setProperty("--my", `${vy}px`);
+    svg.style.setProperty("--mx", `${(e.clientX - r.left - offX) / scale}px`);
+    svg.style.setProperty("--my", `${(e.clientY - r.top - offY) / scale}px`);
   };
 
   return (
@@ -114,9 +114,7 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
       role="img"
       aria-label="MOVIE"
       data-hover={hover}
-      onMouseEnter={() => !reduce && setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onMouseMove={onMove}
+      data-revealed={revealed && !reduce}
     >
       <defs>
         <mask id="fh-invert" maskUnits="userSpaceOnUse" x="0" y="0" width={VB_W} height={VB_H}>
@@ -124,14 +122,15 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
         </mask>
       </defs>
 
-      {/* base 검정 글자 — 히어로 진입 시 위에서 하나씩 낙하(착지=최종). reduce 면 즉시 최종. */}
+      {/* base 검정 글자 — framer 가 위에서 하나씩 낙하(translate y), 낙하 중 살짝 회전은 text 의 CSS(fhRot).
+          호버 판정/커서 추적은 글자(획) 위에서만(각 <text> 이벤트 + pointer-events:visiblePainted). reduce 면 즉시 최종. */}
       <motion.g
         variants={wordContainer}
         initial={reduce ? false : "hidden"}
         animate={revealed || reduce ? "show" : "hidden"}
       >
-        {GLYPHS.map((g) => (
-          <motion.g key={g.ch} variants={letterVar}>
+        {GLYPHS.map((g, i) => (
+          <motion.g key={g.ch} variants={fallVar}>
             <text
               x={g.x}
               y={g.y}
@@ -139,7 +138,12 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
               fontSize={g.size}
               textAnchor="middle"
               dominantBaseline="central"
-              transform={`rotate(${g.rot} ${g.x} ${g.y})`}
+              style={
+                { "--rot": `${g.rot}deg`, "--fall-delay": `${DELAY_CHILDREN + i * STAGGER}s` } as React.CSSProperties
+              }
+              onMouseEnter={() => !reduce && setHover(true)}
+              onMouseLeave={() => setHover(false)}
+              onMouseMove={onMove}
             >
               {g.ch}
             </text>
@@ -147,9 +151,9 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
         ))}
       </motion.g>
 
-      {/* invert 레이어 — 커서 원(mask) 안에서만: 검은 배경 + 흰 글자(색반전). 최종 위치 고정. reduce 면 미렌더 */}
+      {/* invert 레이어 — 커서 원(mask) 안에서만: 검은 배경 + 흰 글자(색반전). 최종 위치 고정. 이벤트 통과. reduce 면 미렌더 */}
       {!reduce && (
-        <g mask="url(#fh-invert)" aria-hidden="true">
+        <g mask="url(#fh-invert)" aria-hidden="true" style={{ pointerEvents: "none" }}>
           <rect x="0" y="0" width={VB_W} height={VB_H} fill="#0b0b0c" />
           {GLYPHS.map((g) => (
             <text
