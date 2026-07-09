@@ -69,11 +69,11 @@ type Pos = {
 const MOVIE: Pos[] = [
   // 하단행(M·V·E): 바닥 접촉(by 음수, origin 바닥) + 글자 폭(M≈.83·V≈.72·E≈.63em)만큼 x 를 좁혀 변끼리 맞닿게.
   { ch: "M", x: 0.0, by: -0.08, rotate: -4, stiffness: 56, damping: 15, origin: "50% 100%" }, // 하단 좌
-  { ch: "V", x: 0.85, by: 0.01, rotate: 178, stiffness: 52, damping: 16, roll: true }, // 하단 중, 위아래 뒤집힘(회전축 중심 → by 로 바닥 접촉)
-  { ch: "E", x: 1.55, by: -0.08, rotate: 2, stiffness: 60, damping: 15, origin: "50% 100%" }, // 하단 우
+  { ch: "V", x: 1.0, by: -0.17, rotate: 90, stiffness: 52, damping: 16, roll: true }, // 하단 중, 옆으로 90° 눕힘(회전축 중심 → by 로 바닥 접촉)
+  { ch: "E", x: 1.85, by: -0.08, rotate: 2, stiffness: 60, damping: 15, origin: "50% 100%" }, // 하단 우
   // 상단행: O 는 M 위(아래변 맞닿게), I 는 오른쪽으로 크게 눕혀 V·E 위에 얹혀 O 우측에 바짝.
   { ch: "O", x: 0.0, by: 0.96, rotate: -2, stiffness: 64, damping: 15 }, // 상단 좌(M 위)
-  { ch: "I", x: 1.17, by: 0.73, rotate: 80, stiffness: 70, damping: 14, roll: true }, // 상단, 오른쪽으로 크게 눕힘(O 우측·V·E 위)
+  { ch: "I", x: 1.55, by: 0.7, rotate: 80, stiffness: 70, damping: 14, roll: true, rollX: 40 }, // 눕힌 채 E 위 착지 → 오른쪽 미끄러져 정착
 ];
 // 작업2(낙하 시작): 화면 최상단 밖(완전히 안 보이는 값).
 const FALL_FROM = -1400;
@@ -94,11 +94,13 @@ const letterVar: Variants = {
   show: (p: Pos) =>
     p.roll
       ? {
-          // 작업2: 낙하하며 rotate 가 최종값을 향해 돌고, 착지 직전(0.82) 살짝 더 돌았다(×1.06) 되돌아 정착(톡 기우뚱).
+          // 낙하하며 rotate 최종값(×1.06 오버슈트)으로 정착. rollX 있으면(I) 착지 후 x 로 옆으로 미끄러져 정착.
           y: 0,
+          x: p.rollX ?? 0,
           rotate: [0, p.rotate * 1.06, p.rotate],
           transition: {
             y: { duration: FALL_DUR, ease: FALL_EASE },
+            x: { delay: FALL_DUR - 0.05, duration: 0.55, ease: [0.16, 1, 0.3, 1] }, // 착지 후 미끄러짐(ease-out, 튕김 없음)
             rotate: {
               duration: FALL_DUR,
               times: [0, 0.82, 1],
@@ -138,13 +140,12 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     if (!b.M || !b.V || !b.E || !b.O || !b.I) return;
     const GAP = 1.5; // 닿되 절대 안 겹치게 1~2px 여유
     const rM = b.M.getBoundingClientRect();
-    const rV = b.V.getBoundingClientRect();
     const rE = b.E.getBoundingClientRect();
     const rO = b.O.getBoundingClientRect();
     const rI = b.I.getBoundingClientRect();
     setTopDy((prev) => {
       const nO = prev.O - (rM.top - GAP - rO.bottom); // O 아래변 → M 윗변
-      const nI = prev.I - (Math.min(rV.top, rE.top) - GAP - rI.bottom); // I 아래변 → V·E 중 더 높은 윗변
+      const nI = prev.I - (rE.top - GAP - rI.bottom); // I 아래변 → E 윗변(미끄러져 E 위에 얹힘)
       if (Math.abs(nO - prev.O) < 0.5 && Math.abs(nI - prev.I) < 0.5) return prev; // 수렴 시 재렌더 억제
       return { O: nO, I: nI };
     });
