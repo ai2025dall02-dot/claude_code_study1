@@ -68,12 +68,12 @@ type Pos = {
 // 배열 순서 = 낙하 순서라 하단(M·V·E) 먼저, 상단(O·I) 나중. 하단행은 밑변/꼭짓점(origin 바닥)으로 바닥 접촉.
 const MOVIE: Pos[] = [
   // 하단행(M·V·E): 바닥 접촉(by 음수, origin 바닥) + 글자 폭(M≈.83·V≈.72·E≈.63em)만큼 x 를 좁혀 변끼리 맞닿게.
-  { ch: "M", x: 0.0, by: -0.08, rotate: -4, stiffness: 56, damping: 15, origin: "50% 100%" }, // 하단 좌
-  { ch: "V", x: 1.0, by: -0.17, rotate: 90, stiffness: 52, damping: 16, roll: true }, // 하단 중, 옆으로 90° 눕힘(회전축 중심 → by 로 바닥 접촉)
-  { ch: "E", x: 1.85, by: -0.08, rotate: 2, stiffness: 60, damping: 15, origin: "50% 100%" }, // 하단 우
+  { ch: "M", x: 0.0, by: -0.08, rotate: -6, stiffness: 56, damping: 15, origin: "50% 100%" }, // 하단 좌(살짝 기욺)
+  { ch: "V", x: 1.0, by: -0.17, rotate: 90, stiffness: 52, damping: 16, roll: true }, // 하단 중, 왼쪽으로 90° 눕힘(회전축 중심 → by 로 바닥 접촉)
+  { ch: "E", x: 1.85, by: -0.08, rotate: 2, stiffness: 60, damping: 15, origin: "50% 100%" }, // 하단 우(정방향)
   // 상단행: O 는 M 위(아래변 맞닿게), I 는 오른쪽으로 크게 눕혀 V·E 위에 얹혀 O 우측에 바짝.
-  { ch: "O", x: 0.0, by: 0.96, rotate: -2, stiffness: 64, damping: 15 }, // 상단 좌(M 위)
-  { ch: "I", x: 1.55, by: 0.7, rotate: 80, stiffness: 70, damping: 14, roll: true, rollX: 40 }, // 눕힌 채 E 위 착지 → 오른쪽 미끄러져 정착
+  { ch: "O", x: 0.0, by: 0.96, rotate: -2, stiffness: 64, damping: 15 }, // 상단 좌(M 위, 정방향)
+  { ch: "I", x: 1.55, by: 0.7, rotate: 78, stiffness: 70, damping: 14, roll: true, rollX: 40 }, // 눕힌 채 E 위 착지 → 오른쪽 미끄러져 정착
 ];
 // 작업2(낙하 시작): 화면 최상단 밖(완전히 안 보이는 값).
 const FALL_FROM = -1400;
@@ -119,8 +119,16 @@ const letterVar: Variants = {
 function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
   const ref = useRef<HTMLHeadingElement>(null);
   const [hover, setHover] = useState(false);
-  // 상단행(O·I) 세로 보정값(px). em 추정이 clamp 폰트에서 어긋나므로 실측(getBoundingClientRect)으로 결정.
-  const [topDy, setTopDy] = useState<{ O: number; I: number }>({ O: 0, I: 0 });
+  // 실측 보정값(px): 글자별 가로(dx)·세로(dy). clamp 폰트 + 글리프 여백 오차 때문에 정적 em 추정이
+  // 계속 어긋나므로(상단행 뜸), 낙하 완료 후 실제 AABB(getBoundingClientRect)로 마진 0 접촉을 결정.
+  const [adj, setAdj] = useState<Record<string, { dx: number; dy: number }>>(() => ({
+    M: { dx: 0, dy: 0 },
+    V: { dx: 0, dy: 0 },
+    E: { dx: 0, dy: 0 },
+    O: { dx: 0, dy: 0 },
+    I: { dx: 0, dy: 0 },
+  }));
+  const [ready, setReady] = useState(false); // 낙하 완료(또는 reduce) → 실측 시작 신호
   const baseRefs = useRef<Record<string, HTMLSpanElement | null>>({}); // 글자별 base span (측정용)
 
   // 커서 좌표를 --mx/--my(워드마크 기준)로 추적 → 반전 원이 커서를 따라다님
@@ -133,52 +141,88 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     el.style.setProperty("--my", `${e.clientY - r.top}px`);
   };
 
-  // 실측 보정: 상단행 아래변(회전 후 실제 AABB bottom)이 하단행 윗변(top)에 GAP 만 두고 닿게 by 보정.
-  // bottom(px) ↑ = 위로(화면 y ↓) 이므로, 목표(top-GAP)와 현재 bottom 차이만큼 dy 를 반대로 이동.
-  const measureTopRow = useCallback(() => {
+  // 실측 마진 0 접촉(정적 em 추정 금지). 낙하 완료 후 모든 글자의 실제 AABB 로:
+  //  · 가로(하단행 M·V·E): M 을 앵커로 V.left=M.right, E.left=V.right 가 되게 dx 보정(변끼리 맞닿음).
+  //  · 세로(상단행 O·I): O.bottom=M.top, I.bottom=E.top 가 되게 dy 보정(아래 글자 위에 얹힘).
+  // 회전 글자(V·I)는 AABB 기준. left/bottom(px)→화면 px 1:1(스케일 조상 없음)이라 단일 패스로 정확.
+  // 보정은 transform(framer 낙하) 과 충돌 없게 left/bottom(CSS)에 얹음. GAP=1px(마진 0 목표·겹침 방지).
+  const measure = useCallback(() => {
     const b = baseRefs.current;
     if (!b.M || !b.V || !b.E || !b.O || !b.I) return;
-    const GAP = 1.5; // 닿되 절대 안 겹치게 1~2px 여유
+    const GAP = 1;
     const rM = b.M.getBoundingClientRect();
+    const rV = b.V.getBoundingClientRect();
     const rE = b.E.getBoundingClientRect();
     const rO = b.O.getBoundingClientRect();
     const rI = b.I.getBoundingClientRect();
-    setTopDy((prev) => {
-      const nO = prev.O - (rM.top - GAP - rO.bottom); // O 아래변 → M 윗변
-      const nI = prev.I - (rE.top - GAP - rI.bottom); // I 아래변 → E 윗변(미끄러져 E 위에 얹힘)
-      if (Math.abs(nO - prev.O) < 0.5 && Math.abs(nI - prev.I) < 0.5) return prev; // 수렴 시 재렌더 억제
-      return { O: nO, I: nI };
+
+    // 가로 접촉(하단행) — M 고정 → 오른쪽으로 순차 밀착. E 는 V 이동분(ddxV) 반영한 예측 right 사용.
+    const ddxV = rM.right + GAP - rV.left;
+    const ddxE = rV.right + ddxV + GAP - rE.left;
+    // 세로 접촉(상단행) — 아래 글자 윗변에 GAP 만 두고 얹힘. bottom(css)↑ = 화면 위로 이동.
+    const ddyO = rO.bottom - rM.top + GAP;
+    const ddyI = rI.bottom - rE.top + GAP;
+
+    setAdj((prev) => {
+      // 수렴(리사이즈 후 잔차 <0.5px) 시 재렌더 억제
+      if (
+        Math.abs(ddxV) < 0.5 &&
+        Math.abs(ddxE) < 0.5 &&
+        Math.abs(ddyO) < 0.5 &&
+        Math.abs(ddyI) < 0.5
+      ) {
+        return prev;
+      }
+      return {
+        M: prev.M,
+        V: { dx: prev.V.dx + ddxV, dy: 0 },
+        E: { dx: prev.E.dx + ddxE, dy: 0 },
+        O: { dx: 0, dy: prev.O.dy + ddyO },
+        I: { dx: 0, dy: prev.I.dy + ddyI },
+      };
     });
   }, []);
 
-  // 낙하 완료(마지막 글자 ≈ stagger 1.0s + FALL_DUR) 후 측정. reduce 면 즉시(다음 프레임).
+  // 낙하 완료 신호(ready): reduce 면 즉시, 아니면 onAnimationComplete + 폴백 타이머(마지막 글자 안착).
   useEffect(() => {
     if (reduce) {
-      const raf = requestAnimationFrame(measureTopRow);
-      return () => cancelAnimationFrame(raf);
+      setReady(true);
+      return;
     }
     if (!revealed) return;
-    const t = setTimeout(measureTopRow, (FALL_DUR + 1.3) * 1000);
+    const t = setTimeout(() => setReady(true), (FALL_DUR + 1.3) * 1000); // onAnimationComplete 폴백
     return () => clearTimeout(t);
-  }, [revealed, reduce, measureTopRow]);
+  }, [reduce, revealed]);
 
-  // 리사이즈 시 재계산(clamp 폰트 크기 변동) — rAF 디바운스
+  // ready 후 1회 실측(analytic 접촉 보정 → 단일 패스로 정확). left/bottom transition 으로 부드럽게 안착.
   useEffect(() => {
-    let raf = 0;
+    if (!ready) return;
+    const raf = requestAnimationFrame(measure);
+    return () => cancelAnimationFrame(raf);
+  }, [ready, measure]);
+
+  // 리사이즈 재계산(clamp 폰트 크기 변동) — 150ms 디바운스. 잔차만 보정(단일 패스).
+  useEffect(() => {
+    if (!ready) return;
+    let t = 0;
     const onResize = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(measureTopRow);
+      clearTimeout(t);
+      t = window.setTimeout(measure, 150);
     };
     window.addEventListener("resize", onResize);
     return () => {
       window.removeEventListener("resize", onResize);
-      cancelAnimationFrame(raf);
+      clearTimeout(t);
     };
-  }, [measureTopRow]);
+  }, [ready, measure]);
 
-  // 상단행에만 보정 dy 를 얹어 bottom 계산(하단행은 0). base/invert 동일 적용.
-  const dyFor = (ch: string) => (ch === "O" ? topDy.O : ch === "I" ? topDy.I : 0);
-  const bottomFor = (p: Pos) => `calc(${p.by}em + ${dyFor(p.ch)}px)`;
+  // 실측 보정(dx/dy)을 left/bottom 에 얹음. base/invert 동일 적용 → 반전 글자도 정확히 겹침.
+  const leftFor = (p: Pos) => `calc(${p.x}em + ${adj[p.ch].dx}px)`;
+  const bottomFor = (p: Pos) => `calc(${p.by}em + ${adj[p.ch].dy}px)`;
+  // reduce: 애니메이션 없이 즉시 1회 적용. 아니면 접촉 보정을 0.35s 로 부드럽게 안착.
+  const settle = reduce
+    ? "none"
+    : "left 0.35s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1)";
 
   return (
     <h1
@@ -191,13 +235,14 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
       onMouseMove={onMove}
     >
       {/* base: 검정 글자. 히어로 진입(revealed) 시 variants 컨테이너가 글자들을 하나씩 순차 낙하.
-          reduce 면 initial=false 로 즉시 최종 상태. (스크롤과 무관한 시간 기반 1회 재생) */}
+          낙하 완료(onAnimationComplete) → 실측 마진 0 접촉 보정. reduce 면 initial=false 로 즉시 최종. */}
       <motion.span
         className={styles.wordLayer}
         aria-hidden="true"
         variants={wordContainer}
         initial={reduce ? false : "hidden"}
         animate={revealed || reduce ? "show" : "hidden"}
+        onAnimationComplete={() => (revealed || reduce) && setReady(true)}
       >
         {MOVIE.map((p, i) => (
           <motion.span
@@ -206,12 +251,12 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
               baseRefs.current[p.ch] = el;
             }}
             className={styles.letterPos}
-            // 보정 dy 는 bottom(transform 아닌 CSS) 에 얹어 낙하(transform y)와 충돌 없이, transition 으로 부드럽게 안착.
+            // 보정 dx/dy 는 left/bottom(CSS)에 얹어 낙하(transform y/rotate)와 충돌 없이 부드럽게 안착.
             style={{
-              left: `${p.x}em`,
+              left: leftFor(p),
               bottom: bottomFor(p),
               transformOrigin: p.origin,
-              transition: "bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+              transition: settle,
             }}
             custom={p}
             variants={letterVar}
@@ -221,7 +266,7 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
         ))}
       </motion.span>
 
-      {/* invert: 커서 원(mask) 안에서만 보이는 반전 레이어 — 검은 배경 + 흰 글자. reduce 면 미렌더 */}
+      {/* invert: 커서 원(mask) 안에서만 보이는 반전 레이어 — 검은 배경 + 흰 글자. base 와 동일 보정. reduce 면 미렌더 */}
       {!reduce && (
         <span className={styles.wordInvert} aria-hidden="true">
           <span className={styles.invertBg} />
@@ -231,10 +276,11 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
                 key={i}
                 className={styles.letterPos}
                 style={{
-                  left: `${p.x}em`,
-                  bottom: bottomFor(p), // base 와 동일한 보정 → 반전 글자도 정확히 겹침
+                  left: leftFor(p), // base 와 동일한 dx/dy 보정 → 반전 글자도 정확히 겹침
+                  bottom: bottomFor(p),
                   transformOrigin: p.origin,
                   transform: `translateX(${p.rollX ?? 0}px) rotate(${p.rotate}deg)`,
+                  transition: settle,
                 }}
               >
                 {p.ch}
