@@ -51,24 +51,35 @@ function opacityAt(i: number, rot: number) {
 // 실제 글리프 아웃라인(Liberation Sans Bold, Arial 메트릭 호환)을 다각형 바디로 만들어 위에서 떨어뜨리고
 // 좌하단 바닥·좌우 벽에 부딪혀 쌓이며 기대게 함. 렌더는 매 틱 바디 position·angle 로 <path> transform 갱신.
 // 좌표계: viewBox(=물리 월드) 단위. 글리프 데이터는 fontSize 1000(위쪽 음수) → SCALE 로 축소.
-const VBW = 900;
-const VBH = 780;
-const SCALE = 0.4; // 글리프(대문자 높이 ~688) → 월드 ~275
-const FLOOR_Y = VBH - 6; // 바닥선(잉크 밑변이 여기 닿음)
-const RIGHT_X = 720; // 우측 경계 — 글자가 좌측 영역에 모이게
-const ORDER = ["M", "O", "V", "I", "E"] as const;
-// 낙하 시작 위치(월드). y 음수 = 화면 위 밖. 좌측 영역에 x 를 흩뿌려 자연스럽게 쌓이게.
+// viewBox = 물리 월드. 5글자가 "겹침 없이 다 보이게" — 세로로 쌓아 넘어지지 않게, 가로로 넓은 한 줄에
+// 좌→우로 나란히 떨어뜨려 서로 살짝 기대며 안착시킴(스택→토플→겹침 방지). 총 글자폭이 다 담기게 넓게.
+const VBW = 1140; // 5글자가 서로 맞닿아 한 줄로 설 수 있는 실제 폭(≈915)+마진. 좁으면 강제로 겹쳐 불안정 → 넉넉히.
+const VBH = 560;
+const SCALE = 0.3; // 글리프(대문자 높이 ~688) → 월드 ~206. 한 줄에 5글자 다 들어가게 축소
+const FLOOR_Y = VBH - 95; // 바닥선. 아래 95 여유 = 잉크가 충돌 헐(hull)보다 살짝 내려오는 만큼(하단 잘림 방지)
+// 좌·우 벽을 viewBox 안쪽으로 마진만큼 들여 세움 → 양 끝 글자가 바깥으로 넘어져도 벽에 막혀 잉크가 프레임 안에 남음.
+const WALL_MARGIN = 100; // 벽~viewBox 가장자리 여유(잉크 오버행 흡수 — 기울어진 E·M 도 안 잘리게 넉넉히)
+const LEFT_X = WALL_MARGIN; // 좌측 벽 안쪽면
+const RIGHT_X = VBW - WALL_MARGIN; // 우측 경계 안쪽면
+const ORDER = ["M", "O", "V", "I", "E"] as const; // 렌더(z)·글자 순서(MOVIE)
+// 낙하 위치(월드). x = 최종 열 중심을 인접 글자와 "맞닿게" 촘촘히 배치 → 서로 기대 지지(뾰족한 V 도 안 넘어짐).
+// 좌→우 순서로 떨궈(DROP_ORDER=ORDER) 왼쪽 글자에 차례로 기댐. y 음수 → viewBox 위 밖(overflow:hidden 로 클립).
 const START: Record<string, { x: number; y: number }> = {
-  M: { x: 190, y: -160 },
-  O: { x: 350, y: -180 },
-  V: { x: 270, y: -180 },
-  I: { x: 450, y: -180 },
-  E: { x: 370, y: -180 },
+  M: { x: 230, y: -140 },
+  O: { x: 452, y: -150 },
+  V: { x: 661, y: -160 },
+  I: { x: 797, y: -150 },
+  E: { x: 921, y: -170 },
 };
-const STAGGER_MS = 620; // 글자 사이 낙하 간격(넉넉히 — 앞 글자가 어느정도 안착 후 다음)
-const FALL_DUR_GUESS = 11000; // 최대 시뮬 시간(ms) — 이후 프레임 고정
-const MAX_SPEED = 42; // 바디 최대 속도(터널링·폭발 방지)
-const MAX_ANG = 0.4; // 바디 최대 각속도
+// 투입(낙하) 순서 = 읽는 순서(왼→오). 각 글자가 이미 안착한 왼쪽 글자에 기대며 안착(뾰족한 V·얇은 I 도 이웃 지지로 섬).
+const DROP_ORDER = ["M", "O", "V", "I", "E"] as const;
+// 낙하 전 미리 부여할 고정 기울기(rad, 음수=왼쪽으로 기욺). 무작위 X → 결정론적.
+// 각 글자를 살짝 왼쪽으로 기운 채(≈-5°) 촘촘히 떨궈, 낙하 후 왼쪽 이웃에 곧바로 걸려 그 각도로 안착(뾰족한 V 도 안 넘어짐).
+const TILT: Record<string, number> = { M: -0.05, O: -0.05, V: -0.16, I: 0, E: -0.05 };
+const STAGGER_MS = 700; // 글자 사이 낙하 간격 — 앞 글자 완전 안착 후 다음이 옆에 기대게
+const FALL_DUR_GUESS = 14000; // 최대 시뮬 시간(ms) — 이후 프레임 고정
+const MAX_SPEED = 18; // 바디 최대 속도 — 낮춰서 착지 충격·튐·미끄러짐 최소화(제자리 안착)
+const MAX_ANG = 0.3; // 바디 최대 각속도
 
 // 정지(=최종) 각 글자 transform 계산: 바디 중심(position)·회전(angle)에 맞춰 글리프 path 를 그림.
 // path 는 글리프 단위 → translate(pos) rotate(angle) scale(SCALE) translate(-무게중심).
@@ -104,15 +115,16 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     if (!svg) return;
 
     Matter.Common.setDecomp(decomp); // 오목 글자(M·V·E) 볼록 분해
-    const engine = Matter.Engine.create({ positionIterations: 12, velocityIterations: 10 });
+    // 충돌 해상도 상향(positionIterations 20·velocityIterations 16) → 서로 파고드는 관통 해소
+    const engine = Matter.Engine.create({ positionIterations: 20, velocityIterations: 16 });
     engine.gravity.y = 1;
     const world = engine.world;
 
-    // 정적 경계: 바닥·좌·우 — 두껍게(터널링 방지: 빠른 바디도 못 뚫게)
-    const wall = { isStatic: true, friction: 0.9, restitution: 0 };
+    // 정적 경계: 바닥·좌·우 — 두껍게(터널링 방지). slop 낮춰 겹침 허용치 축소.
+    const wall = { isStatic: true, friction: 0.9, restitution: 0, slop: 0.01 };
     Matter.Composite.add(world, [
       Matter.Bodies.rectangle(VBW / 2, FLOOR_Y + 400, VBW * 4, 800, wall), // 바닥(윗면 = FLOOR_Y)
-      Matter.Bodies.rectangle(-400, 0, 800, VBH * 10, wall), // 좌측 벽(우측면 = x0)
+      Matter.Bodies.rectangle(LEFT_X - 400, 0, 800, VBH * 10, wall), // 좌측 벽(우측면 = LEFT_X)
       Matter.Bodies.rectangle(RIGHT_X + 400, 0, 800, VBH * 10, wall), // 우측 경계(좌측면 = RIGHT_X)
     ]);
 
@@ -126,10 +138,14 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
         START[ch].x,
         START[ch].y,
         partSets,
-        { restitution: 0.05, friction: 0.9, frictionStatic: 2, density: 0.001 },
+        { restitution: 0, friction: 0.95, frictionStatic: 1, density: 0.001 },
         false,
       );
-      Matter.Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.05); // 낙하 중 살짝 회전(과하지 않게)
+      // slop 을 낮게(0.01) — 잉크끼리 파고드는 겹침을 시각적으로 안 보일 만큼 축소. 복합 바디는 parts 에도 적용.
+      body.slop = 0.01;
+      body.parts.forEach((p) => (p.slop = 0.01));
+      Matter.Body.setAngle(body, TILT[ch]); // 미리 살짝 기울여 낙하 → 이웃에 걸려 그 각도로 안착(결정론적·안정)
+      Matter.Body.setAngularVelocity(body, 0);
       bodies[ch] = body;
     }
 
@@ -168,8 +184,8 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
       }
       render();
     } else {
-      // stagger 로 하나씩 월드에 투입(=하나씩 낙하)
-      ORDER.forEach((ch, i) => {
+      // stagger 로 하나씩 월드에 투입(=하나씩 낙하). DROP_ORDER(왼→오) 순서로 왼쪽 글자에 기대며 안착.
+      DROP_ORDER.forEach((ch, i) => {
         timeouts.push(
           window.setTimeout(() => {
             Matter.Composite.add(world, bodies[ch]);

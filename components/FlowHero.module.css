@@ -65,7 +65,7 @@
   /* 크기만 화면 비율로. viewBox 비율은 height:auto 로 유지. */
   width: clamp(360px, 66vw, 940px);
   height: auto;
-  overflow: visible; /* 낙하 중 글자가 viewBox 밖(위)으로 나가도 안 잘리게 */
+  overflow: hidden; /* 낙하 전/투입 전 글자는 viewBox 위 밖(y<0)에 있어 클립됨 → 상단 미리 보임 제거 */
   user-select: none;
   cursor: default;
   pointer-events: none; /* 빈 SVG 영역은 통과 — 글자(획)만 이벤트 받음 */
