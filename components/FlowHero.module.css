@@ -56,71 +56,42 @@
   .stage[data-revealed="false"] .deck { opacity: 1; transform: none; }
 }
 
-/* ── 대형 볼드 워드마크 MOVIE — 좌측 하단에 글자들이 옹기종기 겹쳐 쌓인 클러스터(절대 배치) ── */
-.bigword {
+/* ── SVG 워드마크 MOVIE — 좌하단 블럭 스택(viewBox 절대좌표) + 호버 원형 색반전 ── */
+.wordmark {
   position: absolute;
-  /* 작업3: 좌측 하단 모서리에 딱 붙게(left:0/bottom:0). 글자는 박스 안에서 겹치지 않게 나란히 배치 */
   left: 0;
   bottom: 0;
-  top: auto;
-  width: 2.9em; /* 좌하단 2행(하단 M·V·E / 상단 O·I) 목표 배치를 담는 박스 */
-  height: 2.35em;
   z-index: 2;
-  margin: 0;
-  font-family: "Arial Black", Helvetica, sans-serif;
-  font-weight: 900;
-  /* 작업1: 과감하게 키움 → 좌측 절반~2/3 영역감 */
-  font-size: clamp(150px, 24vw, 400px);
-  line-height: 0.9;
-  color: #0b0b0c;
+  /* 크기만 화면 비율로. viewBox(900×700) 비율은 height:auto 로 유지. */
+  width: clamp(340px, 62vw, 880px);
+  height: auto;
+  overflow: visible; /* 낙하 중 글자가 viewBox 밖(위)으로 나가도 안 잘리게 */
   user-select: none;
   cursor: default;
 }
-/* 글자 레이어 — 박스 전체를 채워(inset 0) 글자 bottom 기준 배치의 기준(바닥) 제공. base/invert 원점 일치 */
-.wordLayer {
-  position: absolute;
-  inset: 0;
+.glyph {
+  font-family: "Arial Black", Helvetica, sans-serif;
+  font-weight: 900;
+  fill: #0b0b0c; /* base = 검정 */
+  will-change: transform;
 }
-/* 각 글자 = 클러스터 내 절대 위치(인라인 left/top em) + 낙하 y·rotate(framer variants) 대상 */
-.letterPos {
-  position: absolute;
-  display: inline-block;
-  line-height: 1;
-  color: #0b0b0c; /* base = 검정 */
-  will-change: transform, opacity;
+.glyphInvert {
+  font-family: "Arial Black", Helvetica, sans-serif;
+  font-weight: 900;
+  fill: #f8f8f8; /* 원 안 글자는 흰색 */
 }
-
-/* 작업5: 호버 원형 색반전 — 반전 레이어를 워드마크보다 --pad 만큼 확장(inset 음수)해 원이 글자
-   경계에서 잘리지 않고 온전한 원으로 커서를 따라다니게. 원 안: 검은 배경 + 흰 글자. */
-@property --r {
-  syntax: "<length>";
-  inherits: true;
-  initial-value: 0px;
+/* 호버 원형 색반전 — mask 원을 커서 위치(--mx/--my, viewBox 좌표)에 두고 반경 r 을 0→값으로.
+   원 안(흰색 mask)에서만 invert 레이어(검은 배경 + 흰 글자)가 보임 → 색반전. */
+.maskCircle {
+  cx: var(--mx, -1000px);
+  cy: var(--my, -1000px);
+  r: 0;
+  fill: #fff;
+  transition: r 0.4s cubic-bezier(0.16, 1, 0.3, 1); /* 반경만 부드럽게(커서 위치는 즉각 추적) */
 }
-.wordInvert {
-  position: absolute;
-  --pad: 190px; /* 원 반경(130) + 여유 → 원이 컨테이너 밖으로 온전히 나감 */
-  inset: calc(-1 * var(--pad));
-  --r: 0px;
-  -webkit-mask: radial-gradient(circle var(--r) at calc(var(--mx, -9999px) + var(--pad)) calc(var(--my, -9999px) + var(--pad)), #000 0 98%, transparent 100%);
-  mask: radial-gradient(circle var(--r) at calc(var(--mx, -9999px) + var(--pad)) calc(var(--my, -9999px) + var(--pad)), #000 0 98%, transparent 100%);
-  /* 작업4: 원 반경(--r)이 0→130 으로 부드럽게 커지도록 ease-out(빠른 시작·유연한 정착). 아웃 시 부드럽게 0.
-     (커서 위치 --mx/--my 는 transition 없이 즉각 추적 → 위치 지연 없음) */
-  transition: --r 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: none; /* 히트는 .bigword 가 받음 */
+.wordmark[data-hover="true"] .maskCircle {
+  r: 230px; /* 호버 시 원 반경(viewBox 단위) */
 }
-.bigword[data-hover="true"] .wordInvert { --r: 130px; } /* 호버 시 원 반경 */
-.invertBg {
-  position: absolute;
-  inset: 0;
-  background: #0b0b0c; /* 원 안 배경을 검게 */
-}
-/* 흰 글자 레이어는 확장분(--pad)만큼 inset → base 워드마크 박스와 정확히 겹침(글자 위치 일치) */
-.wordInvert .wordLayer {
-  position: absolute;
-  inset: var(--pad);
-}
-.wordInvert .letterPos { color: #f8f8f8; } /* 원 안 글자는 흰색 */
 
 /* ── 원통형(3D 실린더) 카드 덱 — 각도(rotateZ -8·rotateX -20)·크기 기준 복원, 위치만 우측(미잘림) ── */
 .deck {
@@ -211,6 +182,6 @@
      각도(rotateZ-8·rotateX-20)는 그대로, .deck 자체를 scale 로만 축소. */
   .deck { left: 50%; right: auto; top: 30%; transform: scale(0.5); transform-origin: center; }
   .deckTilt { --scale: 0.72; } /* 태블릿(0.52) 상속 방지 — 기준 스케일 복귀 후 .deck scale 로 축소 */
-  /* 워드마크: 좁은 화면에서 테트리스 블록(2.85em)이 안 잘리게 축소 + 바닥에 딱(bottom:0) */
-  .bigword { font-size: clamp(80px, 26vw, 128px); bottom: 0; }
+  /* 워드마크: 좁은 화면에선 폭만 축소(viewBox 비율·좌하단 정렬 유지) */
+  .wordmark { width: clamp(240px, 78vw, 420px); }
 }
