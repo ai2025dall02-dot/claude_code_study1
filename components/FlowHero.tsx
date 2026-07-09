@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
+import Matter from "matter-js";
+import decomp from "poly-decomp";
 import { useIntroRevealed } from "./Intro";
+import { GLYPH_DATA } from "./FlowHeroGlyphs";
 import styles from "./FlowHero.module.css";
 
 export type FlowCard = { label: string; caption: string; img: string };
@@ -44,133 +47,216 @@ function opacityAt(i: number, rot: number) {
   return clamp((FULL_DEG + FADE_BAND - dist) / FADE_BAND, 0, 1);
 }
 
-// ── SVG 워드마크 MOVIE — 좌하단 블럭 스택(viewBox 절대좌표) + 위에서 하나씩 낙하 ──────────────
-// 실측/보정(inkAABB·measure·adj) 전부 제거. 각 글자의 최종 중심(x,y)·각도(rot)를 viewBox 좌표로 확정 →
-// 화면 크기·폰트 여백과 무관하게 항상 같은 비율로 맞물림(겹침·틈은 viewBox 상에서 좌표로 확정).
-// 글자는 <text>(Arial Black 900), 각 글자 중심을 (x,y)에 두고(text-anchor middle·dominant-baseline central)
-// 그 점을 기준으로 회전. 낙하는 framer 가 transform(y/x/rotate)만 이동(착지=최종).
-type Glyph = {
-  ch: string;
-  x: number; // 최종 중심 X(viewBox)
-  y: number; // 최종 중심 Y(viewBox)
-  rot: number; // 각도(°, +시계)
-  size: number; // font-size(viewBox 단위)
+// ── Matter.js 물리 워드마크 MOVIE ─────────────────────────────────────────────
+// 실제 글리프 아웃라인(Liberation Sans Bold, Arial 메트릭 호환)을 다각형 바디로 만들어 위에서 떨어뜨리고
+// 좌하단 바닥·좌우 벽에 부딪혀 쌓이며 기대게 함. 렌더는 매 틱 바디 position·angle 로 <path> transform 갱신.
+// 좌표계: viewBox(=물리 월드) 단위. 글리프 데이터는 fontSize 1000(위쪽 음수) → SCALE 로 축소.
+const VBW = 900;
+const VBH = 780;
+const SCALE = 0.4; // 글리프(대문자 높이 ~688) → 월드 ~275
+const FLOOR_Y = VBH - 6; // 바닥선(잉크 밑변이 여기 닿음)
+const RIGHT_X = 720; // 우측 경계 — 글자가 좌측 영역에 모이게
+const ORDER = ["M", "O", "V", "I", "E"] as const;
+// 낙하 시작 위치(월드). y 음수 = 화면 위 밖. 좌측 영역에 x 를 흩뿌려 자연스럽게 쌓이게.
+const START: Record<string, { x: number; y: number }> = {
+  M: { x: 190, y: -160 },
+  O: { x: 350, y: -180 },
+  V: { x: 270, y: -180 },
+  I: { x: 450, y: -180 },
+  E: { x: 370, y: -180 },
 };
-const VB_W = 1000;
-const VB_H = 920;
-// 하단행(M·V·E)을 viewBox 바닥(=화면 바닥)에 밀착·맞물림, 상단행 O·I 를 그 위에 얹음(아래변 접촉). (각도 유지)
-const GLYPHS: Glyph[] = [
-  { ch: "M", x: 205, y: 697, rot: -6, size: 365 },
-  { ch: "V", x: 455, y: 742, rot: 75, size: 365 },
-  { ch: "E", x: 700, y: 720, rot: 65, size: 365 },
-  { ch: "O", x: 405, y: 482, rot: -5, size: 350 },
-  { ch: "I", x: 640, y: 520, rot: -32, size: 350 },
-];
+const STAGGER_MS = 620; // 글자 사이 낙하 간격(넉넉히 — 앞 글자가 어느정도 안착 후 다음)
+const FALL_DUR_GUESS = 11000; // 최대 시뮬 시간(ms) — 이후 프레임 고정
+const MAX_SPEED = 42; // 바디 최대 속도(터널링·폭발 방지)
+const MAX_ANG = 0.4; // 바디 최대 각속도
 
-const FALL_FROM = -1100; // viewBox 위쪽 화면 밖(완전히 안 보이는 값)
-const STAGGER = 0.22;
-const DELAY_CHILDREN = 0.12;
-const FALL_EASE = [0.33, 0, 0.2, 1]; // 천천히 시작→가속→착지 감속
-const FALL_DUR = 1.5;
-
-const wordContainer: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: STAGGER, delayChildren: DELAY_CHILDREN } },
-};
-// 각 글자 <g> — 화면 밖 위 → 최종 위치로 낙하(framer translate y). 착지=최종.
-// 낙하 중 살짝 회전(rot-20 → 최종 rot)은 <text> 의 CSS 애니메이션(fhRot)이 담당 — framer 는 SVG 회전
-// 원점을 글자 중심으로 못 잡으므로(0,0 고정), 회전만 CSS(transform-box:fill-box; transform-origin:center)로.
-const fallVar: Variants = {
-  hidden: { y: FALL_FROM },
-  show: { y: 0, transition: { duration: FALL_DUR, ease: FALL_EASE } },
-};
+// 정지(=최종) 각 글자 transform 계산: 바디 중심(position)·회전(angle)에 맞춰 글리프 path 를 그림.
+// path 는 글리프 단위 → translate(pos) rotate(angle) scale(SCALE) translate(-무게중심).
+function bodyTransform(px: number, py: number, angleRad: number, ch: string) {
+  const c = GLYPH_DATA[ch].c;
+  return `translate(${px.toFixed(2)} ${py.toFixed(2)}) rotate(${((angleRad * 180) / Math.PI).toFixed(2)}) scale(${SCALE}) translate(${-c[0]} ${-c[1]})`;
+}
+// 낙하 전 초기 transform(시작 위치 = 화면 위 밖) → 첫 페인트에 큰 글자 안 튀게.
+const initialTransform = (ch: string) => bodyTransform(START[ch].x, START[ch].y, 0, ch);
 
 function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const baseRefs = useRef<Record<string, SVGPathElement | null>>({});
+  const invertRefs = useRef<Record<string, SVGPathElement | null>>({});
   const [hover, setHover] = useState(false);
 
-  // 커서 좌표를 viewBox 좌표(--mx/--my)로 변환 → SVG mask 원이 커서를 따라다님.
-  // 글자(<text>) 위에서만 호출되므로(pointer-events:visiblePainted) 빈 영역에선 미발동.
-  const onMove = (e: React.MouseEvent<SVGTextElement>) => {
+  // 커서 → viewBox 좌표(--mx/--my). 글자(획) 위에서만 호출됨(pointer-events:visiblePainted).
+  const onMove = (e: React.MouseEvent<SVGPathElement>) => {
     if (reduce) return;
     const svg = svgRef.current;
     if (!svg) return;
     const r = svg.getBoundingClientRect();
     if (!r.width || !r.height) return;
-    // preserveAspectRatio "xMinYMax meet" → 균일 스케일, 좌측·하단 정렬
-    const scale = Math.min(r.width / VB_W, r.height / VB_H);
-    const offX = 0; // xMin
-    const offY = r.height - VB_H * scale; // YMax(하단 정렬)
-    svg.style.setProperty("--mx", `${(e.clientX - r.left - offX) / scale}px`);
+    const scale = Math.min(r.width / VBW, r.height / VBH);
+    const offY = r.height - VBH * scale; // xMinYMax(하단 정렬)
+    svg.style.setProperty("--mx", `${(e.clientX - r.left) / scale}px`);
     svg.style.setProperty("--my", `${(e.clientY - r.top - offY) / scale}px`);
   };
+
+  useEffect(() => {
+    if (!revealed && !reduce) return; // 히어로 진입(또는 reduce) 전엔 대기
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    Matter.Common.setDecomp(decomp); // 오목 글자(M·V·E) 볼록 분해
+    const engine = Matter.Engine.create({ positionIterations: 12, velocityIterations: 10 });
+    engine.gravity.y = 1;
+    const world = engine.world;
+
+    // 정적 경계: 바닥·좌·우 — 두껍게(터널링 방지: 빠른 바디도 못 뚫게)
+    const wall = { isStatic: true, friction: 0.9, restitution: 0 };
+    Matter.Composite.add(world, [
+      Matter.Bodies.rectangle(VBW / 2, FLOOR_Y + 400, VBW * 4, 800, wall), // 바닥(윗면 = FLOOR_Y)
+      Matter.Bodies.rectangle(-400, 0, 800, VBH * 10, wall), // 좌측 벽(우측면 = x0)
+      Matter.Bodies.rectangle(RIGHT_X + 400, 0, 800, VBH * 10, wall), // 우측 경계(좌측면 = RIGHT_X)
+    ]);
+
+    // 글자 바디(실제 아웃라인) — 낙하 중 튐 최소화(restitution 낮게), 마찰로 안착 안정화
+    const bodies: Record<string, Matter.Body> = {};
+    for (const ch of ORDER) {
+      const g = GLYPH_DATA[ch];
+      // 사전 분해된 볼록 조각들을 vertexSets 로 → 복합 바디(모두 볼록이라 안정적으로 충돌)
+      const partSets = g.parts.map((part) => part.map(([x, y]) => ({ x: x * SCALE, y: y * SCALE })));
+      const body = Matter.Bodies.fromVertices(
+        START[ch].x,
+        START[ch].y,
+        partSets,
+        { restitution: 0.05, friction: 0.9, frictionStatic: 2, density: 0.001 },
+        false,
+      );
+      Matter.Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.05); // 낙하 중 살짝 회전(과하지 않게)
+      bodies[ch] = body;
+    }
+
+    const render = () => {
+      for (const ch of ORDER) {
+        const b = bodies[ch];
+        const t = bodyTransform(b.position.x, b.position.y, b.angle, ch);
+        baseRefs.current[ch]?.setAttribute("transform", t);
+        invertRefs.current[ch]?.setAttribute("transform", t);
+      }
+    };
+    // 매 스텝 속도 클램프 — 빠른 바디의 터널링/폭발 방지(안정적 안착)
+    const clampVel = () => {
+      for (const ch of ORDER) {
+        const b = bodies[ch];
+        if (b.speed > MAX_SPEED) {
+          const k = MAX_SPEED / b.speed;
+          Matter.Body.setVelocity(b, { x: b.velocity.x * k, y: b.velocity.y * k });
+        }
+        if (b.angularSpeed > MAX_ANG) Matter.Body.setAngularVelocity(b, Math.sign(b.angularVelocity) * MAX_ANG);
+      }
+    };
+
+    let raf = 0;
+    const timeouts: number[] = [];
+    let addedCount = 0;
+    let still = 0;
+    let startT = 0;
+
+    if (reduce) {
+      // 물리 없이 즉시 최종: 전부 넣고(약간 x 흩뿌려) 빠르게 안정화 후 1회 렌더
+      for (const ch of ORDER) Matter.Composite.add(world, bodies[ch]);
+      for (let i = 0; i < 1200; i++) {
+        Matter.Engine.update(engine, 1000 / 60);
+        clampVel();
+      }
+      render();
+    } else {
+      // stagger 로 하나씩 월드에 투입(=하나씩 낙하)
+      ORDER.forEach((ch, i) => {
+        timeouts.push(
+          window.setTimeout(() => {
+            Matter.Composite.add(world, bodies[ch]);
+            addedCount++;
+          }, i * STAGGER_MS),
+        );
+      });
+      const loop = (t: number) => {
+        if (!startT) startT = t;
+        Matter.Engine.update(engine, 1000 / 60);
+        clampVel();
+        render();
+        // 전부 투입 후 정지(sleeping 근사)면 멈춰 최종 프레임 고정(미세 진동 방지)
+        if (addedCount >= ORDER.length) {
+          let maxV = 0;
+          for (const ch of ORDER) {
+            const b = bodies[ch];
+            maxV = Math.max(maxV, b.speed, b.angularSpeed * 30);
+          }
+          still = maxV < 0.35 ? still + 1 : 0;
+        }
+        if ((addedCount >= ORDER.length && still > 45) || t - startT > FALL_DUR_GUESS) {
+          render();
+          return; // 프레임 고정(정지)
+        }
+        raf = requestAnimationFrame(loop);
+      };
+      raf = requestAnimationFrame(loop);
+    }
+
+    return () => {
+      cancelAnimationFrame(raf);
+      timeouts.forEach((id) => clearTimeout(id));
+      Matter.Engine.clear(engine);
+    };
+  }, [revealed, reduce]);
 
   return (
     <svg
       ref={svgRef}
       className={styles.wordmark}
-      viewBox={`0 0 ${VB_W} ${VB_H}`}
+      viewBox={`0 0 ${VBW} ${VBH}`}
       preserveAspectRatio="xMinYMax meet"
       role="img"
       aria-label="MOVIE"
       data-hover={hover}
-      data-revealed={revealed && !reduce}
     >
       <defs>
-        <mask id="fh-invert" maskUnits="userSpaceOnUse" x="0" y="0" width={VB_W} height={VB_H}>
+        <mask id="fh-invert" maskUnits="userSpaceOnUse" x="0" y="0" width={VBW} height={VBH}>
           <circle className={styles.maskCircle} />
         </mask>
       </defs>
 
-      {/* base 검정 글자 — framer 가 위에서 하나씩 낙하(translate y), 낙하 중 살짝 회전은 text 의 CSS(fhRot).
-          호버 판정/커서 추적은 글자(획) 위에서만(각 <text> 이벤트 + pointer-events:visiblePainted). reduce 면 즉시 최종. */}
-      <motion.g
-        variants={wordContainer}
-        initial={reduce ? false : "hidden"}
-        animate={revealed || reduce ? "show" : "hidden"}
-      >
-        {GLYPHS.map((g, i) => (
-          <motion.g key={g.ch} variants={fallVar}>
-            <text
-              x={g.x}
-              y={g.y}
-              className={styles.glyph}
-              fontSize={g.size}
-              textAnchor="middle"
-              dominantBaseline="central"
-              style={
-                { "--rot": `${g.rot}deg`, "--fall-delay": `${DELAY_CHILDREN + i * STAGGER}s` } as React.CSSProperties
-              }
-              onMouseEnter={() => !reduce && setHover(true)}
-              onMouseLeave={() => setHover(false)}
-              onMouseMove={onMove}
-            >
-              {g.ch}
-            </text>
-          </motion.g>
+      {/* base 검정 글자 — 물리 바디에 동기화(transform 은 rAF 가 imperative 갱신). 호버는 획 위에서만. */}
+      <g>
+        {ORDER.map((ch) => (
+          <path
+            key={ch}
+            ref={(el) => {
+              baseRefs.current[ch] = el;
+            }}
+            className={styles.glyph}
+            d={GLYPH_DATA[ch].d}
+            transform={initialTransform(ch)}
+            onMouseEnter={() => !reduce && setHover(true)}
+            onMouseLeave={() => setHover(false)}
+            onMouseMove={onMove}
+          />
         ))}
-      </motion.g>
+      </g>
 
-      {/* invert 레이어 — 커서 원(mask) 안에서만: 검은 배경 + 흰 글자(색반전). 최종 위치 고정. 이벤트 통과. reduce 면 미렌더 */}
-      {!reduce && (
-        <g mask="url(#fh-invert)" aria-hidden="true" style={{ pointerEvents: "none" }}>
-          <rect x="0" y="0" width={VB_W} height={VB_H} fill="#0b0b0c" />
-          {GLYPHS.map((g) => (
-            <text
-              key={g.ch}
-              x={g.x}
-              y={g.y}
-              className={styles.glyphInvert}
-              fontSize={g.size}
-              textAnchor="middle"
-              dominantBaseline="central"
-              transform={`rotate(${g.rot} ${g.x} ${g.y})`}
-            >
-              {g.ch}
-            </text>
-          ))}
-        </g>
-      )}
+      {/* invert 레이어 — 커서 원(mask) 안에서만: 검은 배경 + 흰 글자. base 와 동일 transform.
+          reduce 면 호버 자체가 비활성(r=0 유지)이라 안 보임 → SSR 일치 위해 항상 렌더(하이드레이션 안전). */}
+      <g mask="url(#fh-invert)" aria-hidden="true" style={{ pointerEvents: "none" }}>
+        <rect x="0" y="0" width={VBW} height={VBH} fill="#0b0b0c" />
+        {ORDER.map((ch) => (
+          <path
+            key={ch}
+            ref={(el) => {
+              invertRefs.current[ch] = el;
+            }}
+            className={styles.glyphInvert}
+            d={GLYPH_DATA[ch].d}
+            transform={initialTransform(ch)}
+          />
+        ))}
+      </g>
     </svg>
   );
 }
@@ -284,7 +370,7 @@ export default function FlowHero() {
 
   return (
     <section className={styles.stage} id="home" data-revealed={revealed}>
-      {/* 대형 볼드 워드마크 MOVIE — SVG 좌하단 블럭 스택 낙하 + 호버 원형 색반전 */}
+      {/* 대형 워드마크 MOVIE — Matter.js 물리 낙하·쌓임 + 호버 원형 색반전 */}
       <FilmWordmark revealed={revealed} reduce={!!reduce} />
 
       {/* 원통형 3D 카드 덱(우측, 미잘림) — 바깥=고정 기울기, 안쪽=rAF rotateY */}

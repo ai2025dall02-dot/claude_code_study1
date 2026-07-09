@@ -70,33 +70,14 @@
   cursor: default;
   pointer-events: none; /* 빈 SVG 영역은 통과 — 글자(획)만 이벤트 받음 */
 }
+/* 글자 = 물리 바디에 동기화된 <path>. transform 은 JS(rAF)가 attribute 로 갱신 → CSS transform 미지정. */
 .glyph {
-  font-family: "Arial Black", Helvetica, sans-serif;
-  font-weight: 900;
   fill: #0b0b0c; /* base = 검정 */
   will-change: transform;
   pointer-events: visiblePainted; /* 실제 획(잉크) 위에서만 호버 발동 */
   cursor: default;
-  /* 회전(각도)은 CSS 로 — 원점=글자 중심(제자리 회전). 낙하 translate 는 framer(부모 g)가 담당. */
-  transform-box: fill-box;
-  transform-origin: center;
-  transform: rotate(var(--rot, 0deg)); /* 최종 각도(정적: reduce·낙하 후) */
-}
-/* 낙하 중 살짝 회전: 최종각-20° → 최종각. data-revealed(=낙하 시작)일 때만, 글자별 delay 로 stagger */
-@keyframes fhRot {
-  from {
-    transform: rotate(calc(var(--rot, 0deg) - 20deg));
-  }
-  to {
-    transform: rotate(var(--rot, 0deg));
-  }
-}
-.wordmark[data-revealed="true"] .glyph {
-  animation: fhRot 1.5s cubic-bezier(0.33, 0, 0.2, 1) var(--fall-delay, 0s) both;
 }
 .glyphInvert {
-  font-family: "Arial Black", Helvetica, sans-serif;
-  font-weight: 900;
   fill: #f8f8f8; /* 원 안 글자는 흰색 */
 }
 /* 호버 원형 색반전 — mask 원을 커서 위치(--mx/--my, viewBox 좌표)에 두고 반경 r 을 0→값으로.
