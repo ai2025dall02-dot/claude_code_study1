@@ -116,11 +116,88 @@ const letterVar: Variants = {
         },
 };
 
+// ── 글리프 잉크(실제 먹칠) 경계 실측 ──────────────────────────────────────────
+// getBoundingClientRect 는 line-height 박스(글자 위·아래 타이포 여백 포함)를 준다. 대문자는 하강부가
+// 없어 박스 하단에 큰 여백이 남으므로, 박스끼리 붙여도 글자 사이엔 흰 마진이 생긴다(=상단행 공중부양).
+// → canvas TextMetrics 의 actualBoundingBox* 로 "실제 먹칠"의 로컬 경계를 구하고, 요소의 실제 transform
+//   행렬(회전 + rollX 병진)·transform-origin·레이아웃 위치를 적용해 화면상 잉크 AABB 를 계산한다.
+type InkBox = { left: number; right: number; top: number; bottom: number };
+let _inkCtx: CanvasRenderingContext2D | null = null;
+function parseMatrix(s: string) {
+  const id = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+  if (!s || s === "none") return id;
+  const m = s.match(/matrix(3d)?\(([^)]+)\)/);
+  if (!m) return id;
+  const v = m[2].split(",").map((n) => parseFloat(n));
+  // matrix3d: 회전·병진 성분 위치가 다름(col-major 4x4)
+  if (m[1]) return { a: v[0], b: v[1], c: v[4], d: v[5], e: v[12], f: v[13] };
+  return { a: v[0], b: v[1], c: v[2], d: v[3], e: v[4], f: v[5] };
+}
+function inkAABB(el: HTMLElement, host: HTMLElement, hostRect: DOMRect): InkBox {
+  const cs = getComputedStyle(el);
+  const W = el.offsetWidth;
+  const H = el.offsetHeight; // = 1em(line-height:1) — 모든 글자 동일
+  // 로컬 박스 좌표(원점 좌상단, y 아래로)의 잉크 사각형. 실패 시 박스 전체로 폴백.
+  let ix0 = 0,
+    ix1 = W,
+    iy0 = 0,
+    iy1 = H;
+  if (!_inkCtx) _inkCtx = document.createElement("canvas").getContext("2d");
+  if (_inkCtx) {
+    _inkCtx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    _inkCtx.textBaseline = "alphabetic";
+    _inkCtx.textAlign = "left";
+    const m = _inkCtx.measureText(el.textContent || "");
+    if (
+      typeof m.actualBoundingBoxAscent === "number" &&
+      typeof m.actualBoundingBoxLeft === "number" &&
+      typeof m.fontBoundingBoxAscent === "number"
+    ) {
+      // line-height:1 박스 상단 → 베이스라인 거리(모든 글자 동일 → 세로 접촉 차이엔 오차 상쇄)
+      const halfLeading = (H - (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent)) / 2;
+      const baseY = halfLeading + m.fontBoundingBoxAscent;
+      ix0 = -m.actualBoundingBoxLeft; // 펜 원점(박스 좌변=0) 기준 잉크 좌·우
+      ix1 = m.actualBoundingBoxRight;
+      iy0 = baseY - m.actualBoundingBoxAscent; // 잉크 위·아래
+      iy1 = baseY + m.actualBoundingBoxDescent;
+    }
+  }
+  // 레이아웃(비변형) 좌상단 화면 좌표 — offset 체인 합산 후 host(변형 없는 h1) 기준 앵커
+  let ox = 0,
+    oy = 0;
+  let node: HTMLElement | null = el;
+  while (node && node !== host) {
+    ox += node.offsetLeft;
+    oy += node.offsetTop;
+    node = node.offsetParent as HTMLElement | null;
+  }
+  const ux = hostRect.left + ox;
+  const uy = hostRect.top + oy;
+  // 실제 transform 행렬·origin 적용(회전 + rollX 병진 포함) → 잉크 4모서리 화면 좌표 → AABB
+  const to = cs.transformOrigin.split(" ").map((n) => parseFloat(n));
+  const oX = to[0] || 0;
+  const oY = to[1] || 0;
+  const t = parseMatrix(cs.transform);
+  const pts = [
+    [ix0, iy0],
+    [ix1, iy0],
+    [ix1, iy1],
+    [ix0, iy1],
+  ].map(([x, y]) => {
+    const dx = x - oX;
+    const dy = y - oY;
+    return [ux + oX + t.a * dx + t.c * dy + t.e, uy + oY + t.b * dx + t.d * dy + t.f];
+  });
+  const xs = pts.map((p) => p[0]);
+  const ys = pts.map((p) => p[1]);
+  return { left: Math.min(...xs), right: Math.max(...xs), top: Math.min(...ys), bottom: Math.max(...ys) };
+}
+
 function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
   const ref = useRef<HTMLHeadingElement>(null);
   const [hover, setHover] = useState(false);
-  // 실측 보정값(px): 글자별 가로(dx)·세로(dy). clamp 폰트 + 글리프 여백 오차 때문에 정적 em 추정이
-  // 계속 어긋나므로(상단행 뜸), 낙하 완료 후 실제 AABB(getBoundingClientRect)로 마진 0 접촉을 결정.
+  // 실측 보정값(px): 글자별 가로(dx)·세로(dy). 정적 em 추정도, line-height 박스(글자 여백 포함)도
+  // 어긋나므로(상단행 뜸·마진), 낙하 완료 후 실제 잉크 경계(inkAABB)로 마진 0 접촉을 결정.
   const [adj, setAdj] = useState<Record<string, { dx: number; dy: number }>>(() => ({
     M: { dx: 0, dy: 0 },
     V: { dx: 0, dy: 0 },
@@ -141,20 +218,22 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     el.style.setProperty("--my", `${e.clientY - r.top}px`);
   };
 
-  // 실측 마진 0 접촉(정적 em 추정 금지). 낙하 완료 후 모든 글자의 실제 AABB 로:
+  // 실측 마진 0 접촉(정적 em 추정 금지). 낙하 완료 후 모든 글자의 실제 잉크 경계(inkAABB)로:
   //  · 가로(하단행 M·V·E): M 을 앵커로 V.left=M.right, E.left=V.right 가 되게 dx 보정(변끼리 맞닿음).
   //  · 세로(상단행 O·I): O.bottom=M.top, I.bottom=E.top 가 되게 dy 보정(아래 글자 위에 얹힘).
-  // 회전 글자(V·I)는 AABB 기준. left/bottom(px)→화면 px 1:1(스케일 조상 없음)이라 단일 패스로 정확.
-  // 보정은 transform(framer 낙하) 과 충돌 없게 left/bottom(CSS)에 얹음. GAP=1px(마진 0 목표·겹침 방지).
+  // 회전 글자(V·I)는 잉크 AABB 기준. left/bottom(px)→화면 px 1:1(스케일 조상 없음)이라 단일 패스로 정확.
+  // 보정은 transform(framer 낙하) 과 충돌 없게 left/bottom(CSS)에 얹음. GAP=0(잉크끼리 맞닿아 흰 마진 0).
   const measure = useCallback(() => {
     const b = baseRefs.current;
-    if (!b.M || !b.V || !b.E || !b.O || !b.I) return;
-    const GAP = 1;
-    const rM = b.M.getBoundingClientRect();
-    const rV = b.V.getBoundingClientRect();
-    const rE = b.E.getBoundingClientRect();
-    const rO = b.O.getBoundingClientRect();
-    const rI = b.I.getBoundingClientRect();
+    const host = ref.current;
+    if (!b.M || !b.V || !b.E || !b.O || !b.I || !host) return;
+    const GAP = 0;
+    const hostRect = host.getBoundingClientRect();
+    const rM = inkAABB(b.M, host, hostRect);
+    const rV = inkAABB(b.V, host, hostRect);
+    const rE = inkAABB(b.E, host, hostRect);
+    const rO = inkAABB(b.O, host, hostRect);
+    const rI = inkAABB(b.I, host, hostRect);
 
     // 가로 접촉(하단행) — M 고정 → 오른쪽으로 순차 밀착. E 는 V 이동분(ddxV) 반영한 예측 right 사용.
     const ddxV = rM.right + GAP - rV.left;
