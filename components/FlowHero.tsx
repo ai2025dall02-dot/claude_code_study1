@@ -57,14 +57,14 @@ type Glyph = {
   size: number; // font-size(viewBox 단위)
 };
 const VB_W = 1000;
-const VB_H = 720;
-// 하단행(M·V·E)을 viewBox 바닥(=화면 바닥)에 밀착·맞물림, O 는 M·V 골에 끼움, I 는 E 오른쪽 바닥. (각도 유지)
+const VB_H = 920;
+// 하단행(M·V·E)을 viewBox 바닥(=화면 바닥)에 밀착·맞물림, 상단행 O·I 를 그 위에 얹음(아래변 접촉). (각도 유지)
 const GLYPHS: Glyph[] = [
-  { ch: "M", x: 175, y: 530, rot: -6, size: 300 },
-  { ch: "V", x: 385, y: 572, rot: 75, size: 300 },
-  { ch: "E", x: 635, y: 552, rot: 65, size: 300 },
-  { ch: "O", x: 425, y: 275, rot: -5, size: 285 },
-  { ch: "I", x: 850, y: 556, rot: 32, size: 285 },
+  { ch: "M", x: 185, y: 714, rot: -6, size: 340 },
+  { ch: "V", x: 430, y: 757, rot: 75, size: 340 },
+  { ch: "E", x: 690, y: 734, rot: 65, size: 340 },
+  { ch: "O", x: 370, y: 504, rot: -5, size: 320 },
+  { ch: "I", x: 715, y: 554, rot: -32, size: 320 },
 ];
 
 const FALL_FROM = -1100; // viewBox 위쪽 화면 밖(완전히 안 보이는 값)
