@@ -235,7 +235,7 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     const host = ref.current;
     if (!b.M || !b.V || !b.E || !b.O || !b.I || !host) return;
     const GAP = 0;
-    const FLOOR_PAD = 3; // 바닥선에서 살짝 위(잘림 방지 여유)
+    const FLOOR_PAD = 12; // 화면 최하단에서 살짝 위(밀착 + 잘림 방지 여유)
     const hostRect = host.getBoundingClientRect();
     const rM = inkAABB(b.M, host, hostRect);
     const rV = inkAABB(b.V, host, hostRect);
@@ -243,9 +243,10 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     const rO = inkAABB(b.O, host, hostRect);
     const rI = inkAABB(b.I, host, hostRect);
 
-    // [1] 바닥 클램핑 — 하단행(M·V·E) 잉크 최하단을 host(.bigword=stage) 바닥선에 정렬(잘림 0·바닥 접촉).
-    // 세 글자 공통 dyFloor 로 함께 올/내려 밑변을 바닥선에 딱 맞춤(>0: 아래로 넘쳐 위로 / <0: 위 → 내려 접촉).
-    const floorY = hostRect.bottom - FLOOR_PAD;
+    // [1] 바닥 클램핑 — 하단행(M·V·E) 잉크 최하단을 "화면 바닥선(뷰포트 하단)"에 정렬(공중부양 0·잘림 0).
+    // 주의: host(.bigword)는 height:2.35em 로 박스 하단이 화면 최하단이 아니라 클러스터 중간 → 기준으로 쓰면
+    // dyFloor 가 어긋나 글자가 뜬다. .stage(height:100vh)는 뷰포트 하단까지 닿으므로 innerHeight 를 바닥선으로.
+    const floorY = window.innerHeight - FLOOR_PAD;
     const maxBottom = Math.max(rM.bottom, rV.bottom, rE.bottom);
     const dyFloor = maxBottom - floorY;
     // 가로 접촉(하단행) — M 고정 → 오른쪽으로 순차 밀착. E 는 V 이동분(ddxV) 반영한 예측 right 사용.
