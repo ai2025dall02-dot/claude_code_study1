@@ -183,6 +183,11 @@
      각도(rotateZ-8·rotateX-20)는 그대로, .deck 자체를 scale 로만 축소. */
   .deck { left: 50%; right: auto; top: 30%; transform: scale(0.5); transform-origin: center; }
   .deckTilt { --scale: 0.72; } /* 태블릿(0.52) 상속 방지 — 기준 스케일 복귀 후 .deck scale 로 축소 */
-  /* 워드마크: 좁은 화면에선 폭만 축소(viewBox 비율·좌하단 정렬 유지) */
-  .wordmark { width: clamp(280px, 88vw, 520px); }
+  /* 워드마크: 모바일은 하단 "중앙" 정렬 — 요소 자체를 화면 가로 중앙에 두고(left 50%+translateX),
+     JS 는 preserveAspectRatio=xMidYMax + flushToCorner 중앙정렬로 맞춤. 폭은 축소. */
+  .wordmark {
+    width: clamp(280px, 88vw, 520px);
+    left: 50%;
+    transform: translateX(-50%);
+  }
 }

@@ -22,11 +22,11 @@ const CARDS: FlowCard[] = [
 // 원통형 덱: 5장 × 2바퀴 = 10장 → STEP 36° (간격 시원하게)
 const DECK_CARDS = CARDS.slice(0, 5);
 const DECK = [...DECK_CARDS, ...DECK_CARDS];
-const CW = 212;
-const CH = 300;
+const CW = 230; // 카드 폭 — 원통 덱을 조금만 더 크게(212→230, ~8%)
+const CH = 324; // 카드 높이 — 비율 유지하며 소폭 확대(300→324)
 const COUNT = DECK.length;
 const STEP = 360 / COUNT;
-const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.075) + 20;
+const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.075) + 20; // CW 에 비례해 반경 자동 확대
 const SPEED = 7; // deg/sec
 const FULL_DEG = 42;
 const FADE_BAND = 30;
@@ -114,6 +114,19 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
   const baseRefs = useRef<Record<string, SVGPathElement | null>>({});
   const invertRefs = useRef<Record<string, SVGPathElement | null>>({});
   const [hover, setHover] = useState(false);
+  // 모바일(≤767px) 여부. state 는 preserveAspectRatio JSX 갱신용, ref 는 콜백(onMove·flushToCorner)에서 최신값 읽기용.
+  const [isMobile, setIsMobile] = useState(false);
+  const isMobileRef = useRef(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = () => {
+      isMobileRef.current = mq.matches;
+      setIsMobile(mq.matches);
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
 
   // 커서 → viewBox 좌표(--mx/--my). 글자(획) 위에서만 호출됨(pointer-events:visiblePainted).
   const onMove = (e: React.MouseEvent<SVGPathElement>) => {
@@ -123,8 +136,10 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     const r = svg.getBoundingClientRect();
     if (!r.width || !r.height) return;
     const scale = Math.min(r.width / VBW, r.height / VBH);
-    const offY = r.height - VBH * scale; // xMinYMax(하단 정렬)
-    svg.style.setProperty("--mx", `${(e.clientX - r.left) / scale}px`);
+    const offY = r.height - VBH * scale; // YMax(하단 정렬) → 세로 오프셋
+    // 데스크톱 xMin(좌측 정렬) → offX 0. 모바일 xMid(가로 중앙 정렬) → 남는 가로 여백의 절반만큼 오프셋.
+    const offX = isMobileRef.current ? (r.width - VBW * scale) / 2 : 0;
+    svg.style.setProperty("--mx", `${(e.clientX - r.left - offX) / scale}px`);
     svg.style.setProperty("--my", `${(e.clientY - r.top - offY) / scale}px`);
   };
 
@@ -192,8 +207,9 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     // 착지 중 벽·바닥에 파고든 만큼(또는 여백)을 보정 → 여백 0·잘림 0 을 보장. 회전 중심(cRender)이 hull 중심과 같아
     // 바디 정점(≈잉크)을 기준으로 옮기면 렌더 잉크도 정확히 프레임 안쪽 가장자리에 밀착.
     const flushToCorner = () => {
-      // 실제 렌더 잉크의 좌·하단 한계를 계산(hull 정점은 곡선을 성기게 근사해 잉크가 더 튀어나옴 → getBBox 로 정확히).
+      // 실제 렌더 잉크의 좌·우·하단 한계를 계산(hull 정점은 곡선을 성기게 근사해 잉크가 더 튀어나옴 → getBBox 로 정확히).
       let minX = Infinity;
+      let maxX = -Infinity;
       let maxY = -Infinity;
       for (const ch of ORDER) {
         const el = baseRefs.current[ch];
@@ -215,12 +231,14 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
           const wx = b.position.x + ca * sx - sa * sy; // pos + R(angle)·(scaled)
           const wy = b.position.y + sa * sx + ca * sy;
           if (wx < minX) minX = wx;
+          if (wx > maxX) maxX = wx;
           if (wy > maxY) maxY = wy;
         }
       }
       if (!isFinite(minX)) return;
-      const dx = 4 - minX; // 가장 왼쪽 잉크 → x=4(화면 왼쪽 끝 밀착)
-      const dy = VBH - 4 - maxY; // 가장 아래 잉크 → viewBox 밑변 밀착
+      // 데스크톱: 좌측 끝(x=4) 밀착. 모바일: 스택 bounding box 중심 x 를 viewBox 중앙(VBW/2)에 맞춤(하단 중앙).
+      const dx = isMobileRef.current ? VBW / 2 - (minX + maxX) / 2 : 4 - minX;
+      const dy = VBH - 4 - maxY; // 하단은 공통: 가장 아래 잉크 → viewBox 밑변 밀착
       for (const ch of ORDER) Matter.Body.translate(bodies[ch], { x: dx, y: dy });
     };
     // 매 스텝 속도 클램프 — 빠른 바디의 터널링/폭발 방지(안정적 안착)
@@ -310,7 +328,7 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
       ref={svgRef}
       className={styles.wordmark}
       viewBox={`0 0 ${VBW} ${VBH}`}
-      preserveAspectRatio="xMinYMax meet"
+      preserveAspectRatio={isMobile ? "xMidYMax meet" : "xMinYMax meet"}
       role="img"
       aria-label="MOVIE"
       data-hover={hover}
