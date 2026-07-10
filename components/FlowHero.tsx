@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useReducedMotion } from "framer-motion";
 import Matter from "matter-js";
-import decomp from "poly-decomp";
 import { useIntroRevealed } from "./Intro";
 import { GLYPH_DATA } from "./FlowHeroGlyphs";
 import styles from "./FlowHero.module.css";
@@ -58,7 +57,7 @@ const VBH = 1250; // 세로로 길게: 상단은 낙하 구간(화면 위 밖), 
 const SCALE = 0.4; // 글리프(대문자 높이 ~688) → 월드 ~275. 과감하게 크게(단 쏟아져 쌓일 때 서로 엉킴 줄이려 약간 낮춤)
 const FLOOR_Y = VBH - 105; // 바닥선. 기울어 쌓인 글자는 모서리가 더 내려오므로 여유를 둠(랜덤 회전에도 하단 잘림 방지)
 // 좌·우 벽을 viewBox 안쪽으로 마진만큼 들여 세움 → 양 끝 글자가 바깥으로 넘어져도 벽에 막혀 잉크가 프레임 안에 남음.
-const WALL_MARGIN = 90; // 벽~viewBox 가장자리 여유(잉크 오버행 흡수)
+const WALL_MARGIN = 120; // 벽~viewBox 가장자리 여유(기울어진 hull 이 벽에 눌려도 잉크가 프레임 안에 남게 넉넉히)
 const LEFT_X = WALL_MARGIN; // 좌측 벽 안쪽면
 const RIGHT_X = 880; // 우측 경계를 덱 왼쪽에 맞춰 안쪽으로 → 글자가 덱 뒤로 안 넘어가고 좌하단에 모여 쌓임
 const ORDER = ["M", "O", "V", "I", "E"] as const; // 렌더(z)·글자 순서(MOVIE)
@@ -79,6 +78,28 @@ const STAGGER_MS = 150; // 글자 사이 낙하 간격 — 짧게(거의 동시 
 const FALL_DUR_GUESS = 26000; // 최대 시뮬 시간(ms) — 이후 프레임 고정
 const MAX_SPEED = 90; // 바디 최대 속도 — 중력 자연 가속은 살리되 공중 충돌 시 과하게 튕겨 흩어지지 않게 적당히
 const MAX_ANG = 1.0; // 바디 최대 각속도 — 크게 완화(자유로운 자연 회전 허용)
+
+// 볼록 껍질(Andrew's monotone chain) — 점들의 convex hull 을 순서대로 반환.
+function convexHull(pts: [number, number][]): [number, number][] {
+  const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  if (p.length < 3) return p;
+  const cross = (o: number[], a: number[], b: number[]) =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lower: [number, number][] = [];
+  for (const pt of p) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], pt) <= 0) lower.pop();
+    lower.push(pt);
+  }
+  const upper: [number, number][] = [];
+  for (let i = p.length - 1; i >= 0; i--) {
+    const pt = p[i];
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], pt) <= 0) upper.pop();
+    upper.push(pt);
+  }
+  lower.pop();
+  upper.pop();
+  return lower.concat(upper);
+}
 
 // 정지(=최종) 각 글자 transform 계산: 바디 중심(position)·회전(angle)에 맞춰 글리프 path 를 그림.
 // path 는 글리프 단위 → translate(pos) rotate(angle) scale(SCALE) translate(-무게중심).
@@ -113,8 +134,7 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     const svg = svgRef.current;
     if (!svg) return;
 
-    Matter.Common.setDecomp(decomp); // 오목 글자(M·V·E) 볼록 분해
-    // 충돌 해상도 상향(positionIterations 20·velocityIterations 16) → 서로 파고드는 관통 해소
+    // 충돌 해상도 상향(positionIterations 20·velocityIterations 16) → 안정적 안착
     const engine = Matter.Engine.create({ positionIterations: 20, velocityIterations: 16 });
     engine.gravity.y = 0.8; // 살짝 낮춰 체공↑ → 부드럽게 가속(뚝뚝 아님)
     const world = engine.world;
@@ -127,56 +147,33 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
       Matter.Bodies.rectangle(RIGHT_X + 400, 0, 800, VBH * 10, wall), // 우측 경계(좌측면 = RIGHT_X)
     ]);
 
-    // 글자 바디(실제 아웃라인) — 낙하 중 튐 최소화(restitution 낮게), 마찰로 안착 안정화
+    // 글자 바디 = 각 글자의 convex hull(볼록 껍질). 오목 홈(V·M 안쪽)이 메워져 서로 파고들 수 없음 → 겹침 사라짐.
+    // 렌더는 여전히 진짜 글리프 path. hull 은 볼록이라 poly-decomp·setDecomp·수동 면적중심 불필요.
     const bodies: Record<string, Matter.Body> = {};
-    const cRender: Record<string, [number, number]> = {}; // 글자별 면적 중심(글리프 좌표) = 바디 회전 중심
+    const cRender: Record<string, [number, number]> = {}; // 글자별 hull 무게중심(글리프 좌표) = 바디 회전 중심
     for (const ch of ORDER) {
       const g = GLYPH_DATA[ch];
-      // 파트(볼록 조각)들의 면적 가중 중심을 직접 계산 → 이 점을 회전 중심으로 삼아야 기울여도 잉크가 바디와 정확히 겹침.
-      let aSum = 0;
-      let cxSum = 0;
-      let cySum = 0;
-      for (const part of g.parts) {
-        let a = 0;
-        let cx = 0;
-        let cy = 0;
-        for (let i = 0; i < part.length; i++) {
-          const [x0, y0] = part[i];
-          const [x1, y1] = part[(i + 1) % part.length];
-          const cr = x0 * y1 - x1 * y0;
-          a += cr;
-          cx += (x0 + x1) * cr;
-          cy += (y0 + y1) * cr;
-        }
-        a *= 0.5;
-        if (Math.abs(a) < 1e-6) continue;
-        const w = Math.abs(a);
-        aSum += w;
-        cxSum += (cx / (6 * a)) * w;
-        cySum += (cy / (6 * a)) * w;
-      }
-      const cx0 = aSum ? cxSum / aSum : g.c[0];
-      const cy0 = aSum ? cySum / aSum : g.c[1];
-      cRender[ch] = [cx0, cy0];
-      // 면적 중심 기준으로 아주 살짝(1.012배≈2~3단위) 팽창(중심 보존) → 잉크끼리 안 겹치고 렌더 정렬 유지.
-      const DILATE = 1.012;
-      const partSets = g.parts.map((part) =>
-        part.map(([x, y]) => ({ x: (cx0 + (x - cx0) * DILATE) * SCALE, y: (cy0 + (y - cy0) * DILATE) * SCALE })),
-      );
+      // 모든 파트 점을 모아 convex hull 계산(글리프 좌표)
+      const allPts: [number, number][] = [];
+      for (const part of g.parts) for (const pt of part) allPts.push([pt[0], pt[1]]);
+      const hull = convexHull(allPts);
+      // 스케일 적용 + 모서리 chamfer(radius 8) → 글자끼리·바닥에 부드럽게 안착
+      const hullScaled = hull.map(([x, y]) => ({ x: x * SCALE, y: y * SCALE }));
+      const chamfered = Matter.Vertices.chamfer(hullScaled, 8, -1, 2, 14);
+      // hull(chamfer 후) 무게중심 → 렌더 회전 중심(=바디 중심)과 일치시킴(기울여도 잉크 안 어긋남)
+      const com = Matter.Vertices.centre(chamfered);
+      cRender[ch] = [com.x / SCALE, com.y / SCALE];
       const body = Matter.Bodies.fromVertices(
         START[ch].x,
         START[ch].y,
-        partSets,
-        // restitution 0.1(툭 얹히는 아주 약한 바운스), frictionStatic 0.8(딱딱한 정지 완화),
-        // frictionAir 0.012(공기 저항 → 낙하에 미세 감속감, 부드러움)
+        [chamfered],
+        // restitution 0.08(약한 바운스), frictionStatic 1.1(기운 채 걸려 멈춤), frictionAir 0.012(부드러운 낙하)
         { restitution: 0.08, friction: 0.9, frictionStatic: 1.1, frictionAir: 0.012, density: 0.001 },
         false,
+        0, // removeCollinear=0 → 정점을 단순화하지 않음 → 실제 무게중심이 위에서 구한 com 과 정확히 일치(회전 시 어긋남 방지)
       );
-      // slop 을 낮게(0.01) — 잉크끼리 파고드는 겹침을 시각적으로 안 보일 만큼 축소. 복합 바디는 parts 에도 적용.
-      body.slop = 0.01;
-      body.parts.forEach((p) => (p.slop = 0.01));
-      // 제각각 기울어 쏟아지게: 랜덤 초기 각도(±0.35rad≈±20°, 과하지 않게 → 서로 심하게 안 엉킴) + 약한 랜덤 각속도.
-      // 회전은 잠그지 않음(자유 회전 → 기울어진 채 걸려 멈춤).
+      body.slop = 0.02;
+      // 제각각 기울어 쏟아지게: 랜덤 초기 각도(±0.35rad≈±20°) + 약한 랜덤 각속도. 자유 회전.
       Matter.Body.setAngle(body, (Math.random() - 0.5) * 0.7);
       Matter.Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.2);
       bodies[ch] = body;
