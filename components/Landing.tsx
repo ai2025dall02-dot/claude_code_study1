@@ -284,14 +284,19 @@ export default function Landing() {
                   className={styles.postsTrack}
                   style={{ y: applyReveal ? listY : 0 }}
                 >
-                  {/* 리스트 stagger: 화면 중앙 근처(-40%)까지 올라오면 아래→위 순차 등장, once:true */}
+                  {/* 리스트 stagger: 화면 근처에 오면 아래→위 순차 등장.
+                      key={journalPage}: 페이지 전환 시 리마운트 → stagger 리빌이 새 페이지 항목에도 다시 실행되게
+                      함(안 그러면 부모 stagger 가 재오케스트레이션 안 돼 새 항목이 opacity 0 로 남음). 모바일은
+                      journalPage 가 0 고정이라 리마운트 없음(리빌 측정·동작 그대로). viewport 는 데스크톱 페이지
+                      전환(스크롤 위치 무관)에도 확실히 발동하도록 amount 기반으로. */}
                   <motion.div
+                    key={journalPage}
                     ref={postsInnerRef}
                     className={styles.posts}
                     variants={postGroup}
                     initial="hidden"
                     whileInView="show"
-                    viewport={{ once: true, margin: "0px 0px -40% 0px" }}
+                    viewport={{ once: true, amount: 0.1 }}
                   >
                     {visiblePosts.map((p) => (
                       <motion.a key={p.title} className={styles.post} href="#contact" variants={postItem}>
