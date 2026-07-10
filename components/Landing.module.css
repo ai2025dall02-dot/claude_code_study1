@@ -151,6 +151,48 @@
 }
 .col1 { margin-top: 14px; } /* 가운데 열 staggered 시작 — 상단 여백만 축소 (첫 카드 위) */
 .col2 { margin-top: 7px; }
+
+/* ── 라인업 페이지네이션 (데스크톱/노트북/태블릿) ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: clamp(2.2rem, 4vw, 3.4rem);
+}
+.pageNum,
+.pageArrow {
+  min-width: 2.2rem;
+  height: 2.2rem;
+  padding: 0 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #0c0c0c;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s, color 0.2s;
+}
+.pageNum:hover,
+.pageArrow:hover:not(:disabled) { border-color: rgba(0, 0, 0, 0.5); }
+.pageNum[data-active="true"] {
+  background: #0c0c0c;
+  border-color: #0c0c0c;
+  color: #f8f8f8;
+  cursor: default;
+}
+.pageArrow:disabled { opacity: 0.3; cursor: default; }
+.pageNum:focus-visible,
+.pageArrow:focus-visible { outline: 2px solid #0c0c0c; outline-offset: 2px; }
+@media (max-width: 767px) { /* 모바일: 페이지네이션 숨김(전체 한 흐름 노출) */
+  .pagination { display: none; }
+}
 .card {
   display: flex;
   flex-direction: column;

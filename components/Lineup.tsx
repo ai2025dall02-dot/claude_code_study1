@@ -14,7 +14,7 @@ import { films, type Film } from "@/data/films";
 import TypeTitle from "./TypeTitle";
 import styles from "./Landing.module.css";
 
-/* 라인업 작품에 사진 포스터 매핑 (public/posters-photo) */
+/* 라인업 작품에 사진 포스터 매핑 (public/posters-photo). 12편 유니크 — 페이지(6편)마다 사진이 겹치지 않게 배치. */
 const FILM_PHOTO: Record<string, string> = {
   afterimage: "/posters-photo/m1.jpg",
   north: "/posters-photo/m4.jpg",
@@ -22,6 +22,12 @@ const FILM_PHOTO: Record<string, string> = {
   salt: "/posters-photo/m8.jpg",
   winter: "/posters-photo/m6.jpg",
   reel: "/posters-photo/m2.jpg",
+  tide: "/posters-photo/m5.jpg",
+  orchard: "/posters-photo/m7.jpg",
+  static: "/posters-photo/m4.jpg",
+  dust: "/posters-photo/m8.jpg",
+  meridian: "/posters-photo/m3.jpg",
+  ember: "/posters-photo/m1.jpg",
 };
 
 /* 카드별 배치 설정 — mt: 카드별 추가 세로 여백(촘촘하게 0~60), ar: 높이(aspect)
@@ -41,8 +47,11 @@ const CONF = [
   { mt: 16, ar: "3 / 3.6" },
 ];
 
-/* 6편 데이터를 2회 반복해 12개로 노출 (key 충돌 방지 위해 인덱스 suffix) */
-const ITEMS = [...films, ...films];
+/* 12편 유니크 라인업 (중복 반복 제거 — films 자체가 12편) */
+const ITEMS = films;
+
+/* 페이지네이션: 데스크톱/노트북/태블릿에서만 노출. 페이지당 6편 → 2페이지. */
+const PAGE_SIZE = 6;
 
 /* 세로 흐름 masonry: 3개 열로 라운드로빈 분배 (각 열이 세로로 이어짐) */
 const COLS = 3;
@@ -68,6 +77,20 @@ export default function Lineup() {
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
   }, []);
+
+  // 페이지네이션(데스크톱/태블릿). 모바일은 페이지 없이 전체를 한 흐름으로 노출(패럴랙스만 정지).
+  const [page, setPage] = useState(0);
+  const pageCount = Math.ceil(ITEMS.length / PAGE_SIZE);
+  // 현재 페이지에 노출할 항목 (전역 인덱스 i 는 CONF·key 용으로 보존). 모바일이면 전체.
+  const indexed = ITEMS.map((f, i) => ({ f, i }));
+  const visible = isMobile ? indexed : indexed.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const goPage = (p: number) => {
+    const next = Math.max(0, Math.min(pageCount - 1, p));
+    if (next === page) return;
+    setPage(next);
+    // 리스트 상단으로 부드럽게 스크롤(선택) — 새 페이지가 화면 위에서 시작하도록.
+    requestAnimationFrame(() => sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
 
   // 패럴랙스용 — 섹션이 화면을 지나는 전체 진행도 (0: 하단 진입 ~ 1: 상단 이탈)
   // (원형 reveal 은 About 컴포넌트로 이동 — About 본문 기준으로 시작 시점을 잡기 위해)
@@ -97,10 +120,48 @@ export default function Lineup() {
               speed={COL_SPEED[c]}
               reduce={!!reduce}
               noParallax={isMobile}
-              items={ITEMS.map((f, i) => ({ f, i })).filter(({ i }) => i % COLS === c)}
+              // 현재 페이지 항목만 열에 분배(페이지 내 지역 인덱스로 라운드로빈 → 열 개수·패럴랙스 유지)
+              items={visible.filter((_, li) => li % COLS === c)}
             />
           ))}
         </div>
+
+        {/* 페이지네이션 — 데스크톱/노트북/태블릿에서만. 모바일(≤767)에서는 숨김(CSS + isMobile). */}
+        {!isMobile && pageCount > 1 && (
+          <nav className={styles.pagination} aria-label="라인업 페이지">
+            <button
+              type="button"
+              className={styles.pageArrow}
+              onClick={() => goPage(page - 1)}
+              disabled={page === 0}
+              aria-label="이전 페이지"
+            >
+              ←
+            </button>
+            {Array.from({ length: pageCount }, (_, p) => (
+              <button
+                key={p}
+                type="button"
+                className={styles.pageNum}
+                data-active={p === page}
+                aria-current={p === page ? "page" : undefined}
+                aria-label={`${p + 1}페이지`}
+                onClick={() => goPage(p)}
+              >
+                {p + 1}
+              </button>
+            ))}
+            <button
+              type="button"
+              className={styles.pageArrow}
+              onClick={() => goPage(page + 1)}
+              disabled={page === pageCount - 1}
+              aria-label="다음 페이지"
+            >
+              →
+            </button>
+          </nav>
+        )}
       </div>
     </section>
   );
