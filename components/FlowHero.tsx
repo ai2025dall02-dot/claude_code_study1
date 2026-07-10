@@ -53,13 +53,12 @@ function opacityAt(i: number, rot: number) {
 // viewBox = 물리 월드. 큰 글자(SCALE↑)가 좌하단을 시원하게 채우며 블럭처럼 쌓이게 함.
 // 세로로 길게(VBH) 잡아 화면 최상단 밖(네비 위)에서부터 낙하 구간을 확보 → 처음엔 안 보이다 천천히 떨어짐.
 const VBW = 1200;
-const VBH = 1250; // 세로로 길게: 상단은 낙하 구간(화면 위 밖), 하단은 착지·쌓임 영역
-const SCALE = 0.4; // 글리프(대문자 높이 ~688) → 월드 ~275. 과감하게 크게(단 쏟아져 쌓일 때 서로 엉킴 줄이려 약간 낮춤)
-const FLOOR_Y = VBH - 105; // 바닥선. 기울어 쌓인 글자는 모서리가 더 내려오므로 여유를 둠(랜덤 회전에도 하단 잘림 방지)
-// 좌·우 벽을 viewBox 안쪽으로 마진만큼 들여 세움 → 양 끝 글자가 바깥으로 넘어져도 벽에 막혀 잉크가 프레임 안에 남음.
-const WALL_MARGIN = 120; // 벽~viewBox 가장자리 여유(기울어진 hull 이 벽에 눌려도 잉크가 프레임 안에 남게 넉넉히)
-const LEFT_X = WALL_MARGIN; // 좌측 벽 안쪽면
-const RIGHT_X = 880; // 우측 경계를 덱 왼쪽에 맞춰 안쪽으로 → 글자가 덱 뒤로 안 넘어가고 좌하단에 모여 쌓임
+const VBH = 1320; // 세로로 길게: 상단은 낙하 구간(화면 위 밖), 하단은 착지·쌓임 영역. 큰 글자·바닥밀착 위해 살짝 키움
+const SCALE = 0.45; // 글리프(대문자 높이 ~688) → 월드 ~310. 조금 더 크게(비례 확대라 획 굵기 비율 유지). 너무 크면 서로 파묻혀 바닥에 박힘
+const FLOOR_Y = VBH - 12; // 바닥선을 viewBox 밑변 가까이 → 글자가 화면 밑변에 거의 밀착. 12 만 여유(착지 파고듦 흡수, 잘림 방지)
+// 좌·우 경계. LEFT_X 를 viewBox 왼쪽 끝에 거의 붙여 좌측 여백 제거. hull 이 벽에 막히고 잉크는 hull 안이라 안 잘림.
+const LEFT_X = 10; // 좌측 벽 안쪽면(화면 왼쪽 끝 거의 붙게)
+const RIGHT_X = 920; // 우측 경계 — 큰 글자가 좌하단에 다 담기게 살짝 넓힘
 const ORDER = ["M", "O", "V", "I", "E"] as const; // 렌더(z)·글자 순서(MOVIE)
 // 낙하 시작 위치(월드). y 아주 큰 음수 → 글자 전체가 화면 최상단(네비) 위 밖(처음엔 안 보임).
 // x: 아래줄(M·O·V)은 좌→우로 나란히, 윗줄(I·E)은 그 위에 얹히게 → 2줄 블럭 스택. 초기 x 겹침 없이 벌림.
@@ -74,9 +73,9 @@ const START: Record<string, { x: number; y: number }> = {
 };
 // 투입(낙하) 순서 — 거의 동시(STAGGER 짧음). 순서 자체는 큰 의미 없음.
 const DROP_ORDER = ["M", "O", "V", "E", "I"] as const;
-const STAGGER_MS = 150; // 글자 사이 낙하 간격 — 짧게(거의 동시 낙하 → 우르르) 하되 과한 엉킴은 줄이게 약간
+const STAGGER_MS = 300; // 글자 사이 낙하 간격 — 빠른 캐스케이드(우르르 느낌) 하되 앞 글자를 파묻어 바닥에 박히지 않게 벌림
 const FALL_DUR_GUESS = 26000; // 최대 시뮬 시간(ms) — 이후 프레임 고정
-const MAX_SPEED = 90; // 바디 최대 속도 — 중력 자연 가속은 살리되 공중 충돌 시 과하게 튕겨 흩어지지 않게 적당히
+const MAX_SPEED = 45; // 바디 최대 속도 — 중력 자연 가속 살리되 착지 충격(파고듦) 줄이려 낮춤
 const MAX_ANG = 1.0; // 바디 최대 각속도 — 크게 완화(자유로운 자연 회전 허용)
 
 // 볼록 껍질(Andrew's monotone chain) — 점들의 convex hull 을 순서대로 반환.
@@ -134,13 +133,13 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     const svg = svgRef.current;
     if (!svg) return;
 
-    // 충돌 해상도 상향(positionIterations 20·velocityIterations 16) → 안정적 안착
-    const engine = Matter.Engine.create({ positionIterations: 20, velocityIterations: 16 });
+    // 충돌 해상도 크게 상향(positionIterations 40·velocityIterations 24) → 바닥·벽 파고듦 최소화 → 바닥·좌측 밀착해도 안 잘림
+    const engine = Matter.Engine.create({ positionIterations: 40, velocityIterations: 24 });
     engine.gravity.y = 0.8; // 살짝 낮춰 체공↑ → 부드럽게 가속(뚝뚝 아님)
     const world = engine.world;
 
     // 정적 경계: 바닥·좌·우 — 두껍게(터널링 방지). slop 낮춰 겹침 허용치 축소.
-    const wall = { isStatic: true, friction: 0.9, restitution: 0, slop: 0.01 };
+    const wall = { isStatic: true, friction: 0.9, restitution: 0, slop: 0.005 };
     Matter.Composite.add(world, [
       Matter.Bodies.rectangle(VBW / 2, FLOOR_Y + 400, VBW * 4, 800, wall), // 바닥(윗면 = FLOOR_Y)
       Matter.Bodies.rectangle(LEFT_X - 400, 0, 800, VBH * 10, wall), // 좌측 벽(우측면 = LEFT_X)
@@ -157,9 +156,10 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
       const allPts: [number, number][] = [];
       for (const part of g.parts) for (const pt of part) allPts.push([pt[0], pt[1]]);
       const hull = convexHull(allPts);
-      // 스케일 적용 + 모서리 chamfer(radius 8) → 글자끼리·바닥에 부드럽게 안착
+      // 스케일 적용 + 모서리 chamfer(radius 3, 아주 살짝) → 부드러운 안착.
+      // radius 를 작게: chamfer 는 모서리를 안쪽으로 깎아 hull 이 잉크보다 작아지므로, 크면 벽·바닥에서 잉크가 삐져나가 잘림.
       const hullScaled = hull.map(([x, y]) => ({ x: x * SCALE, y: y * SCALE }));
-      const chamfered = Matter.Vertices.chamfer(hullScaled, 8, -1, 2, 14);
+      const chamfered = Matter.Vertices.chamfer(hullScaled, 2, -1, 2, 14);
       // hull(chamfer 후) 무게중심 → 렌더 회전 중심(=바디 중심)과 일치시킴(기울여도 잉크 안 어긋남)
       const com = Matter.Vertices.centre(chamfered);
       cRender[ch] = [com.x / SCALE, com.y / SCALE];
@@ -168,11 +168,11 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
         START[ch].y,
         [chamfered],
         // restitution 0.08(약한 바운스), frictionStatic 1.1(기운 채 걸려 멈춤), frictionAir 0.012(부드러운 낙하)
-        { restitution: 0.08, friction: 0.9, frictionStatic: 1.1, frictionAir: 0.012, density: 0.001 },
+        { restitution: 0.06, friction: 1.0, frictionStatic: 2, frictionAir: 0.012, density: 0.001 },
         false,
         0, // removeCollinear=0 → 정점을 단순화하지 않음 → 실제 무게중심이 위에서 구한 com 과 정확히 일치(회전 시 어긋남 방지)
       );
-      body.slop = 0.02;
+      body.slop = 0.005; // 아주 낮게 → 바닥·글자 파고듦 최소화(바닥 밀착해도 잉크 안 잘림)
       // 제각각 기울어 쏟아지게: 랜덤 초기 각도(±0.35rad≈±20°) + 약한 랜덤 각속도. 자유 회전.
       Matter.Body.setAngle(body, (Math.random() - 0.5) * 0.7);
       Matter.Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.2);
@@ -187,6 +187,41 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
         baseRefs.current[ch]?.setAttribute("transform", t);
         invertRefs.current[ch]?.setAttribute("transform", t);
       }
+    };
+    // 최종 프레임에서 더미 전체를 좌·하단 모서리에 딱 붙임(상대 배치 유지, 함께 평행이동).
+    // 착지 중 벽·바닥에 파고든 만큼(또는 여백)을 보정 → 여백 0·잘림 0 을 보장. 회전 중심(cRender)이 hull 중심과 같아
+    // 바디 정점(≈잉크)을 기준으로 옮기면 렌더 잉크도 정확히 프레임 안쪽 가장자리에 밀착.
+    const flushToCorner = () => {
+      // 실제 렌더 잉크의 좌·하단 한계를 계산(hull 정점은 곡선을 성기게 근사해 잉크가 더 튀어나옴 → getBBox 로 정확히).
+      let minX = Infinity;
+      let maxY = -Infinity;
+      for (const ch of ORDER) {
+        const el = baseRefs.current[ch];
+        const b = bodies[ch];
+        if (!el) continue;
+        const bb = el.getBBox(); // 글리프 좌표계의 tight 잉크 bbox(요소 transform 무관)
+        const c = cRender[ch];
+        const ca = Math.cos(b.angle);
+        const sa = Math.sin(b.angle);
+        const corners = [
+          [bb.x, bb.y],
+          [bb.x + bb.width, bb.y],
+          [bb.x + bb.width, bb.y + bb.height],
+          [bb.x, bb.y + bb.height],
+        ];
+        for (const [gx, gy] of corners) {
+          const sx = (gx - c[0]) * SCALE; // cRender 기준 scale
+          const sy = (gy - c[1]) * SCALE;
+          const wx = b.position.x + ca * sx - sa * sy; // pos + R(angle)·(scaled)
+          const wy = b.position.y + sa * sx + ca * sy;
+          if (wx < minX) minX = wx;
+          if (wy > maxY) maxY = wy;
+        }
+      }
+      if (!isFinite(minX)) return;
+      const dx = 4 - minX; // 가장 왼쪽 잉크 → x=4(화면 왼쪽 끝 밀착)
+      const dy = VBH - 4 - maxY; // 가장 아래 잉크 → viewBox 밑변 밀착
+      for (const ch of ORDER) Matter.Body.translate(bodies[ch], { x: dx, y: dy });
     };
     // 매 스텝 속도 클램프 — 빠른 바디의 터널링/폭발 방지(안정적 안착)
     const clampVel = () => {
@@ -213,6 +248,7 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
         Matter.Engine.update(engine, 1000 / 60);
         clampVel();
       }
+      flushToCorner();
       render();
     } else {
       // stagger 로 하나씩 월드에 투입(=하나씩 낙하). DROP_ORDER(왼→오) 순서로 왼쪽 글자에 기대며 안착.
@@ -253,6 +289,7 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
           still = maxV < 0.4 ? still + 1 : 0;
         }
         if ((addedCount >= ORDER.length && still > 45) || t - startT > FALL_DUR_GUESS) {
+          flushToCorner(); // 최종: 더미를 좌·하단에 딱 붙임(여백·잘림 제거)
           render();
           return; // 프레임 고정(정지)
         }
