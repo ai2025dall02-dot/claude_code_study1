@@ -56,7 +56,7 @@ function opacityAt(i: number, rot: number) {
 const VBW = 1200;
 const VBH = 1250; // 세로로 길게: 상단은 낙하 구간(화면 위 밖), 하단은 착지·쌓임 영역
 const SCALE = 0.44; // 글리프(대문자 높이 ~688) → 월드 ~303. 과감하게 키움(2줄로 쌓아 화면상 크게)
-const FLOOR_Y = VBH - 110; // 바닥선. 아래 110 여유 = 큰 글자 잉크가 충돌 헐보다 내려오는 만큼(하단 잘림 방지)
+const FLOOR_Y = VBH - 26; // 바닥선을 viewBox 밑변 가까이 → 글자가 뷰포트 하단에 거의 밀착(회전 잠금이라 잉크 오버행 작음). 26 만 여유(잘림 방지)
 // 좌·우 벽을 viewBox 안쪽으로 마진만큼 들여 세움 → 양 끝 글자가 바깥으로 넘어져도 벽에 막혀 잉크가 프레임 안에 남음.
 const WALL_MARGIN = 90; // 벽~viewBox 가장자리 여유(잉크 오버행 흡수)
 const LEFT_X = WALL_MARGIN; // 좌측 벽 안쪽면
@@ -77,8 +77,8 @@ const DROP_ORDER = ["M", "O", "V", "E", "I"] as const;
 const TILT: Record<string, number> = { M: -0.03, O: 0, V: 0.03, E: -0.02, I: 0 };
 const STAGGER_MS = 1200; // 글자 사이 낙하 간격 — 앞 글자 완전 안착 후 다음(특히 아래줄 안정 후 윗줄)
 const FALL_DUR_GUESS = 30000; // 최대 시뮬 시간(ms) — 시작이 높고 느려 낙하 길어짐. 이후 프레임 고정
-const MAX_SPEED = 15; // 바디 최대 속도 — 낮춰 천천히·부드럽게 착지(튐·미끄러짐·파고듦 최소화)
-const MAX_ANG = 0.26; // 바디 최대 각속도
+const MAX_SPEED = 140; // 바디 최대 속도 — 높게(터널링 방지용 안전선만). 중력으로 자연 가속(천천히→빨라짐, 뚝뚝 아님)
+const MAX_ANG = 0.26; // 바디 최대 각속도(회전 잠금이라 사실상 미사용)
 
 // 정지(=최종) 각 글자 transform 계산: 바디 중심(position)·회전(angle)에 맞춰 글리프 path 를 그림.
 // path 는 글리프 단위 → translate(pos) rotate(angle) scale(SCALE) translate(-무게중심).
@@ -116,7 +116,7 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     Matter.Common.setDecomp(decomp); // 오목 글자(M·V·E) 볼록 분해
     // 충돌 해상도 상향(positionIterations 20·velocityIterations 16) → 서로 파고드는 관통 해소
     const engine = Matter.Engine.create({ positionIterations: 20, velocityIterations: 16 });
-    engine.gravity.y = 1;
+    engine.gravity.y = 0.8; // 살짝 낮춰 체공↑ → 부드럽게 가속(뚝뚝 아님)
     const world = engine.world;
 
     // 정적 경계: 바닥·좌·우 — 두껍게(터널링 방지). slop 낮춰 겹침 허용치 축소.
@@ -131,13 +131,22 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     const bodies: Record<string, Matter.Body> = {};
     for (const ch of ORDER) {
       const g = GLYPH_DATA[ch];
-      // 사전 분해된 볼록 조각들을 vertexSets 로 → 복합 바디(모두 볼록이라 안정적으로 충돌)
-      const partSets = g.parts.map((part) => part.map(([x, y]) => ({ x: x * SCALE, y: y * SCALE })));
+      // 사전 분해된 볼록 조각들을 vertexSets 로 → 복합 바디(모두 볼록이라 안정적으로 충돌).
+      // 무게중심 기준으로 아주 살짝(1.012배≈2~3단위) 팽창 → 충돌 바디가 잉크보다 조금 커서
+      // 글자끼리 잉크는 안 겹치고 살짝 떨어져 안착(테트리스처럼). 렌더는 원본 path 라 모양 불변.
+      const cwx = g.c[0] * SCALE;
+      const cwy = g.c[1] * SCALE;
+      const DILATE = 1.012;
+      const partSets = g.parts.map((part) =>
+        part.map(([x, y]) => ({ x: cwx + (x * SCALE - cwx) * DILATE, y: cwy + (y * SCALE - cwy) * DILATE })),
+      );
       const body = Matter.Bodies.fromVertices(
         START[ch].x,
         START[ch].y,
         partSets,
-        { restitution: 0, friction: 0.95, frictionStatic: 1, density: 0.001 },
+        // restitution 0.1(툭 얹히는 아주 약한 바운스), frictionStatic 0.8(딱딱한 정지 완화),
+        // frictionAir 0.012(공기 저항 → 낙하에 미세 감속감, 부드러움)
+        { restitution: 0.1, friction: 0.9, frictionStatic: 0.8, frictionAir: 0.012, density: 0.001 },
         false,
       );
       // slop 을 낮게(0.01) — 잉크끼리 파고드는 겹침을 시각적으로 안 보일 만큼 축소. 복합 바디는 parts 에도 적용.
@@ -201,10 +210,24 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
           }, i * STAGGER_MS),
         );
       });
+      // 실제 경과시간 기반 고정 스텝(accumulator) → 프레임 드롭에도 물리는 일정 속도(부드러움, 안정성 유지).
+      const STEP = 1000 / 60;
+      let acc = 0;
+      let lastT = 0;
       const loop = (t: number) => {
         if (!startT) startT = t;
-        Matter.Engine.update(engine, 1000 / 60);
-        clampVel();
+        if (!lastT) lastT = t;
+        let frame = t - lastT;
+        lastT = t;
+        if (frame > 100) frame = 100; // 탭 비활성 후 폭주 방지(clamp)
+        acc += frame;
+        let steps = 0;
+        while (acc >= STEP && steps < 5) {
+          Matter.Engine.update(engine, STEP);
+          clampVel();
+          acc -= STEP;
+          steps++;
+        }
         render();
         // 전부 투입 후 정지(sleeping 근사)면 멈춰 최종 프레임 고정(미세 진동 방지)
         if (addedCount >= ORDER.length) {
@@ -213,7 +236,7 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
             const b = bodies[ch];
             maxV = Math.max(maxV, b.speed, b.angularSpeed * 30);
           }
-          still = maxV < 0.35 ? still + 1 : 0;
+          still = maxV < 0.4 ? still + 1 : 0;
         }
         if ((addedCount >= ORDER.length && still > 45) || t - startT > FALL_DUR_GUESS) {
           render();
