@@ -14,20 +14,21 @@ import { films, type Film } from "@/data/films";
 import TypeTitle from "./TypeTitle";
 import styles from "./Landing.module.css";
 
-/* 라인업 작품에 사진 포스터 매핑 (public/posters-photo). 12편 유니크 — 페이지(6편)마다 사진이 겹치지 않게 배치. */
+/* 라인업 작품에 사진 포스터 매핑 (public/posters-photo). 12편 모두 lineup_1~6 중 하나를 고정 사용.
+   앞 6편은 지정 이미지(lineup_1~6), 나머지 6편은 각 열에서 이미지가 겹치지 않게 고정 배정. */
 const FILM_PHOTO: Record<string, string> = {
-  afterimage: "/posters-photo/m1.jpg",
-  north: "/posters-photo/m4.jpg",
-  exile: "/posters-photo/m3.jpg",
-  salt: "/posters-photo/m8.jpg",
-  winter: "/posters-photo/m6.jpg",
-  reel: "/posters-photo/m2.jpg",
-  tide: "/posters-photo/m5.jpg",
-  orchard: "/posters-photo/m7.jpg",
-  static: "/posters-photo/m4.jpg",
-  dust: "/posters-photo/m8.jpg",
-  meridian: "/posters-photo/m3.jpg",
-  ember: "/posters-photo/m1.jpg",
+  afterimage: "/posters-photo/lineup_1.jpg",
+  north: "/posters-photo/lineup_2.jpg",
+  exile: "/posters-photo/lineup_3.jpg",
+  salt: "/posters-photo/lineup_4.jpg",
+  winter: "/posters-photo/lineup_5.jpg",
+  reel: "/posters-photo/lineup_6.jpg",
+  tide: "/posters-photo/lineup_2.jpg",
+  orchard: "/posters-photo/lineup_3.jpg",
+  static: "/posters-photo/lineup_1.jpg",
+  dust: "/posters-photo/lineup_5.jpg",
+  meridian: "/posters-photo/lineup_6.jpg",
+  ember: "/posters-photo/lineup_4.jpg",
 };
 
 /* 카드별 배치 설정 — mt: 카드별 추가 세로 여백(촘촘하게 0~60), ar: 높이(aspect)
@@ -220,7 +221,7 @@ function LineupCard({
     <motion.a ref={ref} className={styles.card} href="#contact" style={{ marginTop, opacity }}>
       <div className={styles.card__media} style={{ aspectRatio: conf.ar }}>
         <Image
-          src={FILM_PHOTO[f.id] ?? "/posters-photo/m1.jpg"}
+          src={FILM_PHOTO[f.id] ?? "/posters-photo/lineup_1.jpg"}
           alt={`${f.title} 스틸`}
           fill
           sizes="(max-width: 600px) 50vw, (max-width: 980px) 50vw, 33vw"
