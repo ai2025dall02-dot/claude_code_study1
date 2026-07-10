@@ -51,35 +51,34 @@ function opacityAt(i: number, rot: number) {
 // 실제 글리프 아웃라인(Liberation Sans Bold, Arial 메트릭 호환)을 다각형 바디로 만들어 위에서 떨어뜨리고
 // 좌하단 바닥·좌우 벽에 부딪혀 쌓이며 기대게 함. 렌더는 매 틱 바디 position·angle 로 <path> transform 갱신.
 // 좌표계: viewBox(=물리 월드) 단위. 글리프 데이터는 fontSize 1000(위쪽 음수) → SCALE 로 축소.
-// viewBox = 물리 월드. 5글자가 "겹침 없이 다 보이게" — 세로로 쌓아 넘어지지 않게, 가로로 넓은 한 줄에
-// 좌→우로 나란히 떨어뜨려 서로 살짝 기대며 안착시킴(스택→토플→겹침 방지). 총 글자폭이 다 담기게 넓게.
-const VBW = 1140; // 5글자가 서로 맞닿아 한 줄로 설 수 있는 실제 폭(≈915)+마진. 좁으면 강제로 겹쳐 불안정 → 넉넉히.
-const VBH = 560;
-const SCALE = 0.3; // 글리프(대문자 높이 ~688) → 월드 ~206. 한 줄에 5글자 다 들어가게 축소
-const FLOOR_Y = VBH - 95; // 바닥선. 아래 95 여유 = 잉크가 충돌 헐(hull)보다 살짝 내려오는 만큼(하단 잘림 방지)
+// viewBox = 물리 월드. 큰 글자(SCALE↑)가 좌하단을 시원하게 채우며 블럭처럼 쌓이게 함.
+// 세로로 길게(VBH) 잡아 화면 최상단 밖(네비 위)에서부터 낙하 구간을 확보 → 처음엔 안 보이다 천천히 떨어짐.
+const VBW = 1200;
+const VBH = 1250; // 세로로 길게: 상단은 낙하 구간(화면 위 밖), 하단은 착지·쌓임 영역
+const SCALE = 0.44; // 글리프(대문자 높이 ~688) → 월드 ~303. 과감하게 키움(2줄로 쌓아 화면상 크게)
+const FLOOR_Y = VBH - 110; // 바닥선. 아래 110 여유 = 큰 글자 잉크가 충돌 헐보다 내려오는 만큼(하단 잘림 방지)
 // 좌·우 벽을 viewBox 안쪽으로 마진만큼 들여 세움 → 양 끝 글자가 바깥으로 넘어져도 벽에 막혀 잉크가 프레임 안에 남음.
-const WALL_MARGIN = 100; // 벽~viewBox 가장자리 여유(잉크 오버행 흡수 — 기울어진 E·M 도 안 잘리게 넉넉히)
+const WALL_MARGIN = 90; // 벽~viewBox 가장자리 여유(잉크 오버행 흡수)
 const LEFT_X = WALL_MARGIN; // 좌측 벽 안쪽면
 const RIGHT_X = VBW - WALL_MARGIN; // 우측 경계 안쪽면
 const ORDER = ["M", "O", "V", "I", "E"] as const; // 렌더(z)·글자 순서(MOVIE)
-// 낙하 위치(월드). x = 최종 열 중심을 인접 글자와 "맞닿게" 촘촘히 배치 → 서로 기대 지지(뾰족한 V 도 안 넘어짐).
-// 좌→우 순서로 떨궈(DROP_ORDER=ORDER) 왼쪽 글자에 차례로 기댐. y 음수 → viewBox 위 밖(overflow:hidden 로 클립).
+// 낙하 시작 위치(월드). y 아주 큰 음수 → 글자 전체가 화면 최상단(네비) 위 밖(처음엔 안 보임).
+// x: 아래줄(M·O·V)은 좌→우로 나란히, 윗줄(I·E)은 그 위에 얹히게 → 2줄 블럭 스택. 초기 x 겹침 없이 벌림.
 const START: Record<string, { x: number; y: number }> = {
-  M: { x: 230, y: -140 },
-  O: { x: 452, y: -150 },
-  V: { x: 661, y: -160 },
-  I: { x: 797, y: -150 },
-  E: { x: 921, y: -170 },
+  M: { x: 290, y: -900 }, // 아래줄 좌
+  O: { x: 570, y: -1000 }, // 아래줄 중
+  V: { x: 850, y: -1120 }, // 아래줄 우
+  E: { x: 470, y: -1050 }, // 윗줄 좌 — 아래줄(M·O) 위에 얹힘(좌측 흰 공간에 보이게)
+  I: { x: 730, y: -980 }, // 윗줄 우 — 아래줄(V) 위에 얹힘
 };
-// 투입(낙하) 순서 = 읽는 순서(왼→오). 각 글자가 이미 안착한 왼쪽 글자에 기대며 안착(뾰족한 V·얇은 I 도 이웃 지지로 섬).
-const DROP_ORDER = ["M", "O", "V", "I", "E"] as const;
-// 낙하 전 미리 부여할 고정 기울기(rad, 음수=왼쪽으로 기욺). 무작위 X → 결정론적.
-// 각 글자를 살짝 왼쪽으로 기운 채(≈-5°) 촘촘히 떨궈, 낙하 후 왼쪽 이웃에 곧바로 걸려 그 각도로 안착(뾰족한 V 도 안 넘어짐).
-const TILT: Record<string, number> = { M: -0.05, O: -0.05, V: -0.16, I: 0, E: -0.05 };
-const STAGGER_MS = 700; // 글자 사이 낙하 간격 — 앞 글자 완전 안착 후 다음이 옆에 기대게
-const FALL_DUR_GUESS = 14000; // 최대 시뮬 시간(ms) — 이후 프레임 고정
-const MAX_SPEED = 18; // 바디 최대 속도 — 낮춰서 착지 충격·튐·미끄러짐 최소화(제자리 안착)
-const MAX_ANG = 0.3; // 바디 최대 각속도
+// 투입(낙하) 순서: 아래줄 3개(M·O·V) 먼저 완전 안착 → 윗줄 2개(E·I) 그 위에 얹혀 2줄 블럭.
+const DROP_ORDER = ["M", "O", "V", "E", "I"] as const;
+// 고정 기울기(rad). 회전 잠금(관성=∞)이라 이 각도로 계속 유지됨. 0 = 수직(깔끔한 블럭). 살짝만 줘 블럭 느낌.
+const TILT: Record<string, number> = { M: -0.03, O: 0, V: 0.03, E: -0.02, I: 0 };
+const STAGGER_MS = 1200; // 글자 사이 낙하 간격 — 앞 글자 완전 안착 후 다음(특히 아래줄 안정 후 윗줄)
+const FALL_DUR_GUESS = 30000; // 최대 시뮬 시간(ms) — 시작이 높고 느려 낙하 길어짐. 이후 프레임 고정
+const MAX_SPEED = 15; // 바디 최대 속도 — 낮춰 천천히·부드럽게 착지(튐·미끄러짐·파고듦 최소화)
+const MAX_ANG = 0.26; // 바디 최대 각속도
 
 // 정지(=최종) 각 글자 transform 계산: 바디 중심(position)·회전(angle)에 맞춰 글리프 path 를 그림.
 // path 는 글리프 단위 → translate(pos) rotate(angle) scale(SCALE) translate(-무게중심).
@@ -144,8 +143,10 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
       // slop 을 낮게(0.01) — 잉크끼리 파고드는 겹침을 시각적으로 안 보일 만큼 축소. 복합 바디는 parts 에도 적용.
       body.slop = 0.01;
       body.parts.forEach((p) => (p.slop = 0.01));
-      Matter.Body.setAngle(body, TILT[ch]); // 미리 살짝 기울여 낙하 → 이웃에 걸려 그 각도로 안착(결정론적·안정)
+      Matter.Body.setAngle(body, TILT[ch]); // 고정 기울기(대개 0=수직)
       Matter.Body.setAngularVelocity(body, 0);
+      // 회전 잠금(관성=∞) → 낙하·충돌해도 절대 안 넘어지고 수직 유지. 뾰족한 V·얇은 I 도 서서 안착 → 깔끔한 블럭 스택.
+      Matter.Body.setInertia(body, Infinity);
       bodies[ch] = body;
     }
 
@@ -176,9 +177,16 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     let startT = 0;
 
     if (reduce) {
-      // 물리 없이 즉시 최종: 전부 넣고(약간 x 흩뿌려) 빠르게 안정화 후 1회 렌더
-      for (const ch of ORDER) Matter.Composite.add(world, bodies[ch]);
-      for (let i = 0; i < 1200; i++) {
+      // 애니메이션 없이 즉시 최종 배치. 단 애니 결과(2줄 블럭)와 동일하게 DROP_ORDER 로 하나씩 넣고 안정화 반복
+      // (동시 투입하면 한 줄로 뭉쳐 겹침 → 순차 낙하를 동기적으로 재현).
+      for (const ch of DROP_ORDER) {
+        Matter.Composite.add(world, bodies[ch]);
+        for (let i = 0; i < 320; i++) {
+          Matter.Engine.update(engine, 1000 / 60);
+          clampVel();
+        }
+      }
+      for (let i = 0; i < 200; i++) {
         Matter.Engine.update(engine, 1000 / 60);
         clampVel();
       }

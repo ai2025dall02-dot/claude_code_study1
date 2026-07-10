@@ -62,10 +62,11 @@
   left: 0;
   bottom: 0;
   z-index: 2;
-  /* 크기만 화면 비율로. viewBox 비율은 height:auto 로 유지. */
-  width: clamp(360px, 66vw, 940px);
+  /* 크기만 화면 비율로. viewBox 비율(세로로 긴)은 height:auto 로 유지 → 요소가 뷰포트보다 높아
+     상단(낙하 구간)이 화면 최상단(네비) 위로 넘어감. */
+  width: clamp(420px, 74vw, 1040px);
   height: auto;
-  overflow: hidden; /* 낙하 전/투입 전 글자는 viewBox 위 밖(y<0)에 있어 클립됨 → 상단 미리 보임 제거 */
+  overflow: hidden; /* viewBox 위 밖(y<0, =화면 최상단 밖)의 낙하 전 글자는 클립됨 → 처음엔 안 보이다 위에서 떨어짐 */
   user-select: none;
   cursor: default;
   pointer-events: none; /* 빈 SVG 영역은 통과 — 글자(획)만 이벤트 받음 */
@@ -183,5 +184,5 @@
   .deck { left: 50%; right: auto; top: 30%; transform: scale(0.5); transform-origin: center; }
   .deckTilt { --scale: 0.72; } /* 태블릿(0.52) 상속 방지 — 기준 스케일 복귀 후 .deck scale 로 축소 */
   /* 워드마크: 좁은 화면에선 폭만 축소(viewBox 비율·좌하단 정렬 유지) */
-  .wordmark { width: clamp(240px, 78vw, 420px); }
+  .wordmark { width: clamp(280px, 88vw, 520px); }
 }
