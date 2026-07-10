@@ -55,39 +55,39 @@ function opacityAt(i: number, rot: number) {
 // 세로로 길게(VBH) 잡아 화면 최상단 밖(네비 위)에서부터 낙하 구간을 확보 → 처음엔 안 보이다 천천히 떨어짐.
 const VBW = 1200;
 const VBH = 1250; // 세로로 길게: 상단은 낙하 구간(화면 위 밖), 하단은 착지·쌓임 영역
-const SCALE = 0.44; // 글리프(대문자 높이 ~688) → 월드 ~303. 과감하게 키움(2줄로 쌓아 화면상 크게)
-const FLOOR_Y = VBH - 26; // 바닥선을 viewBox 밑변 가까이 → 글자가 뷰포트 하단에 거의 밀착(회전 잠금이라 잉크 오버행 작음). 26 만 여유(잘림 방지)
+const SCALE = 0.4; // 글리프(대문자 높이 ~688) → 월드 ~275. 과감하게 크게(단 쏟아져 쌓일 때 서로 엉킴 줄이려 약간 낮춤)
+const FLOOR_Y = VBH - 105; // 바닥선. 기울어 쌓인 글자는 모서리가 더 내려오므로 여유를 둠(랜덤 회전에도 하단 잘림 방지)
 // 좌·우 벽을 viewBox 안쪽으로 마진만큼 들여 세움 → 양 끝 글자가 바깥으로 넘어져도 벽에 막혀 잉크가 프레임 안에 남음.
 const WALL_MARGIN = 90; // 벽~viewBox 가장자리 여유(잉크 오버행 흡수)
 const LEFT_X = WALL_MARGIN; // 좌측 벽 안쪽면
-const RIGHT_X = VBW - WALL_MARGIN; // 우측 경계 안쪽면
+const RIGHT_X = 880; // 우측 경계를 덱 왼쪽에 맞춰 안쪽으로 → 글자가 덱 뒤로 안 넘어가고 좌하단에 모여 쌓임
 const ORDER = ["M", "O", "V", "I", "E"] as const; // 렌더(z)·글자 순서(MOVIE)
 // 낙하 시작 위치(월드). y 아주 큰 음수 → 글자 전체가 화면 최상단(네비) 위 밖(처음엔 안 보임).
 // x: 아래줄(M·O·V)은 좌→우로 나란히, 윗줄(I·E)은 그 위에 얹히게 → 2줄 블럭 스택. 초기 x 겹침 없이 벌림.
+// 시작 위치: x 를 좌측 영역에 흩뿌리고 y 는 서로 살짝만 다르게(거의 같은 높이) → 거의 동시에 우르르 쏟아져
+// 공중에서 서로 부딪히며 제각각 회전한 채 좌하단에 테트리스처럼 쌓임. 전부 화면 최상단(네비) 위 밖에서 시작.
 const START: Record<string, { x: number; y: number }> = {
-  M: { x: 290, y: -900 }, // 아래줄 좌
-  O: { x: 570, y: -1000 }, // 아래줄 중
-  V: { x: 850, y: -1120 }, // 아래줄 우
-  E: { x: 470, y: -1050 }, // 윗줄 좌 — 아래줄(M·O) 위에 얹힘(좌측 흰 공간에 보이게)
-  I: { x: 730, y: -980 }, // 윗줄 우 — 아래줄(V) 위에 얹힘
+  M: { x: 250, y: -1120 },
+  O: { x: 700, y: -1040 },
+  V: { x: 400, y: -1260 },
+  I: { x: 560, y: -1100 },
+  E: { x: 850, y: -1190 },
 };
-// 투입(낙하) 순서: 아래줄 3개(M·O·V) 먼저 완전 안착 → 윗줄 2개(E·I) 그 위에 얹혀 2줄 블럭.
+// 투입(낙하) 순서 — 거의 동시(STAGGER 짧음). 순서 자체는 큰 의미 없음.
 const DROP_ORDER = ["M", "O", "V", "E", "I"] as const;
-// 고정 기울기(rad). 회전 잠금(관성=∞)이라 이 각도로 계속 유지됨. 0 = 수직(깔끔한 블럭). 살짝만 줘 블럭 느낌.
-const TILT: Record<string, number> = { M: -0.03, O: 0, V: 0.03, E: -0.02, I: 0 };
-const STAGGER_MS = 1200; // 글자 사이 낙하 간격 — 앞 글자 완전 안착 후 다음(특히 아래줄 안정 후 윗줄)
-const FALL_DUR_GUESS = 30000; // 최대 시뮬 시간(ms) — 시작이 높고 느려 낙하 길어짐. 이후 프레임 고정
-const MAX_SPEED = 140; // 바디 최대 속도 — 높게(터널링 방지용 안전선만). 중력으로 자연 가속(천천히→빨라짐, 뚝뚝 아님)
-const MAX_ANG = 0.26; // 바디 최대 각속도(회전 잠금이라 사실상 미사용)
+const STAGGER_MS = 150; // 글자 사이 낙하 간격 — 짧게(거의 동시 낙하 → 우르르) 하되 과한 엉킴은 줄이게 약간
+const FALL_DUR_GUESS = 26000; // 최대 시뮬 시간(ms) — 이후 프레임 고정
+const MAX_SPEED = 90; // 바디 최대 속도 — 중력 자연 가속은 살리되 공중 충돌 시 과하게 튕겨 흩어지지 않게 적당히
+const MAX_ANG = 1.0; // 바디 최대 각속도 — 크게 완화(자유로운 자연 회전 허용)
 
 // 정지(=최종) 각 글자 transform 계산: 바디 중심(position)·회전(angle)에 맞춰 글리프 path 를 그림.
 // path 는 글리프 단위 → translate(pos) rotate(angle) scale(SCALE) translate(-무게중심).
-function bodyTransform(px: number, py: number, angleRad: number, ch: string) {
-  const c = GLYPH_DATA[ch].c;
-  return `translate(${px.toFixed(2)} ${py.toFixed(2)}) rotate(${((angleRad * 180) / Math.PI).toFixed(2)}) scale(${SCALE}) translate(${-c[0]} ${-c[1]})`;
+// 회전 중심(cx,cy)은 "바디의 면적 중심"과 반드시 같아야 함(기울여도 잉크가 바디에서 안 어긋남).
+function bodyTransform(px: number, py: number, angleRad: number, cx: number, cy: number) {
+  return `translate(${px.toFixed(2)} ${py.toFixed(2)}) rotate(${((angleRad * 180) / Math.PI).toFixed(2)}) scale(${SCALE}) translate(${(-cx).toFixed(2)} ${(-cy).toFixed(2)})`;
 }
-// 낙하 전 초기 transform(시작 위치 = 화면 위 밖) → 첫 페인트에 큰 글자 안 튀게.
-const initialTransform = (ch: string) => bodyTransform(START[ch].x, START[ch].y, 0, ch);
+// 낙하 전 초기 transform(시작 위치 = 화면 위 밖, 각도 0) → 첫 페인트에 큰 글자 안 튀게.
+const initialTransform = (ch: string) => bodyTransform(START[ch].x, START[ch].y, 0, GLYPH_DATA[ch].c[0], GLYPH_DATA[ch].c[1]);
 
 function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -129,16 +129,39 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
 
     // 글자 바디(실제 아웃라인) — 낙하 중 튐 최소화(restitution 낮게), 마찰로 안착 안정화
     const bodies: Record<string, Matter.Body> = {};
+    const cRender: Record<string, [number, number]> = {}; // 글자별 면적 중심(글리프 좌표) = 바디 회전 중심
     for (const ch of ORDER) {
       const g = GLYPH_DATA[ch];
-      // 사전 분해된 볼록 조각들을 vertexSets 로 → 복합 바디(모두 볼록이라 안정적으로 충돌).
-      // 무게중심 기준으로 아주 살짝(1.012배≈2~3단위) 팽창 → 충돌 바디가 잉크보다 조금 커서
-      // 글자끼리 잉크는 안 겹치고 살짝 떨어져 안착(테트리스처럼). 렌더는 원본 path 라 모양 불변.
-      const cwx = g.c[0] * SCALE;
-      const cwy = g.c[1] * SCALE;
+      // 파트(볼록 조각)들의 면적 가중 중심을 직접 계산 → 이 점을 회전 중심으로 삼아야 기울여도 잉크가 바디와 정확히 겹침.
+      let aSum = 0;
+      let cxSum = 0;
+      let cySum = 0;
+      for (const part of g.parts) {
+        let a = 0;
+        let cx = 0;
+        let cy = 0;
+        for (let i = 0; i < part.length; i++) {
+          const [x0, y0] = part[i];
+          const [x1, y1] = part[(i + 1) % part.length];
+          const cr = x0 * y1 - x1 * y0;
+          a += cr;
+          cx += (x0 + x1) * cr;
+          cy += (y0 + y1) * cr;
+        }
+        a *= 0.5;
+        if (Math.abs(a) < 1e-6) continue;
+        const w = Math.abs(a);
+        aSum += w;
+        cxSum += (cx / (6 * a)) * w;
+        cySum += (cy / (6 * a)) * w;
+      }
+      const cx0 = aSum ? cxSum / aSum : g.c[0];
+      const cy0 = aSum ? cySum / aSum : g.c[1];
+      cRender[ch] = [cx0, cy0];
+      // 면적 중심 기준으로 아주 살짝(1.012배≈2~3단위) 팽창(중심 보존) → 잉크끼리 안 겹치고 렌더 정렬 유지.
       const DILATE = 1.012;
       const partSets = g.parts.map((part) =>
-        part.map(([x, y]) => ({ x: cwx + (x * SCALE - cwx) * DILATE, y: cwy + (y * SCALE - cwy) * DILATE })),
+        part.map(([x, y]) => ({ x: (cx0 + (x - cx0) * DILATE) * SCALE, y: (cy0 + (y - cy0) * DILATE) * SCALE })),
       );
       const body = Matter.Bodies.fromVertices(
         START[ch].x,
@@ -146,23 +169,24 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
         partSets,
         // restitution 0.1(툭 얹히는 아주 약한 바운스), frictionStatic 0.8(딱딱한 정지 완화),
         // frictionAir 0.012(공기 저항 → 낙하에 미세 감속감, 부드러움)
-        { restitution: 0.1, friction: 0.9, frictionStatic: 0.8, frictionAir: 0.012, density: 0.001 },
+        { restitution: 0.08, friction: 0.9, frictionStatic: 1.1, frictionAir: 0.012, density: 0.001 },
         false,
       );
       // slop 을 낮게(0.01) — 잉크끼리 파고드는 겹침을 시각적으로 안 보일 만큼 축소. 복합 바디는 parts 에도 적용.
       body.slop = 0.01;
       body.parts.forEach((p) => (p.slop = 0.01));
-      Matter.Body.setAngle(body, TILT[ch]); // 고정 기울기(대개 0=수직)
-      Matter.Body.setAngularVelocity(body, 0);
-      // 회전 잠금(관성=∞) → 낙하·충돌해도 절대 안 넘어지고 수직 유지. 뾰족한 V·얇은 I 도 서서 안착 → 깔끔한 블럭 스택.
-      Matter.Body.setInertia(body, Infinity);
+      // 제각각 기울어 쏟아지게: 랜덤 초기 각도(±0.35rad≈±20°, 과하지 않게 → 서로 심하게 안 엉킴) + 약한 랜덤 각속도.
+      // 회전은 잠그지 않음(자유 회전 → 기울어진 채 걸려 멈춤).
+      Matter.Body.setAngle(body, (Math.random() - 0.5) * 0.7);
+      Matter.Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.2);
       bodies[ch] = body;
     }
 
     const render = () => {
       for (const ch of ORDER) {
         const b = bodies[ch];
-        const t = bodyTransform(b.position.x, b.position.y, b.angle, ch);
+        const c = cRender[ch];
+        const t = bodyTransform(b.position.x, b.position.y, b.angle, c[0], c[1]);
         baseRefs.current[ch]?.setAttribute("transform", t);
         invertRefs.current[ch]?.setAttribute("transform", t);
       }
@@ -186,16 +210,9 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
     let startT = 0;
 
     if (reduce) {
-      // 애니메이션 없이 즉시 최종 배치. 단 애니 결과(2줄 블럭)와 동일하게 DROP_ORDER 로 하나씩 넣고 안정화 반복
-      // (동시 투입하면 한 줄로 뭉쳐 겹침 → 순차 낙하를 동기적으로 재현).
-      for (const ch of DROP_ORDER) {
-        Matter.Composite.add(world, bodies[ch]);
-        for (let i = 0; i < 320; i++) {
-          Matter.Engine.update(engine, 1000 / 60);
-          clampVel();
-        }
-      }
-      for (let i = 0; i < 200; i++) {
+      // 애니메이션 없이 즉시 최종 배치. 애니와 동일하게 거의 동시 투입 → 제각각 기울어 쌓인 상태로 안정화.
+      for (const ch of ORDER) Matter.Composite.add(world, bodies[ch]);
+      for (let i = 0; i < 1800; i++) {
         Matter.Engine.update(engine, 1000 / 60);
         clampVel();
       }
