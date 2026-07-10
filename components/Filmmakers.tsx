@@ -27,8 +27,9 @@ const MAKER_PHOTO: Record<string, string> = {
   reel: "/posters-photo/filmmaker_6.jpg", // 감독 6 · Yuki Tanaka (.jpg)
 };
 
-/* 감독 데이터 — films 에서 파생 (사진 + 이름 + 필모/정보) */
-const MAKERS = films.map((f) => ({
+/* 감독 데이터 — films 앞 6편에서 파생(감독 6명 · 전용 사진 filmmaker_1~6 과 1:1).
+   films 는 12편이지만 감독은 6명(각 2편)이므로, 감독 섹션은 유니크한 6명만 노출한다. */
+const MAKERS = films.slice(0, 6).map((f) => ({
   id: f.id,
   index: f.index,
   name: f.director,

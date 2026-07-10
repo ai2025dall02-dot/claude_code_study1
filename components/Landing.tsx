@@ -29,6 +29,9 @@ const JOURNAL = [
   { date: "2024.01.22", cat: "소식", title: "필름 누벨, 로테르담영화제 세일즈 부스 참가" },
 ];
 
+/* 저널 페이지네이션(데스크톱/노트북/태블릿 전용). 페이지당 4개 → 2페이지. 모바일은 페이지 없이 리빌로 전체 노출. */
+const JOURNAL_PAGE_SIZE = 4;
+
 /* 가로 블라인드 슬랫 1개. 훅 규칙 준수를 위해 useTransform 을 슬랫 컴포넌트 내부에서 호출
    (부모 map 안에서 직접 useTransform 하면 훅 규칙 위반).
    밝은 JOURNAL 위에서 검은 슬랫이 "차오르며 덮는" 방향(scaleY 0→1), 아래→위 순차.
@@ -116,6 +119,14 @@ export default function Landing() {
     return () => mq.removeEventListener("change", on);
   }, []);
 
+  // 저널 페이지네이션: 데스크톱/태블릿만 현재 페이지 4개 슬라이스. 모바일은 전체(리빌로 노출) → 리빌 로직과 충돌 없음.
+  const [journalPage, setJournalPage] = useState(0);
+  const journalPageCount = Math.ceil(JOURNAL.length / JOURNAL_PAGE_SIZE);
+  const visiblePosts = isMobile
+    ? JOURNAL
+    : JOURNAL.slice(journalPage * JOURNAL_PAGE_SIZE, (journalPage + 1) * JOURNAL_PAGE_SIZE);
+  const goJournalPage = (p: number) => setJournalPage(Math.max(0, Math.min(journalPageCount - 1, p)));
+
   // 리스트 리빌 측정: 5개까지의 창 높이(winHeight)와, 숨은 3개를 끌어올릴 거리(revealDistance).
   // .posts 그리드의 6번째 자식 상단(=5개 높이)을 창으로, 전체높이-창 을 이동거리로 사용(리사이즈 시 재측정).
   const postsInnerRef = useRef<HTMLDivElement>(null);
@@ -134,7 +145,8 @@ export default function Landing() {
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
-  }, []);
+    // isMobile 전환 시 노출 항목 수(데스크톱 4 ↔ 모바일 8)가 바뀌므로 재측정(모바일 리빌 창 높이 정확히).
+  }, [isMobile]);
 
   // 모바일에서만 리빌 적용(reduce 접근성 폴백 제외). 데스크탑은 y:0·마스크 미표시로 현행 유지.
   const applyReveal = !reduce && isMobile;
@@ -276,7 +288,7 @@ export default function Landing() {
                     whileInView="show"
                     viewport={{ once: true, margin: "0px 0px -40% 0px" }}
                   >
-                    {JOURNAL.map((p) => (
+                    {visiblePosts.map((p) => (
                       <motion.a key={p.title} className={styles.post} href="#contact" variants={postItem}>
                         <span className={styles.post__date}>{p.date}</span>
                         <span>
@@ -294,6 +306,43 @@ export default function Landing() {
                   style={{ opacity: applyReveal ? maskOpacity : 0 }}
                 />
               </div>
+
+              {/* 저널 페이지네이션 — 데스크톱/노트북/태블릿에서만(모바일은 리빌로 전체 노출 → 숨김: isMobile + CSS). */}
+              {!isMobile && journalPageCount > 1 && (
+                <nav className={styles.pagination} aria-label="저널 페이지">
+                  <button
+                    type="button"
+                    className={styles.pageArrow}
+                    onClick={() => goJournalPage(journalPage - 1)}
+                    disabled={journalPage === 0}
+                    aria-label="이전 페이지"
+                  >
+                    ←
+                  </button>
+                  {Array.from({ length: journalPageCount }, (_, p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      className={styles.pageNum}
+                      data-active={p === journalPage}
+                      aria-current={p === journalPage ? "page" : undefined}
+                      aria-label={`${p + 1}페이지`}
+                      onClick={() => goJournalPage(p)}
+                    >
+                      {p + 1}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className={styles.pageArrow}
+                    onClick={() => goJournalPage(journalPage + 1)}
+                    disabled={journalPage === journalPageCount - 1}
+                    aria-label="다음 페이지"
+                  >
+                    →
+                  </button>
+                </nav>
+              )}
             </div>
 
             {/* 작업3: 비-reduce — CONTACT 를 sticky 패널 안 오버레이(z-index 블라인드 위)로. 블라인드가
