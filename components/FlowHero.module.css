@@ -44,7 +44,7 @@
   .nav__links { display: none; }
 }
 
-/* ── 인트로 등장 (카운트다운 후 하단에서). 워드마크는 글자 낙하(framer)가 담당하므로 제외 ── */
+/* ── 인트로 등장 (카운트다운 후 하단에서). 워드마크는 GSAP 인트로가 담당하므로 제외 ── */
 .deck {
   transition: opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
@@ -56,52 +56,41 @@
   .stage[data-revealed="false"] .deck { opacity: 1; transform: none; }
 }
 
-/* ── SVG 워드마크 MOVIE — 좌하단 블럭 스택(viewBox 절대좌표) + 호버 원형 색반전 ── */
-.wordmark {
+/* ── 중앙 워드마크 FILMNOUVELLE — GSAP 글자 인트로 + 커서 인터랙션 ──
+   덱과 화면 중앙에서 겹치며, z축은 덱보다 뒤(z:1 < 덱 z:6) → 덱 반투명 패널 뒤로 은은히 비침. */
+.title {
   position: absolute;
-  left: 0;
-  bottom: 0;
-  z-index: 2;
-  /* 크기만 화면 비율로. viewBox 비율(세로로 긴)은 height:auto 로 유지 → 요소가 뷰포트보다 높아
-     상단(낙하 구간)이 화면 최상단(네비) 위로 넘어감. */
-  width: clamp(420px, 74vw, 1040px);
-  height: auto;
-  overflow: hidden; /* viewBox 위 밖(y<0, =화면 최상단 밖)의 낙하 전 글자는 클립됨 → 처음엔 안 보이다 위에서 떨어짐 */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1; /* 덱(z:6)보다 뒤 */
+  margin: 0;
+  font-family: "Arial Black", Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: clamp(2.2rem, 12vw, 13rem);
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+  text-transform: uppercase;
+  color: #0c0c0c;
+  white-space: nowrap;
   user-select: none;
-  cursor: default;
-  pointer-events: none; /* 빈 SVG 영역은 통과 — 글자(획)만 이벤트 받음 */
+  pointer-events: none; /* 인터랙션은 window pointermove 로 처리 → 덱 드래그를 막지 않음 */
 }
-/* 글자 = 물리 바디에 동기화된 <path>. transform 은 JS(rAF)가 attribute 로 갱신 → CSS transform 미지정. */
-.glyph {
-  fill: #0b0b0c; /* base = 검정 */
+/* 각 글자 span — GSAP 가 yPercent·scaleY·skewX 를 transform 으로 갱신 */
+.letter {
+  display: inline-block;
   will-change: transform;
-  pointer-events: visiblePainted; /* 실제 획(잉크) 위에서만 호버 발동 */
-  cursor: default;
-}
-.glyphInvert {
-  fill: #f8f8f8; /* 원 안 글자는 흰색 */
-}
-/* 호버 원형 색반전 — mask 원을 커서 위치(--mx/--my, viewBox 좌표)에 두고 반경 r 을 0→값으로.
-   원 안(흰색 mask)에서만 invert 레이어(검은 배경 + 흰 글자)가 보임 → 색반전. */
-.maskCircle {
-  cx: var(--mx, -1000px);
-  cy: var(--my, -1000px);
-  r: 0;
-  fill: #fff;
-  transition: r 0.4s cubic-bezier(0.16, 1, 0.3, 1); /* 반경만 부드럽게(커서 위치는 즉각 추적) */
-}
-.wordmark[data-hover="true"] .maskCircle {
-  r: 110px; /* 호버 시 원 반경(viewBox 단위) — 커서 주변 국소 원(텍스트 전체 안 덮게) */
+  transform-origin: 50% 50%;
 }
 
-/* ── 원통형(3D 실린더) 카드 덱 — 각도(rotateZ -8·rotateX -20)·크기 기준 복원, 위치만 우측(미잘림) ── */
+/* ── 원통형(3D 실린더) 카드 덱 — 각도(rotateZ -8·rotateX -20)·크기 유지, 위치는 화면 중앙(텍스트와 겹침) ── */
 .deck {
   position: absolute;
-  left: auto;
-  /* 작업4: 위치만 조금 더 좌측으로(right 값 확대). 형태·각도·크기(scale)는 유지. */
-  right: clamp(4rem, 34vw, 32rem);
-  top: 40%;
-  z-index: 6;
+  /* 중앙 겹침: .deckTilt 의 translate(-50%,-50%) 기준점을 화면 정중앙에 둠 */
+  left: 50%;
+  right: auto;
+  top: 50%;
+  z-index: 6; /* 텍스트(z:1)보다 앞 */
   perspective: 1600px;
   /* 드래그(플릭) 입력 — 세로 스크롤/텍스트 선택 막고, 잡는 커서 표시 */
   touch-action: none;
@@ -131,12 +120,14 @@
   position: absolute;
   inset: 0;
 }
-/* 빈 슬롯(이미지 없는 흰 셀): 반투명 패널 → 뒤 텍스트가 살짝 비침. 이미지 셀(.card)은 불투명 유지 */
+/* 빈 패널(이미지 없는 흰 백킹): 반투명 → 뒤 FILMNOUVELLE 텍스트가 은은히 비침.
+   이미지가 있는 .card 는 불투명 유지(텍스트 안 비침). 카드가 각도로 페이드(opacityAt→0)되면
+   그 뒤 이 반투명 패널이 드러나며 텍스트가 살짝 비쳐 보임. */
 .panel {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.65); /* 작업5: 반투명 흰 셀 */
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.5); /* 반투명 흰 패널 — 텍스트 은은히 비침 */
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 3px;
 }
 /* 카드: 각도 기반 opacity 페이드. 이미지가 카드를 꽉 채움(padding 0 + overflow) */
@@ -168,26 +159,19 @@
 }
 .card__media img { object-fit: cover; filter: none; }
 
-/* 통일 브레이크포인트(1280 / 1024 / 767) — 덱 스케일·위치 단계 조정(우측 유지·미잘림).
+/* 통일 브레이크포인트(1280 / 1024 / 767) — 덱은 항상 화면 중앙(텍스트와 겹침), 스케일만 단계 조정.
    각도(rotateZ-8·rotateX-20)·드래그·자동회전은 불변. */
-@media (max-width: 1280px) { /* 노트북 — 위치만 조금 더 좌측(각도·scale 유지) */
-  .deck { right: clamp(2rem, 33vw, 26rem); top: 40%; }
+@media (max-width: 1280px) { /* 노트북 — 스케일만 축소(중앙 유지) */
   .deckTilt { --scale: 0.72; }
 }
-@media (max-width: 1024px) { /* 태블릿 — 위치만 조금 더 좌측(각도·scale 유지) */
-  .deck { right: clamp(1.5rem, 31vw, 20rem); top: 38%; }
+@media (max-width: 1024px) { /* 태블릿 — 스케일만 축소(중앙 유지) */
   .deckTilt { --scale: 0.6; }
 }
 @media (max-width: 767px) {
-  /* 모바일: 우측 배치 시 잘리므로 화면 중앙 상단으로 + 균일 축소 → 원통 전체가 보이게.
+  /* 모바일: 중앙 유지 + 균일 축소 → 원통 전체가 보이게.
      각도(rotateZ-8·rotateX-20)는 그대로, .deck 자체를 scale 로만 축소. */
-  .deck { left: 50%; right: auto; top: 30%; transform: scale(0.5); transform-origin: center; }
-  .deckTilt { --scale: 0.72; } /* 태블릿(0.52) 상속 방지 — 기준 스케일 복귀 후 .deck scale 로 축소 */
-  /* 워드마크: 모바일은 하단 "중앙" 정렬 — 요소 자체를 화면 가로 중앙에 두고(left 50%+translateX),
-     JS 는 preserveAspectRatio=xMidYMax + flushToCorner 중앙정렬로 맞춤. 폭은 축소. */
-  .wordmark {
-    width: clamp(280px, 88vw, 520px);
-    left: 50%;
-    transform: translateX(-50%);
-  }
+  .deck { transform: scale(0.6); transform-origin: center; }
+  .deckTilt { --scale: 0.72; } /* 태블릿(0.6) 상속 방지 — 기준 스케일 복귀 후 .deck scale 로 축소 */
+  /* 텍스트: 모바일에서 폭 넘침 방지 위해 살짝 축소(중앙 정렬은 .title 기본값 유지) */
+  .title { font-size: clamp(1.8rem, 13vw, 5rem); }
 }
