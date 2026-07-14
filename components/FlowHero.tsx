@@ -2,10 +2,19 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
+import localFont from "next/font/local";
 import { useReducedMotion } from "framer-motion";
 import gsap from "gsap";
 import { useIntroRevealed } from "./Intro";
 import styles from "./FlowHero.module.css";
+
+// 세로로 길쭉한 디스플레이 폰트 Anton(단일 weight 400) — jasminegunarto.com/첨부 HTML 무드.
+// 빌드 시 Google Fonts 다운로드가 불안정한 환경이라 woff2 를 self-host(app/fonts) 후 next/font/local 로 로드.
+const anton = localFont({
+  src: "../app/fonts/anton-latin.woff2",
+  weight: "400",
+  display: "swap",
+});
 
 export type FlowCard = { label: string; caption: string; img: string };
 
@@ -52,30 +61,41 @@ function opacityAt(i: number, rot: number) {
 //  2) 상시 인터랙션 — 인트로 완료 후 커서와 각 글자 거리로 yPercent·scaleY 를 실시간으로 밀어냄(quickTo).
 // 커서가 벗어나면 원위치. prefers-reduced-motion 이면 인트로·인터랙션 모두 비활성(제자리 고정).
 const TITLE = "FILMNOUVELLE";
-const HIT_RADIUS = 190; // 커서 영향 반경(px)
-const PUSH = 60; // 최대 yPercent 밀어냄
-const STRETCH = 0.8; // 최대 scaleY 추가 늘림
+// 커서 인터랙션 — 근처 글자가 세로로 크게 늘어나고(SKALEY) 기울며(SKEW) 밀려남(PUSH).
+const HIT_RADIUS = 230; // 커서 영향 반경(px) — 넓게
+const PUSH = 90; // 최대 yPercent 밀어냄
+const STRETCH = 1.9; // 최대 scaleY 추가 늘림(세로로 확실히 늘어남)
+const SKEW = 26; // 최대 skewX(deg) — 커서 좌우 위치에 따라 기울어짐(찌그러짐)
 
 function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
   const letterRefs = useRef<HTMLSpanElement[]>([]);
 
   useEffect(() => {
+    const wrap = wrapRef.current;
     const letters = letterRefs.current.filter(Boolean);
-    if (letters.length === 0) return;
+    if (!wrap || letters.length === 0) return;
 
-    // reduce: 애니메이션·인터랙션 모두 없이 제자리 고정
+    // 최종 배치: 화면 중앙 상단(네비 아래 충분한 여백). 인트로: 화면 세로 중앙.
+    const topY = () => Math.round(clamp(window.innerHeight * 0.11, 88, 150)); // 네비를 안 가리는 top 여백
+    const centerY = () => Math.round(window.innerHeight / 2 - wrap.offsetHeight / 2);
+
+    // reduce: 애니메이션·인터랙션 모두 없이 중앙 상단 고정 (가로 중앙은 CSS text-align)
     if (reduce) {
-      gsap.set(letters, { clearProps: "all" });
+      gsap.set(wrap, { y: topY() });
+      gsap.set(letters, { clearProps: "transform" });
       return;
     }
     // 인트로 시작 타이밍 — 카운트다운 종료(revealed) 흐름과 연결
     if (!revealed) return;
 
+    // 인트로는 화면 세로 중앙에서 시작 (가로 중앙은 CSS text-align)
+    gsap.set(wrap, { y: centerY() });
     gsap.set(letters, { transformOrigin: "50% 50%" });
 
     let introDone = false;
     let centers: { x: number; y: number }[] = [];
-    // 인트로 완료(=제자리) 시점의 글자 중심을 측정해 인터랙션 거리 계산의 기준으로 캐시.
+    // 인터랙션 거리 기준 = 글자가 최종 위치(중앙 상단)에 안착한 뒤의 화면상 중심을 캐시.
     // (밀어낸 transform 은 캐시에 반영 안 함 → 피드백 없이 안정적)
     const measure = () => {
       centers = letters.map((l) => {
@@ -84,7 +104,7 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
       });
     };
 
-    // 1) 인트로 — 랜덤에서 제자리로 모임
+    // 1) 인트로 — 랜덤에서 제자리로 모임 → 완료 후 [3] 중앙 상단으로 이동 → 그다음 인터랙션 활성
     const intro = gsap.from(letters, {
       yPercent: () => gsap.utils.random(-280, 280),
       scaleY: () => gsap.utils.random(0.2, 2.6),
@@ -94,14 +114,22 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
       ease: "power4.out",
       stagger: { each: 0.055, from: "random" },
       onComplete: () => {
-        introDone = true;
-        measure();
+        gsap.to(wrap, {
+          y: topY(),
+          duration: 1.1,
+          ease: "power3.inOut",
+          onComplete: () => {
+            introDone = true;
+            measure(); // 상단 안착 후 측정(이동으로 위치가 바뀌므로)
+          },
+        });
       },
     });
 
-    // 2) 상시 인터랙션 — quickTo 로 yPercent·scaleY 실시간 반영
+    // 2) 상시 인터랙션 — quickTo 로 yPercent·scaleY·skewX 실시간 반영(세로 늘림 + 기울임 왜곡)
     const yTo = letters.map((l) => gsap.quickTo(l, "yPercent", { duration: 0.5, ease: "power3" }));
     const sTo = letters.map((l) => gsap.quickTo(l, "scaleY", { duration: 0.5, ease: "power3" }));
+    const kTo = letters.map((l) => gsap.quickTo(l, "skewX", { duration: 0.5, ease: "power3" }));
 
     const onMove = (e: PointerEvent) => {
       if (!introDone) return;
@@ -112,29 +140,36 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
         const dist = Math.hypot(dx, dy) || 1;
         const f = Math.max(0, 1 - dist / HIT_RADIUS); // 가까울수록 1
         yTo[i]((dy / dist) * f * PUSH); // 커서 반대 방향으로 밀어냄
-        sTo[i](1 + f * STRETCH); // 가까울수록 세로로 늘어남
+        sTo[i](1 + f * STRETCH); // 가까울수록 세로로 크게 늘어남
+        kTo[i](-(dx / dist) * f * SKEW); // 커서 좌우 위치에 따라 기울어짐(찌그러짐)
       }
     };
     const reset = () => {
       for (let i = 0; i < letters.length; i++) {
         yTo[i](0);
         sTo[i](1);
+        kTo[i](0);
       }
     };
     const onLeave = (e: PointerEvent) => {
       if (!e.relatedTarget) reset(); // 뷰포트를 벗어날 때 원위치
     };
+    const onResize = () => {
+      measure();
+      if (introDone) gsap.set(wrap, { y: topY() }); // 상단 위치 유지
+    };
 
     window.addEventListener("pointermove", onMove);
-    window.addEventListener("resize", measure);
+    window.addEventListener("resize", onResize);
     window.addEventListener("blur", reset);
     document.addEventListener("pointerout", onLeave);
 
     return () => {
       intro.kill();
       gsap.killTweensOf(letters);
+      gsap.killTweensOf(wrap);
       window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("resize", measure);
+      window.removeEventListener("resize", onResize);
       window.removeEventListener("blur", reset);
       document.removeEventListener("pointerout", onLeave);
       gsap.set(letters, { clearProps: "all" });
@@ -142,20 +177,22 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
   }, [revealed, reduce]);
 
   return (
-    <h1 className={styles.title} aria-label={TITLE}>
-      {TITLE.split("").map((ch, i) => (
-        <span
-          key={i}
-          ref={(el) => {
-            if (el) letterRefs.current[i] = el;
-          }}
-          className={styles.letter}
-          aria-hidden="true"
-        >
-          {ch}
-        </span>
-      ))}
-    </h1>
+    <div className={styles.titleWrap} ref={wrapRef}>
+      <h1 className={`${styles.title} ${anton.className}`} aria-label={TITLE}>
+        {TITLE.split("").map((ch, i) => (
+          <span
+            key={i}
+            ref={(el) => {
+              if (el) letterRefs.current[i] = el;
+            }}
+            className={styles.letter}
+            aria-hidden="true"
+          >
+            {ch}
+          </span>
+        ))}
+      </h1>
+    </div>
   );
 }
 

@@ -56,25 +56,32 @@
   .stage[data-revealed="false"] .deck { opacity: 1; transform: none; }
 }
 
-/* ── 중앙 워드마크 FILMNOUVELLE — GSAP 글자 인트로 + 커서 인터랙션 ──
-   덱과 화면 중앙에서 겹치며, z축은 덱보다 뒤(z:1 < 덱 z:6) → 덱 반투명 패널 뒤로 은은히 비침. */
-.title {
+/* ── 워드마크 FILMNOUVELLE — GSAP 글자 인트로 + 커서 인터랙션 ──
+   위치/이동은 .titleWrap(래퍼)이 담당(GSAP 가 xPercent·y 로 제어): 인트로는 화면 중앙,
+   완료 후 중앙 상단(네비 아래)으로 이동. z축은 덱보다 뒤(z:1 < 덱 z:6) → 덱 반투명 패널 뒤로 비침.
+   pre-JS 기본값은 상단 정렬(top:0). reduce/JS 지연 시에도 네비를 안 가리는 안전한 자리. */
+.titleWrap {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
+  right: 0; /* 전폭 + text-align:center → 제목이 뷰포트보다 넓어도 항상 화면 가로 중앙 */
   z-index: 1; /* 덱(z:6)보다 뒤 */
+  text-align: center;
+  pointer-events: none; /* 인터랙션은 window pointermove 로 처리 → 덱 드래그를 막지 않음 */
+  will-change: transform; /* GSAP 는 세로 이동(y)만 제어 — 가로 중앙은 text-align 이 담당 */
+}
+/* 세로로 길쭉한 Anton(단일 weight 400) — className 으로 폰트 적용, 여기선 메트릭만.
+   letter-spacing/line-height 는 첨부 HTML 기준(-0.02em / 0.9). */
+.title {
+  display: inline-block; /* text-align:center 로 가로 중앙 정렬됨 */
   margin: 0;
-  font-family: "Arial Black", Helvetica, sans-serif;
-  font-weight: 900;
-  font-size: clamp(2.2rem, 12vw, 13rem);
+  font-size: clamp(2.6rem, 13.5vw, 15rem);
   letter-spacing: -0.02em;
   line-height: 0.9;
   text-transform: uppercase;
   color: #0c0c0c;
   white-space: nowrap;
   user-select: none;
-  pointer-events: none; /* 인터랙션은 window pointermove 로 처리 → 덱 드래그를 막지 않음 */
 }
 /* 각 글자 span — GSAP 가 yPercent·scaleY·skewX 를 transform 으로 갱신 */
 .letter {
@@ -172,6 +179,6 @@
      각도(rotateZ-8·rotateX-20)는 그대로, .deck 자체를 scale 로만 축소. */
   .deck { transform: scale(0.6); transform-origin: center; }
   .deckTilt { --scale: 0.72; } /* 태블릿(0.6) 상속 방지 — 기준 스케일 복귀 후 .deck scale 로 축소 */
-  /* 텍스트: 모바일에서 폭 넘침 방지 위해 살짝 축소(중앙 정렬은 .title 기본값 유지) */
-  .title { font-size: clamp(1.8rem, 13vw, 5rem); }
+  /* 텍스트: 모바일에서 폭 넘침 방지 위해 살짝 축소(Anton 은 좁아 조금 더 키워도 됨) */
+  .title { font-size: clamp(2rem, 15vw, 6rem); }
 }
