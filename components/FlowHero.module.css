@@ -78,14 +78,23 @@
   white-space: nowrap;
   user-select: none;
 }
-/* 각 글자 span — GSAP 가 clip-path(inset) 마스크를 애니메이션(글자 자체 변형 없음, 레이아웃 불변).
-   래퍼는 pointer-events:none 이지만 글자 span 만 auto 로 되살려 mouseenter(호버 웨이브)를 받게 함.
-   (글자 잉크 영역에서만 반응 → 글자 사이 여백/그 아래 덱 드래그는 방해하지 않음) */
+/* 각 글자 = 바깥 span(.letter) + 안쪽 span(.letterInner).
+   .letter = 고정 마스크 창: clip-path(inset) 로 글자 원래 영역만 남기고(가로=글자 폭, 세로는 넉넉히 열어 잉크 안 잘림),
+             transform 을 걸지 않아 창이 제자리 고정 → 안쪽 글자가 이 창을 통과하며 밀려나갔다 들어옴.
+   래퍼는 pointer-events:none 이지만 .letter 만 auto 로 되살려 mouseenter(호버 웨이브)를 받게 함
+   (글자 영역에서만 반응 → 그 아래 덱 드래그는 방해하지 않음). */
 .letter {
   display: inline-block;
-  will-change: clip-path;
+  overflow: visible;
+  clip-path: inset(-45% 0% -45% 0%); /* 고정 창: 좌우=글자 폭 경계(통과 시 잘림), 상하=+45% 열어 글자 안 잘림 */
+  will-change: clip-path, transform;
   pointer-events: auto;
   cursor: default;
+}
+/* 안쪽 실제 글자 — GSAP 가 xPercent(가로 이동)만 애니메이션(형태 왜곡 없음). transform 이라 레이아웃 불변. */
+.letterInner {
+  display: inline-block;
+  will-change: transform;
 }
 
 /* ── 원통형(3D 실린더) 카드 덱 — 각도(rotateZ -8·rotateX -20)·크기 유지, 위치는 화면 중앙(텍스트와 겹침) ── */

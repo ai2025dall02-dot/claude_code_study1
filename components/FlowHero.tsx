@@ -62,18 +62,19 @@ function opacityAt(i: number, rot: number) {
 //  2) 호버 — 글자에 커서를 올리면 그 인접 영역 글자만 동일한 커튼 웨이브를 1회 재생(상시 추적 아님).
 // prefers-reduced-motion 이면 웨이브·호버 모두 비활성(중앙 상단 고정).
 const TITLE = "FILMNOUVELLE";
-// 인트로·호버가 공유하는 "clip-path 마스크 커튼 웨이브" 파라미터.
-// 글자는 어떤 변형(늘림·기울임·이동·페이드)도 없이 항상 똑바로 선 채, clip-path(inset) 마스크가
-// 좌→우로 훑고 지나가며 각 글자를 가렸다가(정점) yoyo 로 다시 전체 노출(rest)로 복귀시킴.
-// 레이아웃(글자 간격)은 clip-path 가 렌더링만 자르므로 불변.
+// 인트로·호버가 공유하는 "슬라이드 마스크 웨이브" 파라미터.
+// 각 글자는 형태 왜곡 없이 똑바로 선 채, 고정된 clip-path 창(=글자 원래 영역)을 "통과"하며 좌→우로 슬라이드함:
+//   퇴장 — 글자가 좌→우로 밀려나 창 오른쪽 밖으로 빠져 사라짐
+//   등장 — 곧바로 왼쪽 밖에서 좌→우로 들어오며 다시 나타남(밀려나며 교체되는 느낌)
+// 마스크 창은 바깥 span(고정), 이동은 안쪽 span(transform x)에만 적용 → 창은 제자리, 글자만 통과.
+// 이동은 transform 이라 레이아웃(글자 간격/전체 폭) 불변.
 const WAVE = {
-  // [가림 방향] inset(top right bottom left). left 100% = 왼쪽부터 잘려 들어가며 좌→우로 덮여 사라짐.
-  //             복귀(yoyo)는 오른쪽 끝에서부터 다시 드러남 → 커튼이 훑고 지나가는 느낌.
-  shown: "inset(0% 0% 0% 0%)", // rest: 전혀 안 가림(전체 노출)
-  hidden: "inset(0% 0% 0% 100%)", // 정점: 왼쪽 100% 인셋 = 완전히 가림(안 보임)
-  each: 0.08, // [전파 속도] 글자 간 stagger 간격(s). 키울수록 마스크 파도가 좌→우로 천천히·또렷하게 훑음
-  dur: 0.34, // [샥 속도] 한 글자 편도 시간(s). yoyo 왕복 = 2×. 작을수록 한 글자가 빠르게 "샤샥" 가렸다 드러남
-  ease: "power2.inOut", // [가감속] 가림/드러남의 완급. inOut=양끝 부드럽게
+  slide: 115, // [이동 거리] 안쪽 글자를 밀어내는 가로 거리(xPercent, 글자 폭 대비 %). 100%↑ 면 창 밖으로 완전히 빠짐
+  exitDur: 0.34, // [퇴장 속도] 좌→우로 밀려나 사라지는 시간(s). 길수록 느긋하게 빠짐
+  enterDur: 0.22, // [등장 속도] 좌→우로 들어오는 시간(s). 짧을수록 "탁" 밀고 들어오는 느낌
+  exitEase: "power2.in", // [퇴장 가속] in=서서히 빨라지며 창 밖으로 빠짐
+  enterEase: "power3.out", // [등장 감속] out=빠르게 들어와 제자리서 탁 멈춤
+  each: 0.075, // [전파 속도] 글자 간 stagger 간격(s). 키울수록 파도가 좌→우로 또렷하게 훑음
 };
 const HOVER_SPAN = 2; // 호버한 글자 기준 좌우로 포함할 글자 수(=인접 영역 폭)
 
@@ -87,21 +88,23 @@ function FilmWordmark({
   onIntroComplete?: () => void; // 타이틀이 중앙 상단으로 이동 완료된 시점(=덱 등장 트리거)
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const letterRefs = useRef<HTMLSpanElement[]>([]);
+  const letterRefs = useRef<HTMLSpanElement[]>([]); // 바깥 span = 고정 마스크 창(mouseenter 수신)
+  const innerRefs = useRef<HTMLSpanElement[]>([]); // 안쪽 span = 실제 글자(가로 이동 애니메이션 대상)
 
   useEffect(() => {
     const wrap = wrapRef.current;
     const letters = letterRefs.current.filter(Boolean);
+    const inners = innerRefs.current.filter(Boolean);
     if (!wrap || letters.length === 0) return;
 
     // 최종 배치: 화면 중앙 상단(네비 아래 충분한 여백). 인트로: 화면 세로 중앙.
     const topY = () => Math.round(clamp(window.innerHeight * 0.11, 88, 150)); // 네비를 안 가리는 top 여백
     const centerY = () => Math.round(window.innerHeight / 2 - wrap.offsetHeight / 2);
 
-    // reduce: 애니메이션·인터랙션 모두 없이 중앙 상단 고정 (가로 중앙은 CSS text-align). 마스크 없이 전체 노출.
+    // reduce: 애니메이션·인터랙션 모두 없이 중앙 상단 고정 (가로 중앙은 CSS text-align). 글자 제자리 노출.
     if (reduce) {
       gsap.set(wrap, { y: topY() });
-      gsap.set(letters, { clearProps: "all" });
+      gsap.set(inners, { clearProps: "all" });
       return;
     }
     // 인트로 시작 타이밍 — 카운트다운 종료(revealed) 흐름과 연결
@@ -109,30 +112,26 @@ function FilmWordmark({
 
     // 인트로는 화면 세로 중앙에서 시작 (가로 중앙은 CSS text-align)
     gsap.set(wrap, { y: centerY() });
-    gsap.set(letters, { clipPath: WAVE.shown, opacity: 1 }); // rest = 전체 노출, 변형 없음
+    gsap.set(inners, { xPercent: 0 }); // rest = 제자리(창을 꽉 채워 전체 노출)
 
     let introDone = false;
 
-    // 공유 clip-path 커튼 웨이브 — 주어진 글자들을 좌→우 stagger 로 "마스크가 훑고 지나가며 가렸다가" yoyo 로
-    // 정확히 rest(전체 노출)로 복귀. from(=shown)으로 시작 고정 → 겹쳐 호출돼도 항상 전체 노출로 복귀.
-    // 글자 자체는 변형·이동·페이드 없음(똑바로 선 채 마스크만 이동). 반환 tween 으로 onComplete 훅 가능.
+    // 공유 슬라이드 마스크 웨이브 — 안쪽 글자를 좌→우 stagger 로 "창 오른쪽 밖으로 밀어내(퇴장)" 곧바로
+    // "왼쪽 밖에서 들어오게(등장)" 하는 키프레임. 마스크 창(바깥 span)은 고정이라 글자가 창을 통과하며 교체되듯 보임.
+    // 항상 xPercent 0(제자리)로 복귀. 반환 tween 으로 onComplete 훅 가능.
     const playWave = (els: HTMLSpanElement[]) =>
-      gsap.fromTo(
-        els,
-        { clipPath: WAVE.shown }, // rest = 전체 노출
-        {
-          clipPath: WAVE.hidden, // 정점 = 마스크로 완전히 가림
-          duration: WAVE.dur,
-          ease: WAVE.ease,
-          stagger: { each: WAVE.each, from: "start" }, // 좌→우 순차 전파(마스크 파도)
-          yoyo: true,
-          repeat: 1, // 가렸다가(정점) 다시 드러남(전체 노출로 복귀)
-        },
-      );
+      gsap.to(els, {
+        keyframes: [
+          { xPercent: WAVE.slide, duration: WAVE.exitDur, ease: WAVE.exitEase }, // 퇴장: 좌→우로 밀려나 창 밖으로
+          { xPercent: -WAVE.slide, duration: 0 }, // 즉시 왼쪽 밖으로 순간 이동(창 밖=안 보임 → 점프 안 보임)
+          { xPercent: 0, duration: WAVE.enterDur, ease: WAVE.enterEase }, // 등장: 왼쪽에서 좌→우로 들어와 제자리
+        ],
+        stagger: { each: WAVE.each, from: "start" }, // 좌→우 순차 전파(슬라이드 파도)
+      });
 
-    // 1) 인트로 — 전체 커튼 웨이브(좌→우, 왕복) → 완료 후 중앙 상단으로 이동 → 호버 활성
+    // 1) 인트로 — 전체 슬라이드 웨이브(좌→우) → 완료 후 중앙 상단으로 이동 → 호버 활성
     gsap.from(wrap, { autoAlpha: 0, duration: 0.3, ease: "power1.out" }); // 부드러운 등장
-    const intro = playWave(letters);
+    const intro = playWave(inners);
     intro.eventCallback("onComplete", () => {
       gsap.to(wrap, {
         y: topY(),
@@ -156,7 +155,7 @@ function FilmWordmark({
       for (let k = lo; k <= hi; k++) idxs.push(k);
       if (idxs.some((k) => playing.has(k))) return; // 재생 중이면 무시(중복 방지)
       idxs.forEach((k) => playing.add(k));
-      const t = playWave(idxs.map((k) => letters[k])); // 영역 왼쪽 끝부터 좌→우 전파
+      const t = playWave(idxs.map((k) => inners[k])); // 영역 왼쪽 끝부터 좌→우 전파
       t.eventCallback("onComplete", () => idxs.forEach((k) => playing.delete(k)));
     };
     const handlers = letters.map((l, i) => {
@@ -172,11 +171,11 @@ function FilmWordmark({
 
     return () => {
       intro.kill();
-      gsap.killTweensOf(letters);
+      gsap.killTweensOf(inners);
       gsap.killTweensOf(wrap);
       letters.forEach((l, i) => l.removeEventListener("mouseenter", handlers[i]));
       window.removeEventListener("resize", onResize);
-      gsap.set(letters, { clearProps: "all" });
+      gsap.set(inners, { clearProps: "all" });
     };
   }, [revealed, reduce, onIntroComplete]);
 
@@ -192,7 +191,14 @@ function FilmWordmark({
             className={styles.letter}
             aria-hidden="true"
           >
-            {ch}
+            <span
+              ref={(el) => {
+                if (el) innerRefs.current[i] = el;
+              }}
+              className={styles.letterInner}
+            >
+              {ch}
+            </span>
           </span>
         ))}
       </h1>
