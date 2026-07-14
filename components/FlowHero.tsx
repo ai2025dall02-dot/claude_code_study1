@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import localFont from "next/font/local";
 import { useReducedMotion } from "framer-motion";
@@ -62,20 +62,28 @@ function opacityAt(i: number, rot: number) {
 //  2) 호버 — 글자에 커서를 올리면 그 인접 영역 글자만 동일한 커튼 웨이브를 1회 재생(상시 추적 아님).
 // prefers-reduced-motion 이면 웨이브·호버 모두 비활성(중앙 상단 고정).
 const TITLE = "FILMNOUVELLE";
-// 인트로·호버가 공유하는 "커튼 웨이브" 파라미터 — 좌→우 stagger 로 각 글자가 위로 밀려 사라졌다가(왜곡+투명)
-// yoyo 로 정확히 제자리·불투명으로 복귀. 아래 값들이 각각 담당하는 느낌:
+// 인트로·호버가 공유하는 "가로 커튼 웨이브" 파라미터 — 좌→우 stagger 로 각 글자가 가로로 압착·밀려나며 왜곡됐다가
+// yoyo 로 정확히 제자리(scaleX 1·xPercent 0·skewX 0)로 복귀. 글자는 항상 보인 채 왜곡만 됨(사라지지 않음).
+// 아래 값들이 각각 담당하는 느낌:
 const WAVE = {
-  opacity: 0.04, // [사라짐] 정점 투명도(0에 가까울수록 확실히 "사라졌다 나타남"). 커튼 느낌의 핵심
-  yPercent: -62, // [퇴장 방향] 위로 밀려 올라가며 사라짐(+면 아래로). 절댓값 클수록 멀리 걷히듯 사라짐
-  scaleY: 1.7, // [늘어남] 사라질 때 위로 당겨지듯 세로로 늘어남(1=변형 없음). 커질수록 쭉 늘어남
-  skewX: -12, // [결/기울기] 훑고 지나가는 사선 결(deg). 0=수직, 클수록 많이 기욺
-  each: 0.1, // [전파 속도] 글자 간 stagger 간격(s). 키울수록 파도가 좌→우로 천천히·또렷하게 훑음
-  dur: 0.28, // [샥 속도] 한 글자 편도 시간(s). yoyo 왕복 = 2×. 작을수록 한 글자가 빠르게 "샥" 갔다 옴
-  ease: "power2.inOut", // [가감속] 사라짐/복귀의 완급. inOut=양끝 부드럽게
+  scaleX: 0.45, // [압착] 가로로 눌림(1=원형, <1 압착). 파도의 핵심 왜곡 — 작을수록 납작하게 눌림
+  xPercent: -22, // [밀림] 좌우로 밀려나는 이동(음수=왼쪽). 절댓값 클수록 옆으로 크게 밀림
+  skewX: -16, // [결/기울기] 훑고 지나가는 사선 결(deg). 0=수직, 클수록 많이 기욺
+  each: 0.085, // [전파 속도] 글자 간 stagger 간격(s). 키울수록 파도가 좌→우로 천천히·또렷하게 훑음
+  dur: 0.26, // [샥 속도] 한 글자 편도 시간(s). yoyo 왕복 = 2×. 작을수록 한 글자가 빠르게 "샥" 압착됐다 폄
+  ease: "power2.inOut", // [가감속] 압착/복귀의 완급. inOut=양끝 부드럽게
 };
 const HOVER_SPAN = 2; // 호버한 글자 기준 좌우로 포함할 글자 수(=인접 영역 폭)
 
-function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
+function FilmWordmark({
+  revealed,
+  reduce,
+  onIntroComplete,
+}: {
+  revealed: boolean;
+  reduce: boolean;
+  onIntroComplete?: () => void; // 타이틀이 중앙 상단으로 이동 완료된 시점(=덱 등장 트리거)
+}) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const letterRefs = useRef<HTMLSpanElement[]>([]);
 
@@ -99,27 +107,26 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
 
     // 인트로는 화면 세로 중앙에서 시작 (가로 중앙은 CSS text-align)
     gsap.set(wrap, { y: centerY() });
-    gsap.set(letters, { transformOrigin: "50% 50%", scaleY: 1, skewX: 0, yPercent: 0, opacity: 1 });
+    gsap.set(letters, { transformOrigin: "50% 50%", scaleX: 1, xPercent: 0, skewX: 0, opacity: 1 });
 
     let introDone = false;
 
-    // 공유 커튼 웨이브 — 주어진 글자들을 좌→우 stagger 로 "위로 밀려 사라졌다가"(왜곡+투명) yoyo 로
-    // 정확히 제자리·불투명(rest = opacity 1, 변형 0)으로 복귀. from(=rest)으로 시작 고정 → 겹쳐 호출돼도 항상 rest 복귀.
-    // 반환 tween 으로 onComplete 훅 가능.
+    // 공유 가로 커튼 웨이브 — 주어진 글자들을 좌→우 stagger 로 "가로로 압착·밀려나며 왜곡"됐다가 yoyo 로
+    // 정확히 제자리(rest = scaleX 1·xPercent 0·skewX 0)로 복귀. from(=rest)으로 시작 고정 → 겹쳐 호출돼도 항상 rest 복귀.
+    // 글자는 항상 보임(opacity 미변경). 반환 tween 으로 onComplete 훅 가능.
     const playWave = (els: HTMLSpanElement[]) =>
       gsap.fromTo(
         els,
-        { opacity: 1, scaleY: 1, skewX: 0, yPercent: 0 }, // rest
+        { scaleX: 1, xPercent: 0, skewX: 0 }, // rest
         {
-          opacity: WAVE.opacity, // 사라짐(커튼)
-          yPercent: WAVE.yPercent, // 위로 밀려 퇴장
-          scaleY: WAVE.scaleY, // 세로로 당겨 늘림
+          scaleX: WAVE.scaleX, // 가로로 압착
+          xPercent: WAVE.xPercent, // 좌우로 밀림
           skewX: WAVE.skewX, // 사선 결
           duration: WAVE.dur,
           ease: WAVE.ease,
           stagger: { each: WAVE.each, from: "start" }, // 좌→우 순차 전파(파도)
           yoyo: true,
-          repeat: 1, // 갔다가(사라짐+왜곡) 되돌아옴(복귀+불투명)
+          repeat: 1, // 갔다가(압착+왜곡) 되돌아옴(복귀)
         },
       );
 
@@ -133,6 +140,7 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
         ease: "power3.inOut",
         onComplete: () => {
           introDone = true;
+          onIntroComplete?.(); // 상단 안착 완료 → 덱 등장 트리거
         },
       });
     });
@@ -170,7 +178,7 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
       window.removeEventListener("resize", onResize);
       gsap.set(letters, { clearProps: "all" });
     };
-  }, [revealed, reduce]);
+  }, [revealed, reduce, onIntroComplete]);
 
   return (
     <div className={styles.titleWrap} ref={wrapRef}>
@@ -196,6 +204,7 @@ export default function FlowHero() {
   const revealed = useIntroRevealed();
   const reduce = useReducedMotion();
   const ringRef = useRef<HTMLDivElement>(null);
+  const deckRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const pausedRef = useRef(false);
   const rotRef = useRef(0);
@@ -204,6 +213,29 @@ export default function FlowHero() {
   const lastXRef = useRef(0);
   const lastTRef = useRef(0);
   const reduceRef = useRef(false);
+
+  // 덱 등장 트리거 — 타이틀 인트로 웨이브가 끝나고 상단 이동이 완료된 시점(FilmWordmark 콜백)
+  const [titleSettled, setTitleSettled] = useState(false);
+  const handleIntroComplete = useCallback(() => setTitleSettled(true), []);
+
+  // 덱 등장 — 텍스트 상단 안착 후 아래에서 위로 올라오며 페이드인(GSAP). 각도·형태·크기·회전·드래그는 불변.
+  // top(위치)만 애니메이션 → .deck 의 transform(모바일 scale 등)을 건드리지 않음. reduce 는 CSS 로 즉시 표시.
+  useEffect(() => {
+    const deck = deckRef.current;
+    if (!deck || reduce || !titleSettled) return;
+    const restTop = parseFloat(getComputedStyle(deck).top) || 0;
+    gsap.fromTo(
+      deck,
+      { autoAlpha: 0, top: restTop + 80 }, // 아래(+80px)에서 투명하게 시작
+      {
+        autoAlpha: 1,
+        top: restTop,
+        duration: 1.0,
+        ease: "power3.out",
+        onComplete: () => gsap.set(deck, { clearProps: "top" }), // 반응형 top:50% 복귀
+      },
+    );
+  }, [titleSettled, reduce]);
 
   useEffect(() => {
     const ring = ringRef.current;
@@ -301,12 +333,13 @@ export default function FlowHero() {
 
   return (
     <section className={styles.stage} id="home" data-revealed={revealed}>
-      {/* 중앙 워드마크 FILMNOUVELLE — GSAP 글자 인트로 + 커서 인터랙션 (덱보다 뒤 z축) */}
-      <FilmWordmark revealed={revealed} reduce={!!reduce} />
+      {/* 중앙 워드마크 FILMNOUVELLE — GSAP 가로 커튼 웨이브 (덱보다 뒤 z축) */}
+      <FilmWordmark revealed={revealed} reduce={!!reduce} onIntroComplete={handleIntroComplete} />
 
-      {/* 원통형 3D 카드 덱(중앙 겹침) — 바깥=고정 기울기, 안쪽=rAF rotateY */}
+      {/* 원통형 3D 카드 덱(중앙 겹침) — 바깥=고정 기울기, 안쪽=rAF rotateY. 등장은 GSAP(텍스트 인트로 완료 후) */}
       <div
         className={styles.deck}
+        ref={deckRef}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

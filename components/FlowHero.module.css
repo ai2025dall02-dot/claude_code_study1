@@ -44,16 +44,11 @@
   .nav__links { display: none; }
 }
 
-/* ── 인트로 등장 (카운트다운 후 하단에서). 워드마크는 GSAP 인트로가 담당하므로 제외 ── */
-.deck {
-  transition: opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: 0.28s;
-}
-.stage[data-revealed="false"] .deck { opacity: 0; transform: translateY(90px); }
-
+/* ── 덱 등장은 GSAP 가 담당(텍스트 인트로 웨이브 완료 → 상단 이동 완료 시점에 아래→위 + 페이드인) ──
+   등장 전까지 숨김. reduce 면 애니메이션 없이 즉시 표시. (CSS transition 방식 제거 — GSAP 로 통일) */
+.deck { opacity: 0; }
 @media (prefers-reduced-motion: reduce) {
-  .stage[data-revealed="false"] .deck { opacity: 1; transform: none; }
+  .deck { opacity: 1; }
 }
 
 /* ── 워드마크 FILMNOUVELLE — GSAP 글자 인트로 + 커서 인터랙션 ──
