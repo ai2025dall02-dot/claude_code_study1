@@ -62,16 +62,18 @@ function opacityAt(i: number, rot: number) {
 //  2) 호버 — 글자에 커서를 올리면 그 인접 영역 글자만 동일한 커튼 웨이브를 1회 재생(상시 추적 아님).
 // prefers-reduced-motion 이면 웨이브·호버 모두 비활성(중앙 상단 고정).
 const TITLE = "FILMNOUVELLE";
-// 인트로·호버가 공유하는 "가로 커튼 웨이브" 파라미터 — 좌→우 stagger 로 각 글자가 가로로 압착·밀려나며 왜곡됐다가
-// yoyo 로 정확히 제자리(scaleX 1·xPercent 0·skewX 0)로 복귀. 글자는 항상 보인 채 왜곡만 됨(사라지지 않음).
-// 아래 값들이 각각 담당하는 느낌:
+// 인트로·호버가 공유하는 "clip-path 마스크 커튼 웨이브" 파라미터.
+// 글자는 어떤 변형(늘림·기울임·이동·페이드)도 없이 항상 똑바로 선 채, clip-path(inset) 마스크가
+// 좌→우로 훑고 지나가며 각 글자를 가렸다가(정점) yoyo 로 다시 전체 노출(rest)로 복귀시킴.
+// 레이아웃(글자 간격)은 clip-path 가 렌더링만 자르므로 불변.
 const WAVE = {
-  scaleX: 0.45, // [압착] 가로로 눌림(1=원형, <1 압착). 파도의 핵심 왜곡 — 작을수록 납작하게 눌림
-  xPercent: -22, // [밀림] 좌우로 밀려나는 이동(음수=왼쪽). 절댓값 클수록 옆으로 크게 밀림
-  skewX: -16, // [결/기울기] 훑고 지나가는 사선 결(deg). 0=수직, 클수록 많이 기욺
-  each: 0.085, // [전파 속도] 글자 간 stagger 간격(s). 키울수록 파도가 좌→우로 천천히·또렷하게 훑음
-  dur: 0.26, // [샥 속도] 한 글자 편도 시간(s). yoyo 왕복 = 2×. 작을수록 한 글자가 빠르게 "샥" 압착됐다 폄
-  ease: "power2.inOut", // [가감속] 압착/복귀의 완급. inOut=양끝 부드럽게
+  // [가림 방향] inset(top right bottom left). left 100% = 왼쪽부터 잘려 들어가며 좌→우로 덮여 사라짐.
+  //             복귀(yoyo)는 오른쪽 끝에서부터 다시 드러남 → 커튼이 훑고 지나가는 느낌.
+  shown: "inset(0% 0% 0% 0%)", // rest: 전혀 안 가림(전체 노출)
+  hidden: "inset(0% 0% 0% 100%)", // 정점: 왼쪽 100% 인셋 = 완전히 가림(안 보임)
+  each: 0.08, // [전파 속도] 글자 간 stagger 간격(s). 키울수록 마스크 파도가 좌→우로 천천히·또렷하게 훑음
+  dur: 0.34, // [샥 속도] 한 글자 편도 시간(s). yoyo 왕복 = 2×. 작을수록 한 글자가 빠르게 "샤샥" 가렸다 드러남
+  ease: "power2.inOut", // [가감속] 가림/드러남의 완급. inOut=양끝 부드럽게
 };
 const HOVER_SPAN = 2; // 호버한 글자 기준 좌우로 포함할 글자 수(=인접 영역 폭)
 
@@ -96,10 +98,10 @@ function FilmWordmark({
     const topY = () => Math.round(clamp(window.innerHeight * 0.11, 88, 150)); // 네비를 안 가리는 top 여백
     const centerY = () => Math.round(window.innerHeight / 2 - wrap.offsetHeight / 2);
 
-    // reduce: 애니메이션·인터랙션 모두 없이 중앙 상단 고정 (가로 중앙은 CSS text-align)
+    // reduce: 애니메이션·인터랙션 모두 없이 중앙 상단 고정 (가로 중앙은 CSS text-align). 마스크 없이 전체 노출.
     if (reduce) {
       gsap.set(wrap, { y: topY() });
-      gsap.set(letters, { clearProps: "transform" });
+      gsap.set(letters, { clearProps: "all" });
       return;
     }
     // 인트로 시작 타이밍 — 카운트다운 종료(revealed) 흐름과 연결
@@ -107,26 +109,24 @@ function FilmWordmark({
 
     // 인트로는 화면 세로 중앙에서 시작 (가로 중앙은 CSS text-align)
     gsap.set(wrap, { y: centerY() });
-    gsap.set(letters, { transformOrigin: "50% 50%", scaleX: 1, xPercent: 0, skewX: 0, opacity: 1 });
+    gsap.set(letters, { clipPath: WAVE.shown, opacity: 1 }); // rest = 전체 노출, 변형 없음
 
     let introDone = false;
 
-    // 공유 가로 커튼 웨이브 — 주어진 글자들을 좌→우 stagger 로 "가로로 압착·밀려나며 왜곡"됐다가 yoyo 로
-    // 정확히 제자리(rest = scaleX 1·xPercent 0·skewX 0)로 복귀. from(=rest)으로 시작 고정 → 겹쳐 호출돼도 항상 rest 복귀.
-    // 글자는 항상 보임(opacity 미변경). 반환 tween 으로 onComplete 훅 가능.
+    // 공유 clip-path 커튼 웨이브 — 주어진 글자들을 좌→우 stagger 로 "마스크가 훑고 지나가며 가렸다가" yoyo 로
+    // 정확히 rest(전체 노출)로 복귀. from(=shown)으로 시작 고정 → 겹쳐 호출돼도 항상 전체 노출로 복귀.
+    // 글자 자체는 변형·이동·페이드 없음(똑바로 선 채 마스크만 이동). 반환 tween 으로 onComplete 훅 가능.
     const playWave = (els: HTMLSpanElement[]) =>
       gsap.fromTo(
         els,
-        { scaleX: 1, xPercent: 0, skewX: 0 }, // rest
+        { clipPath: WAVE.shown }, // rest = 전체 노출
         {
-          scaleX: WAVE.scaleX, // 가로로 압착
-          xPercent: WAVE.xPercent, // 좌우로 밀림
-          skewX: WAVE.skewX, // 사선 결
+          clipPath: WAVE.hidden, // 정점 = 마스크로 완전히 가림
           duration: WAVE.dur,
           ease: WAVE.ease,
-          stagger: { each: WAVE.each, from: "start" }, // 좌→우 순차 전파(파도)
+          stagger: { each: WAVE.each, from: "start" }, // 좌→우 순차 전파(마스크 파도)
           yoyo: true,
-          repeat: 1, // 갔다가(압착+왜곡) 되돌아옴(복귀)
+          repeat: 1, // 가렸다가(정점) 다시 드러남(전체 노출로 복귀)
         },
       );
 
