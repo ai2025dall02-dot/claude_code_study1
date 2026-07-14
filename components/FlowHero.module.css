@@ -77,6 +77,10 @@
   color: #0c0c0c;
   white-space: nowrap;
   user-select: none;
+  /* 호버 판정: 제목 텍스트 박스(글자+글자 사이 여백)에서만 pointermove 수신 → 커서 x 로 글자/여백 판정.
+     박스는 텍스트 크기라 좌우 넓은 빈 영역은 통과(titleWrap none). 덱(z:6)이 위이므로 겹치는 구간은 덱이 우선 → 드래그 방해 없음. */
+  pointer-events: auto;
+  cursor: default;
 }
 /* 각 글자 = 바깥 span(.letter) + 안쪽 span(.letterInner).
    .letter = 고정 마스크 창: clip-path(inset) 로 글자 원래 영역만 남기고(가로=글자 폭, 세로는 넉넉히 열어 잉크 안 잘림),
@@ -86,12 +90,10 @@
 .letter {
   display: inline-block;
   overflow: visible;
-  clip-path: inset(-45% 0% -45% 0%); /* 고정 창: 좌우=글자 폭 경계(통과 시 잘림), 상하=+45% 열어 글자 안 잘림 */
+  clip-path: inset(-45% 0% -45% 0%); /* 고정 창(기본=상하 열림): 좌우=글자 폭 경계(가로 통과 시 잘림), 상하=+45% 열어 글자 안 잘림 */
   will-change: clip-path, transform;
-  pointer-events: auto;
-  cursor: default;
 }
-/* 안쪽 실제 글자 — GSAP 가 xPercent(가로 이동)만 애니메이션(형태 왜곡 없음). transform 이라 레이아웃 불변. */
+/* 안쪽 실제 글자 — GSAP 가 xPercent(가로) / yPercent(등장 세로) 이동만 애니메이션(형태 왜곡 없음). transform 이라 레이아웃 불변. */
 .letterInner {
   display: inline-block;
   will-change: transform;
