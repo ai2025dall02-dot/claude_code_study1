@@ -62,14 +62,16 @@ function opacityAt(i: number, rot: number) {
 //  2) 호버 — 글자에 커서를 올리면 그 인접 영역 글자만 동일한 커튼 웨이브를 1회 재생(상시 추적 아님).
 // prefers-reduced-motion 이면 웨이브·호버 모두 비활성(중앙 상단 고정).
 const TITLE = "FILMNOUVELLE";
-// 인트로·호버가 공유하는 왜곡 파라미터/이징 — 좌→우 stagger 로 왜곡했다가 yoyo 로 원위치 복귀.
+// 인트로·호버가 공유하는 "커튼 웨이브" 파라미터 — 좌→우 stagger 로 각 글자가 위로 밀려 사라졌다가(왜곡+투명)
+// yoyo 로 정확히 제자리·불투명으로 복귀. 아래 값들이 각각 담당하는 느낌:
 const WAVE = {
-  scaleY: 2.0, // 세로 늘림 정점
-  skewX: -20, // 기울임 정점(deg)
-  yPercent: -34, // 위로 밀림 정점
-  each: 0.045, // 글자 간 stagger 간격(좌→우 전파 속도)
-  dur: 0.42, // 한 글자 편도 시간(yoyo 라 왕복 = 2×)
-  ease: "power2.inOut",
+  opacity: 0.04, // [사라짐] 정점 투명도(0에 가까울수록 확실히 "사라졌다 나타남"). 커튼 느낌의 핵심
+  yPercent: -62, // [퇴장 방향] 위로 밀려 올라가며 사라짐(+면 아래로). 절댓값 클수록 멀리 걷히듯 사라짐
+  scaleY: 1.7, // [늘어남] 사라질 때 위로 당겨지듯 세로로 늘어남(1=변형 없음). 커질수록 쭉 늘어남
+  skewX: -12, // [결/기울기] 훑고 지나가는 사선 결(deg). 0=수직, 클수록 많이 기욺
+  each: 0.1, // [전파 속도] 글자 간 stagger 간격(s). 키울수록 파도가 좌→우로 천천히·또렷하게 훑음
+  dur: 0.28, // [샥 속도] 한 글자 편도 시간(s). yoyo 왕복 = 2×. 작을수록 한 글자가 빠르게 "샥" 갔다 옴
+  ease: "power2.inOut", // [가감속] 사라짐/복귀의 완급. inOut=양끝 부드럽게
 };
 const HOVER_SPAN = 2; // 호버한 글자 기준 좌우로 포함할 글자 수(=인접 영역 폭)
 
@@ -101,21 +103,23 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
 
     let introDone = false;
 
-    // 공유 커튼 웨이브 — 주어진 글자들을 좌→우 stagger 로 왜곡(WAVE)했다가 yoyo 로 정확히 원위치 복귀.
-    // fromTo 의 from(=rest)으로 시작을 고정 → 중간에 겹쳐 호출돼도 항상 rest 로 되돌아옴. 반환 tween 으로 onComplete 훅 가능.
+    // 공유 커튼 웨이브 — 주어진 글자들을 좌→우 stagger 로 "위로 밀려 사라졌다가"(왜곡+투명) yoyo 로
+    // 정확히 제자리·불투명(rest = opacity 1, 변형 0)으로 복귀. from(=rest)으로 시작 고정 → 겹쳐 호출돼도 항상 rest 복귀.
+    // 반환 tween 으로 onComplete 훅 가능.
     const playWave = (els: HTMLSpanElement[]) =>
       gsap.fromTo(
         els,
-        { scaleY: 1, skewX: 0, yPercent: 0 },
+        { opacity: 1, scaleY: 1, skewX: 0, yPercent: 0 }, // rest
         {
-          scaleY: WAVE.scaleY,
-          skewX: WAVE.skewX,
-          yPercent: WAVE.yPercent,
+          opacity: WAVE.opacity, // 사라짐(커튼)
+          yPercent: WAVE.yPercent, // 위로 밀려 퇴장
+          scaleY: WAVE.scaleY, // 세로로 당겨 늘림
+          skewX: WAVE.skewX, // 사선 결
           duration: WAVE.dur,
           ease: WAVE.ease,
-          stagger: { each: WAVE.each, from: "start" }, // 좌→우 순차 전파
+          stagger: { each: WAVE.each, from: "start" }, // 좌→우 순차 전파(파도)
           yoyo: true,
-          repeat: 1, // 갔다가(왜곡) 되돌아옴(복귀)
+          repeat: 1, // 갔다가(사라짐+왜곡) 되돌아옴(복귀+불투명)
         },
       );
 
