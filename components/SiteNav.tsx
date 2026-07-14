@@ -5,6 +5,7 @@ import { useIntroRevealed } from "./Intro";
 import styles from "./SiteNav.module.css";
 
 const LINKS: { label: string; href: string }[] = [
+  { label: "HOME", href: "#home" }, // 히어로 섹션 — ABOUT 앞
   { label: "ABOUT", href: "#about" },
   { label: "LINEUP", href: "#lineup" },
   { label: "FILMMAKERS", href: "#filmmakers" },
@@ -69,10 +70,6 @@ export default function SiteNav() {
 
   return (
     <header className={styles.nav} data-scrolled={scrolled} data-revealed={revealed} data-open={open}>
-      <a className={styles.brand} href="#home" aria-label="필름 누벨 — 히어로로 이동">
-        FILMNOUVELLE
-      </a>
-
       {/* 햄버거 버튼 — 모바일(≤767)에서만 CSS 로 노출. 데스크톱은 display:none. */}
       <button
         ref={btnRef}

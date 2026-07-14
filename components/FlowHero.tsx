@@ -61,7 +61,7 @@ function opacityAt(i: number, rot: number) {
 //     타이틀이 중앙 상단으로 이동.
 //  2) 호버 — 글자에 커서를 올리면 그 인접 영역 글자만 동일한 커튼 웨이브를 1회 재생(상시 추적 아님).
 // prefers-reduced-motion 이면 웨이브·호버 모두 비활성(중앙 상단 고정).
-const TITLE = "FILMNOUVELLE";
+const TITLE = "FILM NOUVELLE"; // 공백은 애니메이션 대상 아님(별도 .gap span). 웨이브/호버는 공백 제외한 글자만.
 // 인트로·호버가 공유하는 "슬라이드 마스크 웨이브" 파라미터.
 // 각 글자는 형태 왜곡 없이 똑바로 선 채, 고정된 clip-path 창(=글자 원래 영역)을 "통과"하며 좌→우로 슬라이드함:
 //   퇴장 — 글자가 좌→우로 밀려나 창 오른쪽 밖으로 빠져 사라짐
@@ -173,39 +173,46 @@ function FilmWordmark({
     // 2) 호버 — .title 에서 pointermove 로 커서 x 판정: 글자 위=그 글자 하나 / 글자 사이 여백=양옆 두 글자.
     // 영역이 "바뀌는 순간"에만 1회 재생(같은 영역 머무는 동안 반복 없음). playing Set 으로 진행중 중복 방지.
     const playing = new Set<number>();
-    let boxes: { l: number; r: number }[] = []; // 각 글자 바깥 box 의 화면 x 범위(고정 창이라 안정적)
+    // 각 글자 바깥 box 의 화면 좌표(고정 창이라 안정적). 모바일 2줄에서도 y 로 줄을 구분하려 t/b 도 저장.
+    let boxes: { l: number; r: number; t: number; b: number; i: number }[] = [];
     const measureBoxes = () => {
-      boxes = letters.map((el) => {
-        const b = el.getBoundingClientRect();
-        return { l: b.left, r: b.right };
+      boxes = letters.map((el, i) => {
+        const r = el.getBoundingClientRect();
+        return { l: r.left, r: r.right, t: r.top, b: r.bottom, i };
       });
     };
-    // 커서 x → 재생 대상 인덱스 배열 + 영역 키(같은 영역 판정용).
-    // 글자 box 중앙 코어(HIT_CORE) 안 → 그 글자 하나 / 코어 바깥 가장자리 → 그쪽 이웃과의 '여백' → 양옆 두 글자.
-    const regionAt = (x: number): { idxs: number[]; key: string } | null => {
+    // 커서 (x,y) → 재생 대상 인덱스 배열 + 영역 키(같은 영역 판정용).
+    // 먼저 커서가 있는 "줄"(y 로 필터)만 추림 → 그 줄 안에서 x 로 판정.
+    // 글자 box 중앙 코어(HIT_CORE) 안 → 그 글자 하나 / 코어 바깥 가장자리·글자 사이(공백 포함) → 양옆 두 글자.
+    const regionAt = (x: number, y: number): { idxs: number[]; key: string } | null => {
       if (boxes.length === 0) return null;
-      // x 를 포함하는 box 찾기(box 는 맞닿아 있어 좌→우 첫 매칭)
-      let i = -1;
-      for (let k = 0; k < boxes.length; k++) {
-        if (x >= boxes[k].l && x <= boxes[k].r) { i = k; break; }
+      let line = boxes.filter((b) => y >= b.t - 4 && y <= b.b + 4); // 커서가 걸친 줄
+      if (line.length === 0) line = boxes.slice(); // 위/아래 여백이면 전체에서 판정
+      line.sort((a, b) => a.l - b.l); // 좌→우 정렬
+      if (x < line[0].l) return { idxs: [line[0].i], key: `H${line[0].i}` }; // 줄 맨 왼쪽 밖 → 첫 글자
+      if (x > line[line.length - 1].r) return { idxs: [line[line.length - 1].i], key: `T${line[line.length - 1].i}` }; // 맨 오른쪽 밖 → 끝 글자
+      for (let k = 0; k < line.length; k++) {
+        const b = line[k];
+        if (x >= b.l && x <= b.r) {
+          const margin = ((b.r - b.l) * (1 - HIT_CORE)) / 2; // 좌우 가장자리 폭
+          if (x >= b.l + margin && x <= b.r - margin) return { idxs: [b.i], key: `L${b.i}` }; // 중앙 코어 → 글자 하나
+          if (x < b.l + margin && k > 0) return { idxs: [line[k - 1].i, b.i], key: `G${line[k - 1].i}` }; // 왼쪽 가장자리 → 왼 이웃과
+          if (x > b.r - margin && k < line.length - 1) return { idxs: [b.i, line[k + 1].i], key: `G${b.i}` }; // 오른쪽 가장자리 → 오른 이웃과
+          return { idxs: [b.i], key: `L${b.i}` }; // 줄 양 끝 바깥 가장자리 → 그 글자 하나
+        }
+        if (x < b.l) {
+          // box 사이 여백(공백 포함) → 양옆 두 글자
+          if (k > 0) return { idxs: [line[k - 1].i, b.i], key: `G${line[k - 1].i}` };
+          return { idxs: [b.i], key: `H${b.i}` };
+        }
       }
-      if (i === -1) {
-        // 모든 글자 바깥 → 첫 글자보다 왼쪽 / 마지막보다 오른쪽
-        if (x < boxes[0].l) return { idxs: [0], key: "Lhead" };
-        return { idxs: [boxes.length - 1], key: "Ltail" };
-      }
-      const b = boxes[i];
-      const margin = ((b.r - b.l) * (1 - HIT_CORE)) / 2; // 좌우 가장자리 폭
-      if (x >= b.l + margin && x <= b.r - margin) return { idxs: [i], key: `L${i}` }; // 중앙 코어 → 글자 하나
-      if (x < b.l + margin && i > 0) return { idxs: [i - 1, i], key: `G${i - 1}` }; // 왼쪽 가장자리 → 왼 이웃과 여백
-      if (x > b.r - margin && i < boxes.length - 1) return { idxs: [i, i + 1], key: `G${i}` }; // 오른쪽 가장자리 → 오른 이웃과 여백
-      return { idxs: [i], key: `L${i}` }; // 양 끝 글자의 바깥 가장자리 → 그 글자 하나
+      return null;
     };
 
     let lastKey = "";
     const onPointerMove = (e: PointerEvent) => {
       if (!introDone) return;
-      const region = regionAt(e.clientX);
+      const region = regionAt(e.clientX, e.clientY);
       if (!region) return;
       if (region.key === lastKey) return; // 같은 영역 머무는 동안 반복 재생 안 함
       lastKey = region.key;
@@ -243,25 +250,32 @@ function FilmWordmark({
   return (
     <div className={styles.titleWrap} ref={wrapRef}>
       <h1 className={`${styles.title} ${anton.className}`} aria-label={TITLE} ref={titleRef}>
-        {TITLE.split("").map((ch, i) => (
-          <span
-            key={i}
-            ref={(el) => {
-              if (el) letterRefs.current[i] = el;
-            }}
-            className={styles.letter}
-            aria-hidden="true"
-          >
-            <span
-              ref={(el) => {
-                if (el) innerRefs.current[i] = el;
-              }}
-              className={styles.letterInner}
-            >
-              {ch}
+        {TITLE.split("").map((ch, i) =>
+          ch === " " ? (
+            // 공백: 애니메이션/측정 대상 아님. 데스크톱=단어 사이 여백, 모바일=블록 전환으로 줄바꿈(FILM / NOUVELLE).
+            <span key={i} className={styles.gap} aria-hidden="true">
+              {" "}
             </span>
-          </span>
-        ))}
+          ) : (
+            <span
+              key={i}
+              ref={(el) => {
+                if (el) letterRefs.current[i] = el;
+              }}
+              className={styles.letter}
+              aria-hidden="true"
+            >
+              <span
+                ref={(el) => {
+                  if (el) innerRefs.current[i] = el;
+                }}
+                className={styles.letterInner}
+              >
+                {ch}
+              </span>
+            </span>
+          ),
+        )}
       </h1>
     </div>
   );
