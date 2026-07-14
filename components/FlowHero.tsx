@@ -55,17 +55,23 @@ function opacityAt(i: number, rot: number) {
   return clamp((FULL_DEG + FADE_BAND - dist) / FADE_BAND, 0, 1);
 }
 
-// ── GSAP 글자 워드마크 "FILMNOUVELLE" ────────────────────────────────────────
-// 첨부 hero-letters-interactive.html 방식:
-//  1) 인트로 — 각 글자를 랜덤 yPercent·scaleY·skewX·opacity 0 에서 제자리로 한 번 모임(power4.out, from:"random").
-//  2) 상시 인터랙션 — 인트로 완료 후 커서와 각 글자 거리로 yPercent·scaleY 를 실시간으로 밀어냄(quickTo).
-// 커서가 벗어나면 원위치. prefers-reduced-motion 이면 인트로·인터랙션 모두 비활성(제자리 고정).
+// ── GSAP 글자 워드마크 "FILMNOUVELLE" (jasminegunarto.com 무드) ──────────────
+// 커튼 웨이브 방식:
+//  1) 인트로 — 카운트다운 종료 후, 화면 중앙에서 글자들이 좌→우로 "샥" 훑고 왜곡됐다 원위치 복귀(왕복)한 뒤
+//     타이틀이 중앙 상단으로 이동.
+//  2) 호버 — 글자에 커서를 올리면 그 인접 영역 글자만 동일한 커튼 웨이브를 1회 재생(상시 추적 아님).
+// prefers-reduced-motion 이면 웨이브·호버 모두 비활성(중앙 상단 고정).
 const TITLE = "FILMNOUVELLE";
-// 커서 인터랙션 — 근처 글자가 세로로 크게 늘어나고(SKALEY) 기울며(SKEW) 밀려남(PUSH).
-const HIT_RADIUS = 230; // 커서 영향 반경(px) — 넓게
-const PUSH = 90; // 최대 yPercent 밀어냄
-const STRETCH = 1.9; // 최대 scaleY 추가 늘림(세로로 확실히 늘어남)
-const SKEW = 26; // 최대 skewX(deg) — 커서 좌우 위치에 따라 기울어짐(찌그러짐)
+// 인트로·호버가 공유하는 왜곡 파라미터/이징 — 좌→우 stagger 로 왜곡했다가 yoyo 로 원위치 복귀.
+const WAVE = {
+  scaleY: 2.0, // 세로 늘림 정점
+  skewX: -20, // 기울임 정점(deg)
+  yPercent: -34, // 위로 밀림 정점
+  each: 0.045, // 글자 간 stagger 간격(좌→우 전파 속도)
+  dur: 0.42, // 한 글자 편도 시간(yoyo 라 왕복 = 2×)
+  ease: "power2.inOut",
+};
+const HOVER_SPAN = 2; // 호버한 글자 기준 좌우로 포함할 글자 수(=인접 영역 폭)
 
 function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -91,87 +97,73 @@ function FilmWordmark({ revealed, reduce }: { revealed: boolean; reduce: boolean
 
     // 인트로는 화면 세로 중앙에서 시작 (가로 중앙은 CSS text-align)
     gsap.set(wrap, { y: centerY() });
-    gsap.set(letters, { transformOrigin: "50% 50%" });
+    gsap.set(letters, { transformOrigin: "50% 50%", scaleY: 1, skewX: 0, yPercent: 0, opacity: 1 });
 
     let introDone = false;
-    let centers: { x: number; y: number }[] = [];
-    // 인터랙션 거리 기준 = 글자가 최종 위치(중앙 상단)에 안착한 뒤의 화면상 중심을 캐시.
-    // (밀어낸 transform 은 캐시에 반영 안 함 → 피드백 없이 안정적)
-    const measure = () => {
-      centers = letters.map((l) => {
-        const r = l.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-      });
-    };
 
-    // 1) 인트로 — 랜덤에서 제자리로 모임 → 완료 후 [3] 중앙 상단으로 이동 → 그다음 인터랙션 활성
-    const intro = gsap.from(letters, {
-      yPercent: () => gsap.utils.random(-280, 280),
-      scaleY: () => gsap.utils.random(0.2, 2.6),
-      skewX: () => gsap.utils.random(-50, 50),
-      opacity: 0,
-      duration: 1.5,
-      ease: "power4.out",
-      stagger: { each: 0.055, from: "random" },
-      onComplete: () => {
-        gsap.to(wrap, {
-          y: topY(),
-          duration: 1.1,
-          ease: "power3.inOut",
-          onComplete: () => {
-            introDone = true;
-            measure(); // 상단 안착 후 측정(이동으로 위치가 바뀌므로)
-          },
-        });
-      },
+    // 공유 커튼 웨이브 — 주어진 글자들을 좌→우 stagger 로 왜곡(WAVE)했다가 yoyo 로 정확히 원위치 복귀.
+    // fromTo 의 from(=rest)으로 시작을 고정 → 중간에 겹쳐 호출돼도 항상 rest 로 되돌아옴. 반환 tween 으로 onComplete 훅 가능.
+    const playWave = (els: HTMLSpanElement[]) =>
+      gsap.fromTo(
+        els,
+        { scaleY: 1, skewX: 0, yPercent: 0 },
+        {
+          scaleY: WAVE.scaleY,
+          skewX: WAVE.skewX,
+          yPercent: WAVE.yPercent,
+          duration: WAVE.dur,
+          ease: WAVE.ease,
+          stagger: { each: WAVE.each, from: "start" }, // 좌→우 순차 전파
+          yoyo: true,
+          repeat: 1, // 갔다가(왜곡) 되돌아옴(복귀)
+        },
+      );
+
+    // 1) 인트로 — 전체 커튼 웨이브(좌→우, 왕복) → 완료 후 중앙 상단으로 이동 → 호버 활성
+    gsap.from(wrap, { autoAlpha: 0, duration: 0.3, ease: "power1.out" }); // 부드러운 등장
+    const intro = playWave(letters);
+    intro.eventCallback("onComplete", () => {
+      gsap.to(wrap, {
+        y: topY(),
+        duration: 1.0,
+        ease: "power3.inOut",
+        onComplete: () => {
+          introDone = true;
+        },
+      });
     });
 
-    // 2) 상시 인터랙션 — quickTo 로 yPercent·scaleY·skewX 실시간 반영(세로 늘림 + 기울임 왜곡)
-    const yTo = letters.map((l) => gsap.quickTo(l, "yPercent", { duration: 0.5, ease: "power3" }));
-    const sTo = letters.map((l) => gsap.quickTo(l, "scaleY", { duration: 0.5, ease: "power3" }));
-    const kTo = letters.map((l) => gsap.quickTo(l, "skewX", { duration: 0.5, ease: "power3" }));
-
-    const onMove = (e: PointerEvent) => {
+    // 2) 호버 — 커서를 올린 글자 인접 영역만 동일 웨이브 1회 재생(상시 추적 아님).
+    // playing: 현재 웨이브가 진행 중인 글자 인덱스. 영역이 겹치면 중복 재생 방지.
+    const playing = new Set<number>();
+    const onEnter = (i: number) => {
       if (!introDone) return;
-      for (let i = 0; i < letters.length; i++) {
-        const c = centers[i];
-        const dx = c.x - e.clientX;
-        const dy = c.y - e.clientY;
-        const dist = Math.hypot(dx, dy) || 1;
-        const f = Math.max(0, 1 - dist / HIT_RADIUS); // 가까울수록 1
-        yTo[i]((dy / dist) * f * PUSH); // 커서 반대 방향으로 밀어냄
-        sTo[i](1 + f * STRETCH); // 가까울수록 세로로 크게 늘어남
-        kTo[i](-(dx / dist) * f * SKEW); // 커서 좌우 위치에 따라 기울어짐(찌그러짐)
-      }
+      const lo = Math.max(0, i - HOVER_SPAN);
+      const hi = Math.min(letters.length - 1, i + HOVER_SPAN);
+      const idxs: number[] = [];
+      for (let k = lo; k <= hi; k++) idxs.push(k);
+      if (idxs.some((k) => playing.has(k))) return; // 재생 중이면 무시(중복 방지)
+      idxs.forEach((k) => playing.add(k));
+      const t = playWave(idxs.map((k) => letters[k])); // 영역 왼쪽 끝부터 좌→우 전파
+      t.eventCallback("onComplete", () => idxs.forEach((k) => playing.delete(k)));
     };
-    const reset = () => {
-      for (let i = 0; i < letters.length; i++) {
-        yTo[i](0);
-        sTo[i](1);
-        kTo[i](0);
-      }
-    };
-    const onLeave = (e: PointerEvent) => {
-      if (!e.relatedTarget) reset(); // 뷰포트를 벗어날 때 원위치
-    };
+    const handlers = letters.map((l, i) => {
+      const h = () => onEnter(i);
+      l.addEventListener("mouseenter", h);
+      return h;
+    });
+
     const onResize = () => {
-      measure();
       if (introDone) gsap.set(wrap, { y: topY() }); // 상단 위치 유지
     };
-
-    window.addEventListener("pointermove", onMove);
     window.addEventListener("resize", onResize);
-    window.addEventListener("blur", reset);
-    document.addEventListener("pointerout", onLeave);
 
     return () => {
       intro.kill();
       gsap.killTweensOf(letters);
       gsap.killTweensOf(wrap);
-      window.removeEventListener("pointermove", onMove);
+      letters.forEach((l, i) => l.removeEventListener("mouseenter", handlers[i]));
       window.removeEventListener("resize", onResize);
-      window.removeEventListener("blur", reset);
-      document.removeEventListener("pointerout", onLeave);
       gsap.set(letters, { clearProps: "all" });
     };
   }, [revealed, reduce]);

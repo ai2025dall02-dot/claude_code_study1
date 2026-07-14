@@ -83,11 +83,15 @@
   white-space: nowrap;
   user-select: none;
 }
-/* 각 글자 span — GSAP 가 yPercent·scaleY·skewX 를 transform 으로 갱신 */
+/* 각 글자 span — GSAP 가 yPercent·scaleY·skewX 를 transform 으로 갱신.
+   래퍼는 pointer-events:none 이지만 글자 span 만 auto 로 되살려 mouseenter(호버 웨이브)를 받게 함.
+   (글자 잉크 영역에서만 반응 → 글자 사이 여백/그 아래 덱 드래그는 방해하지 않음) */
 .letter {
   display: inline-block;
   will-change: transform;
   transform-origin: 50% 50%;
+  pointer-events: auto;
+  cursor: default;
 }
 
 /* ── 원통형(3D 실린더) 카드 덱 — 각도(rotateZ -8·rotateX -20)·크기 유지, 위치는 화면 중앙(텍스트와 겹침) ── */
