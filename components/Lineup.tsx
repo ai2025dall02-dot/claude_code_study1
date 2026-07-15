@@ -14,8 +14,8 @@ import { films, type Film } from "@/data/films";
 import TypeTitle from "./TypeTitle";
 import styles from "./Landing.module.css";
 
-/* 라인업 작품에 사진 포스터 매핑 (public/posters-photo). 12편 모두 lineup_1~6 중 하나를 고정 사용.
-   앞 6편은 지정 이미지(lineup_1~6), 나머지 6편은 각 열에서 이미지가 겹치지 않게 고정 배정. */
+/* 라인업 작품에 사진 포스터 매핑 (public/posters-photo). 12편이 각각 고유 이미지 사용:
+   앞 6편 afterimage~reel = lineup_1~6, 뒤 6편 tide~ember = lineup_7~12. */
 const FILM_PHOTO: Record<string, string> = {
   afterimage: "/posters-photo/lineup_1.jpg",
   north: "/posters-photo/lineup_2.jpg",
@@ -23,12 +23,12 @@ const FILM_PHOTO: Record<string, string> = {
   salt: "/posters-photo/lineup_4.jpg",
   winter: "/posters-photo/lineup_5.jpg",
   reel: "/posters-photo/lineup_6.jpg",
-  tide: "/posters-photo/lineup_2.jpg",
-  orchard: "/posters-photo/lineup_3.jpg",
-  static: "/posters-photo/lineup_1.jpg",
-  dust: "/posters-photo/lineup_5.jpg",
-  meridian: "/posters-photo/lineup_6.jpg",
-  ember: "/posters-photo/lineup_4.jpg",
+  tide: "/posters-photo/lineup_7.jpg",
+  orchard: "/posters-photo/lineup_8.jpg",
+  static: "/posters-photo/lineup_9.jpg",
+  dust: "/posters-photo/lineup_10.jpg",
+  meridian: "/posters-photo/lineup_11.jpg",
+  ember: "/posters-photo/lineup_12.jpg",
 };
 
 /* 카드별 배치 설정 — mt: 카드별 추가 세로 여백(촘촘하게 0~60), ar: 높이(aspect)

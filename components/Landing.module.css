@@ -55,8 +55,8 @@
 }
 .title em {
   font-style: normal;
-  /* [2] 라인 두께: 1.3px → 0.8px 로 얇게(심플한 아웃라인) */
-  -webkit-text-stroke: 0.8px #0b0b0c;
+  /* 라인 두께: 0.8px → 0.5px 로 더 얇게(가는 선, 심플). 모든 섹션 제목(TypeTitle)에 일괄 적용. */
+  -webkit-text-stroke: 0.5px #0b0b0c;
   color: transparent;
 }
 .index {
