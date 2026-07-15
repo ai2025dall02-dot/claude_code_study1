@@ -20,7 +20,8 @@
 
   /* — Type — */
   --font-display: var(--font-display-en), var(--font-display-ko), Georgia, "Apple SD Gothic Neo", serif;
-  --font-sans: var(--font-body), system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  /* 본문/한글 전역 통일: Pretendard(self-host) 선두 → 사이트 전체 한글·라틴 본문에 일괄 적용. 뒤는 fallback. */
+  --font-sans: var(--font-pretendard), var(--font-body), system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   --font-meta: var(--font-mono), ui-monospace, "SFMono-Regular", monospace;
 
   /* — Layout — */

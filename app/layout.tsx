@@ -5,7 +5,7 @@ import {
   Noto_Sans_KR,
   JetBrains_Mono,
 } from "next/font/google";
-import { anton } from "./fonts"; // 공용 Anton(--font-anton) — 히어로 + 섹션 제목 공유
+import { anton, pretendard } from "./fonts"; // 공용 Anton(제목) + Pretendard(본문/한글)
 import "./globals.css";
 
 // 라틴 디스플레이 (브랜드·영문 제목)
@@ -69,7 +69,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${playfair.variable} ${nanum.variable} ${noto.variable} ${mono.variable} ${anton.variable}`}
+      className={`${playfair.variable} ${nanum.variable} ${noto.variable} ${mono.variable} ${anton.variable} ${pretendard.variable}`}
     >
       <body>
         <a className="skip-link" href="#programme">

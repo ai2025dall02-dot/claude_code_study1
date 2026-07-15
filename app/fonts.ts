@@ -9,3 +9,13 @@ export const anton = localFont({
   display: "swap",
   variable: "--font-anton",
 });
+
+// 공용 본문 한글 폰트 Pretendard(가변 weight 하나로 전 굵기 커버) — 사이트 전체 한글/본문 통일.
+// 이 환경은 Google Fonts/jsdelivr 다운로드가 막혀 raw.githubusercontent 에서 받은 variable woff2 를 self-host.
+// variable(--font-pretendard)로 노출 → globals 의 --font-sans 스택 선두에 넣어 일괄 적용.
+export const pretendard = localFont({
+  src: "./fonts/PretendardVariable.woff2",
+  weight: "45 920", // 가변 폰트 weight 범위(기존 300~700 등 굵기 값 그대로 매핑됨)
+  display: "swap",
+  variable: "--font-pretendard",
+});

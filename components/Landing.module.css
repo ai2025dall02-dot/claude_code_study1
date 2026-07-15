@@ -46,14 +46,17 @@
   /* 히어로와 동일한 공용 Anton. fill(solid)+outline(em) 구조는 그대로. */
   font-family: var(--font-anton), "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
-  font-size: clamp(2.1rem, 6vw, 4.2rem);
+  /* [2] 크기: 전 섹션 소폭 확대(4.2rem→5rem 상한, 6vw→6.6vw) */
+  font-size: clamp(2.5rem, 6.6vw, 5rem);
   line-height: 0.92;
-  letter-spacing: -0.03em;
+  /* [2] 자간: 좁던 -0.03em → 0.05em 로 넓혀 글자 사이 여유(심플·시원) */
+  letter-spacing: 0.05em;
   color: #0b0b0c;
 }
 .title em {
   font-style: normal;
-  -webkit-text-stroke: 1.3px #0b0b0c;
+  /* [2] 라인 두께: 1.3px → 0.8px 로 얇게(심플한 아웃라인) */
+  -webkit-text-stroke: 0.8px #0b0b0c;
   color: transparent;
 }
 .index {
@@ -365,8 +368,9 @@
   margin-bottom: 1rem;
 }
 .fmBg .title {
-  /* 노트북(1280~1440)에서 화면 밖으로 과하게 넘치지 않게 상한·vw 계수 하향 (13rem→9.5, 15vw→11) */
-  font-size: clamp(3.4rem, 11vw, 9.5rem);
+  /* [2] FILM MAKERS 는 다른 섹션보다 눈에 띄게 크게 강조(9.5rem→12rem 상한, 11vw→13vw).
+     노트북에서 넘치지 않는 선(측정 확인) 유지. */
+  font-size: clamp(4rem, 13vw, 12rem);
   line-height: 0.9;
   justify-content: center;
   color: #0b0b0c; /* LINEUP 제목과 동일 톤 */
