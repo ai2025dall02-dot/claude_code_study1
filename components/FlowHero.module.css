@@ -70,7 +70,8 @@
 .title {
   display: inline-block; /* text-align:center 로 가로 중앙 정렬됨 */
   margin: 0;
-  font-size: clamp(2.6rem, 13.5vw, 15rem);
+  /* 좌우 여백 축소 위해 확대(13.5vw/15rem → 16.5vw/18rem). nowrap 이라 뷰포트 밖으로 넘치지 않는 선에서 최대. */
+  font-size: clamp(2.6rem, 16.5vw, 18rem);
   letter-spacing: -0.02em;
   line-height: 0.9;
   text-transform: uppercase;

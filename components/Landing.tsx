@@ -301,11 +301,11 @@ export default function Landing() {
                     {visiblePosts.map((p) => (
                       <motion.a key={p.title} className={styles.post} href="#contact" variants={postItem}>
                         <span className={styles.post__date}>{p.date}</span>
-                        <span>
+                        <span className={styles.post__title}>{p.title}</span>
+                        <span className={styles.post__end}>
                           <span className={styles.post__cat}>{p.cat}</span>
-                          <span className={styles.post__title}>{p.title}</span>
+                          <span className={styles.post__more}>READ →</span>
                         </span>
-                        <span className={styles.post__more}>READ →</span>
                       </motion.a>
                     ))}
                   </motion.div>

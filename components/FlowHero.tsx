@@ -2,19 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import localFont from "next/font/local";
 import { useReducedMotion } from "framer-motion";
 import gsap from "gsap";
+import { anton } from "@/app/fonts"; // 공용 Anton — 섹션 제목(TypeTitle)과 동일 폰트 공유
 import { useIntroRevealed } from "./Intro";
 import styles from "./FlowHero.module.css";
-
-// 세로로 길쭉한 디스플레이 폰트 Anton(단일 weight 400) — jasminegunarto.com/첨부 HTML 무드.
-// 빌드 시 Google Fonts 다운로드가 불안정한 환경이라 woff2 를 self-host(app/fonts) 후 next/font/local 로 로드.
-const anton = localFont({
-  src: "../app/fonts/anton-latin.woff2",
-  weight: "400",
-  display: "swap",
-});
 
 export type FlowCard = { label: string; caption: string; img: string };
 
