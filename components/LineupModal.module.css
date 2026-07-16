@@ -25,14 +25,15 @@
   will-change: transform;
 }
 
-/* 좌: 세로형 포스터. [2] 폭 비중을 줄여(44%→34%) 우측 텍스트를 더 길쭉하게, contain 으로 잘림 없이 전체 노출 */
+/* 좌: 세로형 포스터. 레퍼런스처럼 폭을 좁게(≈21%) → 우측 텍스트(.body)가 대부분(≈79%) 차지.
+   칸이 좁고 세로로 길어 세로 포스터와 비율이 맞으므로 cover 로 좌우 여백 없이 꽉 채움(잘림 최소). */
 .media {
   position: relative;
-  flex: 0 0 34%; /* [2] 좌 포스터 폭 비중 — 줄일수록 텍스트 영역이 넓어짐 */
-  background: #141416; /* [2] contain 여백(레터박스) 배경 — 포스터와 자연스럽게 이어짐 */
+  flex: 0 0 21%; /* 좌 포스터 폭 비중 — 줄일수록 우측 텍스트가 길어짐(레퍼런스 20~22%) */
+  background: #141416; /* cover 라 보통 안 보이지만, 혹시 모를 여백 대비 배경 */
 }
 .media :global(img) {
-  object-fit: contain; /* [2] 세로 포스터가 시트 높이 안에서 위아래 잘리지 않고 전체가 보이게 */
+  object-fit: cover; /* 좁은 세로 칸을 여백 없이 꽉 채움(이전 contain 의 레터박스 제거) */
 }
 
 /* 우: 어두운 상세 패널(밝은 텍스트) */
@@ -145,13 +146,10 @@
     flex-direction: column;
     border-radius: 0;
   }
-  /* 모바일: 포스터 영역을 크게(58vh) + 상단 이미지는 cover 로 꽉 채움(PC 만 contain). */
+  /* 모바일: 포스터 영역을 크게(58vh, 세로 풀스크린 상단). object-fit 은 base 의 cover 를 그대로 사용. */
   .media {
     flex: 0 0 58vh; /* 키우면 포스터 더 크게(덜 잘림), 줄이면 텍스트 영역이 넓어짐 */
     width: 100%;
-  }
-  .media :global(img) {
-    object-fit: cover; /* 모바일 상단 이미지는 여백 없이 채움(PC 의 contain 을 무효화) */
   }
   /* [2] 텍스트 영역은 나머지 공간(약 42vh)만 차지하고 넘치면 스크롤(overflow-y:auto) */
   .body {

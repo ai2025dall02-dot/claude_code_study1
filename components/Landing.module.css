@@ -55,8 +55,9 @@
 }
 .title em {
   font-style: normal;
-  /* 라인 두께: 0.5px → 0.3px 로 절반 수준까지 더 얇게(아주 가는 선). 모든 섹션 제목(TypeTitle)에 일괄 적용. */
-  -webkit-text-stroke: 0.3px #0b0b0c;
+  /* 라인 두께: 0.3px → 0.25px 로 실질 최소선까지(아주 가는 헤어라인). 모든 섹션 제목(TypeTitle) 일괄.
+     이보다 얇으면 저해상도(1x)에서 선이 끊겨/사라져 보일 수 있어 여기가 안전한 하한. */
+  -webkit-text-stroke: 0.25px #0b0b0c;
   color: transparent;
 }
 .index {
