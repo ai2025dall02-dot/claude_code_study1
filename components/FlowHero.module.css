@@ -44,25 +44,19 @@
   .nav__links { display: none; }
 }
 
-/* ── 덱 등장은 GSAP 가 담당(텍스트 인트로 웨이브 완료 → 상단 이동 완료 시점에 아래→위 + 페이드인) ──
-   등장 전까지 숨김. reduce 면 애니메이션 없이 즉시 표시. (CSS transition 방식 제거 — GSAP 로 통일) */
-.deck { opacity: 0; }
-@media (prefers-reduced-motion: reduce) {
-  .deck { opacity: 1; }
-}
-
 /* ── 워드마크 FILMNOUVELLE — GSAP 글자 인트로 + 커서 인터랙션 ──
    위치/이동은 .titleWrap(래퍼)이 담당(GSAP 가 xPercent·y 로 제어): 인트로는 화면 중앙,
-   완료 후 중앙 상단(네비 아래)으로 이동. z축은 덱보다 뒤(z:1 < 덱 z:6) → 덱 반투명 패널 뒤로 비침.
+   완료 후 중앙 상단(네비 아래)으로 이동. z축은 WebGL 덱(z:3)보다 뒤(z:1) → 투명 캔버스 너머로
+   텍스트가 비치고, 이미지 카드가 지나갈 땐 카드가 텍스트를 가림.
    pre-JS 기본값은 상단 정렬(top:0). reduce/JS 지연 시에도 네비를 안 가리는 안전한 자리. */
 .titleWrap {
   position: absolute;
   top: 0;
   left: 0;
   right: 0; /* 전폭 + text-align:center → 제목이 뷰포트보다 넓어도 항상 화면 가로 중앙 */
-  z-index: 1; /* 덱(z:6)보다 뒤 */
+  z-index: 1; /* WebGL 덱 캔버스(z:3)보다 뒤 → 카드 틈/페이드 영역으로 비침 */
   text-align: center;
-  pointer-events: none; /* 인터랙션은 window pointermove 로 처리 → 덱 드래그를 막지 않음 */
+  pointer-events: none; /* 인터랙션은 캔버스가 처리 → 텍스트는 입력을 막지 않음 */
   will-change: transform; /* GSAP 는 세로 이동(y)만 제어 — 가로 중앙은 text-align 이 담당 */
 }
 /* 세로로 길쭉한 Anton(단일 weight 400) — className 으로 폰트 적용, 여기선 메트릭만.
@@ -80,7 +74,7 @@
   white-space: nowrap;
   user-select: none;
   /* 호버 판정: 제목 텍스트 박스(글자+글자 사이 여백)에서만 pointermove 수신 → 커서 x 로 글자/여백 판정.
-     박스는 텍스트 크기라 좌우 넓은 빈 영역은 통과(titleWrap none). 덱(z:6)이 위이므로 겹치는 구간은 덱이 우선 → 드래그 방해 없음. */
+     박스는 텍스트 크기라 좌우 넓은 빈 영역은 통과(titleWrap none). WebGL 캔버스(z:3)가 위라 겹치는 구간은 캔버스가 입력을 받음. */
   pointer-events: auto;
   cursor: default;
 }
@@ -106,95 +100,12 @@
   width: 0.3em;
 }
 
-/* ── 원통형(3D 실린더) 카드 덱 — 각도(rotateZ -8·rotateX -20)·크기 유지, 위치는 화면 중앙(텍스트와 겹침) ── */
-.deck {
-  position: absolute;
-  /* 중앙 겹침: .deckTilt 의 translate(-50%,-50%) 기준점을 화면 정중앙에 둠 */
-  left: 50%;
-  right: auto;
-  top: 50%;
-  z-index: 6; /* 텍스트(z:1)보다 앞 */
-  perspective: 1600px;
-  /* 드래그(플릭) 입력 — 세로 스크롤/텍스트 선택 막고, 잡는 커서 표시 */
-  touch-action: none;
-  user-select: none;
-  cursor: grab;
-}
-.deck:active { cursor: grabbing; }
-/* 바깥 래퍼: 고정 기울기(대각 스윕)만 — 회전과 분리. 작업4: 각도 rotateZ-8·rotateX-20 유지, 스케일 복원 */
-.deckTilt {
-  position: absolute;
-  left: 0;
-  top: 0;
-  --scale: 0.8; /* 작업4: 0.72→0.8 로 살짝 키움. 각도(rotateZ-8·rotateX-20)는 그대로 */
-  transform: translate(-50%, -50%) rotateZ(-8deg) rotateX(-20deg) scale(var(--scale, 1));
-  transform-style: preserve-3d;
-}
-/* 안쪽 링: rotateY 무한 회전만 */
-.deckRing {
-  position: relative;
-  width: var(--cw);
-  height: var(--ch);
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-/* 셀: 원기둥 옆면 배치 (rotateY(θ) translateZ(radius)) */
-.cell {
-  position: absolute;
-  inset: 0;
-}
-/* 빈 패널(이미지 없는 흰 백킹): 반투명 → 뒤 FILMNOUVELLE 텍스트가 은은히 비침.
-   이미지가 있는 .card 는 불투명 유지(텍스트 안 비침). 카드가 각도로 페이드(opacityAt→0)되면
-   그 뒤 이 반투명 패널이 드러나며 텍스트가 살짝 비쳐 보임. */
-.panel {
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.5); /* 반투명 흰 패널 — 텍스트 은은히 비침 */
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 3px;
-}
-/* 카드: 각도 기반 opacity 페이드. 이미지가 카드를 꽉 채움(padding 0 + overflow) */
-.card {
-  position: absolute;
-  inset: 0;
-  background: #fff;
-  border-radius: 3px;
-  padding: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 26px 50px rgba(20, 20, 20, 0.22), 0 4px 14px rgba(20, 20, 20, 0.14);
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-  transform: translateZ(0);
-  transition: transform 0.25s ease;
-}
-.card.hovered {
-  transform: scale(1.16) translateZ(0);
-  z-index: 50;
-  box-shadow: 0 44px 90px rgba(20, 20, 20, 0.42), 0 12px 26px rgba(20, 20, 20, 0.3);
-}
-.card__media {
-  position: relative;
-  flex: 1;
-  overflow: hidden;
-  background: #ddd;
-}
-.card__media img { object-fit: cover; filter: none; }
+/* ── 원통형 카드 덱은 WebGL(three.js) 컴포넌트(CylinderDeck)가 렌더 ──
+   투명 캔버스가 스테이지 전체를 덮되(inset:0, z:3) 텍스트(z:1) 위에 겹쳐, 이미지 카드는 텍스트를
+   가리고 카드 사이 틈/뒤로 페이드된 영역은 투명이라 뒤 텍스트가 비침. 형상·회전·드래그·페이드·기울기·
+   반응형·reduce 는 모두 컴포넌트 내부(three.js)에서 처리 → 별도 덱 CSS 불필요. */
 
-/* 통일 브레이크포인트(1280 / 1024 / 767) — 덱은 항상 화면 중앙(텍스트와 겹침), 스케일만 단계 조정.
-   각도(rotateZ-8·rotateX-20)·드래그·자동회전은 불변. */
-@media (max-width: 1280px) { /* 노트북 — 스케일만 축소(중앙 유지) */
-  .deckTilt { --scale: 0.72; }
-}
-@media (max-width: 1024px) { /* 태블릿 — 스케일만 축소(중앙 유지) */
-  .deckTilt { --scale: 0.6; }
-}
 @media (max-width: 767px) {
-  /* 모바일: 중앙 유지 + 균일 축소 → 원통 전체가 보이게.
-     각도(rotateZ-8·rotateX-20)는 그대로, .deck 자체를 scale 로만 축소. */
-  .deck { transform: scale(0.6); transform-origin: center; }
-  .deckTilt { --scale: 0.72; } /* 태블릿(0.6) 상속 방지 — 기준 스케일 복귀 후 .deck scale 로 축소 */
   /* 모바일: FILM / NOUVELLE 두 줄로 나누고(공백 .gap 을 블록으로 전환) 폰트를 키워 화면을 시원하게 채움.
      각 단어(FILM·NOUVELLE)는 nowrap 유지라 줄 안에서 안 쪼개짐. NOUVELLE(8자)가 폭에 맞도록 26vw 기준. */
   .title { font-size: clamp(3rem, 26vw, 9rem); }
