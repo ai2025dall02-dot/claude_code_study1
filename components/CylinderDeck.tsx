@@ -29,22 +29,23 @@ const FILL = 0.86; // [1] 카드가 차지하는 STEP 비율 — 0.82→0.86(틈
 const SEG_W = 24; // 카드 가로 세그먼트(클수록 곡면이 매끄러움)
 
 // ── 기울기 ──
-// [1] FOLLOW.ART 형태: rotateZ(대각선)는 거의 0 → 원통이 사선으로 뚝 떨어지지 않음.
-//   rotateX 로만 원통을 눕혀, 정면 카드들이 좌우로 넓고 "완만한 아치"로 펼쳐지게.
-const TILT_Z = THREE.MathUtils.degToRad(0); // 대각선 기울기 제거(수평 아치)
-const TILT_X = THREE.MathUtils.degToRad(-18); // 원통 눕힘 — 값이 클수록 아치가 깊게 처짐(-24→-18 로 더 완만·정면 카드 세움)
+// [1] FOLLOW.ART 형태: 원통을 좌하단→우상단으로 살짝 비스듬히(대각선). 24°는 과했고 0°는 부족 → 그 중간.
+const TILT_Z = THREE.MathUtils.degToRad(10); // 대각선 기울기 — 0°(수평)→10°(살짝 비스듬)
+const TILT_X = THREE.MathUtils.degToRad(-18); // 원통 눕힘 — 값이 클수록 아치가 깊게 처짐(완만하게 -18 유지)
 
 // ── 카메라/스케일 ──
 const CAM_Z = 13; // [1] 카메라 거리 — 16→13 로 당겨 정면 카드를 크게(가깝게)
 const CAM_FOV = 34; // [1] 시야각 — 넓혀 좌우 카드가 완만한 아치로 더 많이 보이게
 const CENTER_Y = -0.55; // 수평 아치 기준 세로 위치(월드 Y) — 아치가 화면 상·중단에 오도록
 
-// ── 회전에 따른 이미지 ↔ 짙은 회색 크로스페이드 ──
-// [3] 각 카드: 정면 근처(opacityAt≈1)=이미지 온전 / 뒤로 갈수록 이미지가 페이드되고 짙은 회색 반투명으로 전환.
-//   회색 패널을 카드 뒤에 두고 panelOpacity = (1 - imageOpacity) * PANEL_OPACITY 로 역크로스페이드.
-//   "짙은 회색 + 반투명"이라 그 너머 FILMNOUVELLE 텍스트는 여전히 비침(색 어둡게/opacity 과하면 텍스트 가려짐 → 균형).
-const PANEL_COLOR = 0x4d4d4d; // 짙은 회색
-const PANEL_OPACITY = 0.55; // 뒤로 간 카드의 회색 최대 불투명도(반투명 — 텍스트 비침 유지)
+// ── 원통 뒷벽(연속된 짙은 회색 안쪽 벽) ──
+// [2] 카드마다 개별 회색 패널을 두면 카드 틈(FILL<1)에서 회색이 끊겨 보임 → 대신 원통 뒷면 전체를 덮는
+//   "짙은 회색 실린더" 메시 1개를 카드 안쪽에 둠(BackSide → 카메라 반대편=뒷면 반원만 렌더, 앞면은 컬링).
+//   정면 카드(이미지)는 이 벽 앞을 가리고, 카드가 페이드/뒤로 가면 연속된 회색 벽이 드러남.
+//   반투명이라 그 너머 FILMNOUVELLE 텍스트는 은은히 비침.
+const PANEL_COLOR = 0x4d4d4d; // 짙은 회색(뒷벽 색)
+const PANEL_OPACITY = 0.5; // 뒷벽 불투명도(반투명 — 텍스트 비침 유지)
+const WALL_INSET = 0.06; // 뒷벽 반지름을 카드보다 살짝 안쪽으로(카드가 벽보다 앞)
 // 반응형 스케일 — 그룹 전체에 곱함. [1] 카드/카메라를 키운 만큼(정면 큰 아치) 좁은 화면에선 더
 //   줄여야 아치가 안 잘리고 들어옴(모바일 0.62→0.42, 태블릿 하향). 데스크탑은 큰 카드 의도 유지.
 function scaleForWidth(w: number) {
@@ -138,7 +139,7 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
     camera.position.set(0, 0, CAM_Z);
     camera.lookAt(0, 0, 0);
 
-    // 기울기 그룹 중첩: tiltZ(0°) > tiltX(-18°, 눕힘) > ring(rotateY 회전) — 기존 deckTilt/deckRing 대응.
+    // 기울기 그룹 중첩: tiltZ(10°) > tiltX(-18°, 눕힘) > ring(rotateY 회전) — 기존 deckTilt/deckRing 대응.
     const tiltZ = new THREE.Group();
     tiltZ.rotation.z = TILT_Z;
     tiltZ.position.y = CENTER_Y; // 세로 위치 보정
@@ -158,11 +159,26 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
     const RADIUS = CARD_W / cardAngle; // 카드 폭 = 호 길이 → 반지름
     const geometry = makeCurvedPlane(CARD_W, CARD_H, RADIUS);
 
+    // [2] 원통 뒷벽 — 카드 안쪽(반지름 살짝 작게)에 짙은 회색 실린더 1개. BackSide 라 카메라 반대편
+    //   (뒷면 반원)만 렌더 → 앞면 컬링(정면 카드 앞을 안 가림). 카드가 페이드/뒤로 가면 연속된 회색 벽이 드러남.
+    //   반투명 → 그 너머 텍스트 비침. tiltX 에 붙여(회전 안 함) 뒷면은 항상 뒤에 고정.
+    const wallRadius = RADIUS - WALL_INSET; // 카드(RADIUS)보다 살짝 안쪽
+    const wallGeo = new THREE.CylinderGeometry(wallRadius, wallRadius, CARD_H, 96, 1, true); // openEnded
+    const wallMat = new THREE.MeshBasicMaterial({
+      color: PANEL_COLOR,
+      transparent: true,
+      opacity: PANEL_OPACITY,
+      side: THREE.BackSide, // 뒷면 반원만 보이게(앞면 컬링)
+      depthWrite: false,
+    });
+    const wall = new THREE.Mesh(wallGeo, wallMat);
+    wall.renderOrder = -1; // 카드보다 먼저(뒤에) 그림
+    tiltX.add(wall);
+
     const loader = new THREE.TextureLoader();
     const maxAniso = renderer.capabilities.getMaxAnisotropy();
     const textures: THREE.Texture[] = [];
     const materials: THREE.MeshBasicMaterial[] = []; // 이미지 머티리얼(카드마다)
-    const panelMaterials: THREE.MeshBasicMaterial[] = []; // 짙은 회색 크로스페이드 머티리얼(카드마다)
     const meshes: THREE.Mesh[] = [];
     const baseAngle: number[] = []; // 카드 i 의 기준 각도(deg)
     const curScale: number[] = []; // 호버 확대 lerp 현재값
@@ -190,22 +206,7 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
       const slot = new THREE.Group();
       slot.rotation.y = THREE.MathUtils.degToRad(i * STEP); // 원통 둘레 배치
 
-      // [3] 짙은 회색 크로스페이드 패널 — 카드 바로 뒤. 카드마다 독립 머티리얼(opacity 개별 제어).
-      //   정면(이미지 온전)에선 opacity 0(안 보임), 뒤로 갈수록 opacity↑ → 이미지가 사라진 자리를 짙은 회색이 채움.
-      const panelMat = new THREE.MeshBasicMaterial({
-        color: PANEL_COLOR,
-        transparent: true,
-        opacity: 0,
-        side: THREE.FrontSide, // 뒤 반구는 컬링(회색 쌓임 방지)
-        depthWrite: false,
-      });
-      const panel = new THREE.Mesh(geometry, panelMat);
-      panel.position.z = RADIUS - 0.03; // 카드 바로 뒤(z-fighting 방지)
-      panel.renderOrder = -1;
-      slot.add(panel);
-      panelMaterials.push(panelMat);
-
-      // 이미지 카드 — 정면 근처=불투명, 뒤로 갈수록 페이드
+      // 이미지 카드 — 정면 근처=불투명, 뒤로 갈수록 페이드(사라지면 뒤 회색 벽이 드러남)
       const tex = loadTex(deck[i]);
       const mat = new THREE.MeshBasicMaterial({
         map: tex,
@@ -251,12 +252,9 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
       ring.rotation.y = THREE.MathUtils.degToRad(rot);
       for (let i = 0; i < COUNT; i++) {
         const o = opacityAt(baseAngle[i] + rot); // 1(정면)→0(뒤)
-        // [3] 이미지 페이드 + 짙은 회색 역크로스페이드: 이미지 o, 회색 (1-o)*PANEL_OPACITY.
+        // [3] 이미지만 각도 페이드 → 사라지면 뒤의 연속된 회색 벽(wall)이 그 자리를 채움.
         materials[i].opacity = o;
         materials[i].visible = o > 0.001;
-        const g = (1 - o) * PANEL_OPACITY;
-        panelMaterials[i].opacity = g;
-        panelMaterials[i].visible = g > 0.001;
         const target = i === hovered ? HOVER_SCALE : 1;
         curScale[i] += (target - curScale[i]) * 0.18; // 부드러운 확대/복귀
         meshes[i].scale.setScalar(curScale[i]);
@@ -368,8 +366,9 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
       wrap.removeEventListener("pointercancel", onPointerUp);
       wrap.removeEventListener("pointerleave", onPointerLeave);
       geometry.dispose();
+      wallGeo.dispose();
+      wallMat.dispose();
       materials.forEach((m) => m.dispose());
-      panelMaterials.forEach((m) => m.dispose());
       textures.forEach((t) => t.dispose());
       renderer.dispose();
       if (canvas.parentNode === wrap) wrap.removeChild(canvas);
