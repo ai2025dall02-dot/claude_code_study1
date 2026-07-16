@@ -19,15 +19,17 @@ const CARDS: FlowCard[] = [
   { label: "ARCHIVE", caption: "필름의 끝 · 16mm", img: "/posters-photo/lineup_6.jpg" },
 ];
 
-// ── 원통형 카드 덱(형태·각도·회전·드래그 유지) ─────────────────────────────
-// 5장 × 2바퀴 = 10장 → STEP 36° (간격 시원하게)
-const DECK_CARDS = CARDS.slice(0, 5);
-const DECK = [...DECK_CARDS, ...DECK_CARDS];
-const CW = 230; // 카드 폭
-const CH = 324; // 카드 높이
-const COUNT = DECK.length;
-const STEP = 360 / COUNT;
-const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.075) + 20; // CW 비례 반경
+// ── 원통형 카드 덱 ─────────────────────────────
+// [1] 곡률 완화: 카드 수를 늘려(6장 × 3바퀴 = 18면) STEP 을 작게(20°) → 원통이 더 매끄러움.
+//     (평면 카드라 완전한 곡면은 불가 → 면을 잘게 쪼개 다각형을 원에 가깝게)
+const DECK_CARDS = CARDS; // 6 포스터 전부
+const DECK_REPEAT = 3; // 바퀴 수 — 늘리면 면이 잘게 쪼개져 곡률이 부드러워짐(성능과 트레이드오프)
+const DECK = Array.from({ length: DECK_REPEAT }).flatMap(() => DECK_CARDS); // 18 셀
+const CW = 172; // 카드 폭 — 면이 많아진 만큼 좁혀 반경(원통 크기)이 과하게 커지지 않게
+const CH = 300; // 카드 높이
+const COUNT = DECK.length; // 18
+const STEP = 360 / COUNT; // 20° (면 간격 — 작을수록 매끄러움)
+const RADIUS = Math.round((CW / 2 / Math.tan(Math.PI / COUNT)) * 1.02) + 12; // 카드가 옆면에 촘촘히(살짝 겹쳐 이음새 완화)
 const SPEED = 7; // deg/sec
 const FULL_DEG = 42;
 const FADE_BAND = 30;
@@ -276,9 +278,13 @@ function FilmWordmark({
 export default function FlowHero() {
   const revealed = useIntroRevealed();
   const reduce = useReducedMotion();
-  const ringRef = useRef<HTMLDivElement>(null);
-  const deckRef = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
+  // [2] 덱을 두 레이어로 분리 → 텍스트를 그 사이에 끼움(빈 패널 < 텍스트 < 이미지 카드).
+  const backRingRef = useRef<HTMLDivElement>(null); // 뒤: 빈 패널 링(회전)
+  const frontRingRef = useRef<HTMLDivElement>(null); // 앞: 이미지 카드 링(회전)
+  const backDeckRef = useRef<HTMLDivElement>(null); // 뒤 덱(등장 애니메이션 대상)
+  const frontDeckRef = useRef<HTMLDivElement>(null); // 앞 덱(등장 애니메이션 + 드래그 입력)
+  const cardRefs = useRef<Array<HTMLDivElement | null>>([]); // 앞 이미지 카드(각도 페이드)
+  const panelRefs = useRef<Array<HTMLDivElement | null>>([]); // 뒤 빈 패널(각도 페이드)
   const pausedRef = useRef(false);
   const rotRef = useRef(0);
   const velocityRef = useRef(0);
@@ -318,11 +324,12 @@ export default function FlowHero() {
   // 덱 등장 — 텍스트 상단 안착 후 아래에서 위로 올라오며 페이드인(GSAP). 각도·형태·크기·회전·드래그는 불변.
   // top(위치)만 애니메이션 → .deck 의 transform(모바일 scale 등)을 건드리지 않음. reduce 는 CSS 로 즉시 표시.
   useEffect(() => {
-    const deck = deckRef.current;
-    if (!deck || reduce || !titleSettled) return;
-    const restTop = parseFloat(getComputedStyle(deck).top) || 0;
+    const back = backDeckRef.current;
+    const front = frontDeckRef.current;
+    if (!back || !front || reduce || !titleSettled) return;
+    const restTop = parseFloat(getComputedStyle(front).top) || 0;
     gsap.fromTo(
-      deck,
+      [back, front], // 앞·뒤 덱을 함께 등장(같은 top·opacity)
       { autoAlpha: 0, top: restTop + 80 }, // 아래(+80px)에서 투명하게 시작
       {
         autoAlpha: 1,
@@ -330,7 +337,7 @@ export default function FlowHero() {
         duration: 1.0,
         ease: "power3.out",
         onComplete: () => {
-          gsap.set(deck, { clearProps: "top" }); // 반응형 top:50% 복귀
+          gsap.set([back, front], { clearProps: "top" }); // 반응형 top:50% 복귀
           setIntroComplete(true); // 인트로 전체 완료 → 스크롤 잠금 해제(sticky 종료)
         },
       },
@@ -338,20 +345,31 @@ export default function FlowHero() {
   }, [titleSettled, reduce]);
 
   useEffect(() => {
-    const ring = ringRef.current;
-    if (!ring) return;
+    const backRing = backRingRef.current;
+    const frontRing = frontRingRef.current;
+    if (!backRing || !frontRing) return;
 
+    // 두 링(앞/뒤)에 동일 회전 적용 → 하나의 원통처럼 보임
+    const applyRot = () => {
+      const tf = `rotateY(${rotRef.current}deg)`;
+      backRing.style.transform = tf;
+      frontRing.style.transform = tf;
+    };
+    // 카드(이미지)·패널(빈 백킹) 모두 각도 기준 opacity 페이드
     const applyOpacity = () => {
       for (let i = 0; i < COUNT; i++) {
+        const o = String(opacityAt(i, rotRef.current));
         const card = cardRefs.current[i];
-        if (card) card.style.opacity = String(opacityAt(i, rotRef.current));
+        if (card) card.style.opacity = o;
+        const panel = panelRefs.current[i];
+        if (panel) panel.style.opacity = o;
       }
     };
 
     const r = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     reduceRef.current = r;
     if (r) {
-      ring.style.transform = "rotateY(0deg)";
+      applyRot();
       applyOpacity();
       return;
     }
@@ -366,7 +384,7 @@ export default function FlowHero() {
 
       // 드래그 중 — 자동 회전/관성 없이 rotRef(손 입력)만 즉시 반영
       if (draggingRef.current) {
-        ring.style.transform = `rotateY(${rotRef.current}deg)`;
+        applyRot();
         applyOpacity();
         pausedWritten = false;
         raf = requestAnimationFrame(frame);
@@ -376,7 +394,7 @@ export default function FlowHero() {
       // 호버 정지: 관성이 남아있으면 무시하고 계속 굴림(플릭 우선)
       if (pausedRef.current && velocityRef.current === 0) {
         if (!pausedWritten) {
-          ring.style.transform = `rotateY(${rotRef.current}deg)`;
+          applyRot();
           applyOpacity();
           pausedWritten = true;
         }
@@ -389,7 +407,7 @@ export default function FlowHero() {
       rotRef.current += (SPEED + velocityRef.current) * dt;
       velocityRef.current *= DECAY;
       if (Math.abs(velocityRef.current) < 0.05) velocityRef.current = 0;
-      ring.style.transform = `rotateY(${rotRef.current}deg)`;
+      applyRot();
       applyOpacity();
       raf = requestAnimationFrame(frame);
     };
@@ -433,13 +451,45 @@ export default function FlowHero() {
 
   return (
     <section className={styles.stage} id="home" data-revealed={revealed}>
-      {/* 중앙 워드마크 FILMNOUVELLE — GSAP 가로 커튼 웨이브 (덱보다 뒤 z축) */}
+      {/* ── z 레이어 순서(뒤→앞): [1] 빈 패널 덱(deckBack) < [2] 텍스트(titleWrap) < [3] 이미지 카드 덱(deckFront) ──
+          3D 서브트리(preserve-3d)와 2D 텍스트는 단순 z-index 로 사이에 끼울 수 없어, 원통을 "빈 패널"과
+          "이미지 카드" 두 덱으로 분리하고 그 사이에 텍스트를 배치(각 덱은 독립 stacking context). 두 링은 동일
+          회전(applyRot)을 받아 하나의 원통처럼 보임. */}
+
+      {/* [뒤] 빈 패널 덱 — 이미지 없는 반투명 백킹만. 텍스트 뒤에 깔림(z:1). 입력 대상 아님(pointer-events:none) */}
+      <div className={`${styles.deck} ${styles.deckBack}`} ref={backDeckRef} aria-hidden="true">
+        <div className={styles.deckTilt}>
+          <div
+            className={styles.deckRing}
+            ref={backRingRef}
+            style={{ "--cw": `${CW}px`, "--ch": `${CH}px` } as React.CSSProperties}
+          >
+            {DECK.map((_, i) => (
+              <div
+                key={i}
+                className={styles.cell}
+                style={{ transform: `rotateY(${i * STEP}deg) translateZ(${RADIUS}px)` }}
+              >
+                <div
+                  className={styles.panel}
+                  ref={(el) => {
+                    panelRefs.current[i] = el;
+                  }}
+                  style={{ opacity: opacityAt(i, 0) }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* [중간] 중앙 워드마크 FILMNOUVELLE — 빈 패널은 가리고(앞), 이미지 카드에는 가려짐(뒤). z:2 */}
       <FilmWordmark revealed={revealed} reduce={!!reduce} onIntroComplete={handleIntroComplete} />
 
-      {/* 원통형 3D 카드 덱(중앙 겹침) — 바깥=고정 기울기, 안쪽=rAF rotateY. 등장은 GSAP(텍스트 인트로 완료 후) */}
+      {/* [앞] 이미지 카드 덱 — 포스터가 채워진 카드. 텍스트 위에 뜸(z:3). 드래그 입력은 이 덱에서 받음 */}
       <div
-        className={styles.deck}
-        ref={deckRef}
+        className={`${styles.deck} ${styles.deckFront}`}
+        ref={frontDeckRef}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -448,7 +498,7 @@ export default function FlowHero() {
         <div className={styles.deckTilt}>
           <div
             className={styles.deckRing}
-            ref={ringRef}
+            ref={frontRingRef}
             style={{ "--cw": `${CW}px`, "--ch": `${CH}px` } as React.CSSProperties}
           >
             {DECK.map((c, i) => (
@@ -457,7 +507,6 @@ export default function FlowHero() {
                 className={styles.cell}
                 style={{ transform: `rotateY(${i * STEP}deg) translateZ(${RADIUS}px)` }}
               >
-                <div className={styles.panel} aria-hidden="true" />
                 <div
                   className={styles.card}
                   ref={(el) => {
@@ -468,7 +517,7 @@ export default function FlowHero() {
                   onMouseLeave={onLeave}
                 >
                   <div className={styles.card__media}>
-                    <Image src={c.img} alt={c.caption} fill sizes="212px" priority={i < 6} />
+                    <Image src={c.img} alt={c.caption} fill sizes="180px" priority={i < 6} />
                   </div>
                 </div>
               </div>

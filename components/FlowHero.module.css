@@ -53,14 +53,15 @@
 
 /* ── 워드마크 FILMNOUVELLE — GSAP 글자 인트로 + 커서 인터랙션 ──
    위치/이동은 .titleWrap(래퍼)이 담당(GSAP 가 xPercent·y 로 제어): 인트로는 화면 중앙,
-   완료 후 중앙 상단(네비 아래)으로 이동. z축은 덱보다 뒤(z:1 < 덱 z:6) → 덱 반투명 패널 뒤로 비침.
+   완료 후 중앙 상단(네비 아래)으로 이동. z축은 두 덱 사이(뒤 빈 패널 z:1 < 텍스트 z:2 < 앞 이미지 카드 z:3)
+   → 빈 패널은 텍스트가 가리고, 이미지 카드는 텍스트를 가림.
    pre-JS 기본값은 상단 정렬(top:0). reduce/JS 지연 시에도 네비를 안 가리는 안전한 자리. */
 .titleWrap {
   position: absolute;
   top: 0;
   left: 0;
   right: 0; /* 전폭 + text-align:center → 제목이 뷰포트보다 넓어도 항상 화면 가로 중앙 */
-  z-index: 1; /* 덱(z:6)보다 뒤 */
+  z-index: 2; /* [2] 뒤 빈 패널 덱(z:1)보다 앞, 앞 이미지 카드 덱(z:3)보다 뒤 */
   text-align: center;
   pointer-events: none; /* 인터랙션은 window pointermove 로 처리 → 덱 드래그를 막지 않음 */
   will-change: transform; /* GSAP 는 세로 이동(y)만 제어 — 가로 중앙은 text-align 이 담당 */
@@ -80,7 +81,7 @@
   white-space: nowrap;
   user-select: none;
   /* 호버 판정: 제목 텍스트 박스(글자+글자 사이 여백)에서만 pointermove 수신 → 커서 x 로 글자/여백 판정.
-     박스는 텍스트 크기라 좌우 넓은 빈 영역은 통과(titleWrap none). 덱(z:6)이 위이므로 겹치는 구간은 덱이 우선 → 드래그 방해 없음. */
+     박스는 텍스트 크기라 좌우 넓은 빈 영역은 통과(titleWrap none). 앞 이미지 카드 덱(z:3)이 위이므로 겹치는 구간은 덱이 우선 → 드래그 방해 없음. */
   pointer-events: auto;
   cursor: default;
 }
@@ -106,27 +107,38 @@
   width: 0.3em;
 }
 
-/* ── 원통형(3D 실린더) 카드 덱 — 각도(rotateZ -8·rotateX -20)·크기 유지, 위치는 화면 중앙(텍스트와 겹침) ── */
+/* ── 원통형(3D 실린더) 카드 덱 — 각도(rotateZ -8·rotateX -20)·크기 유지, 위치는 화면 중앙(텍스트와 겹침) ──
+   [2] 텍스트를 사이에 끼우려 두 덱(뒤 빈 패널 / 앞 이미지 카드)으로 분리. 공통 위치·원근은 .deck,
+   z 순서와 입력은 .deckBack / .deckFront 로 나눔. 두 링은 동일 회전을 받아 하나의 원통처럼 겹쳐 보임. */
 .deck {
   position: absolute;
   /* 중앙 겹침: .deckTilt 의 translate(-50%,-50%) 기준점을 화면 정중앙에 둠 */
   left: 50%;
   right: auto;
   top: 50%;
-  z-index: 6; /* 텍스트(z:1)보다 앞 */
   perspective: 1600px;
+}
+/* [뒤] 빈 패널 덱 — 텍스트 뒤(z:1). 입력 대상 아님(드래그는 앞 덱이 받음). */
+.deckBack {
+  z-index: 1;
+  pointer-events: none;
+}
+/* [앞] 이미지 카드 덱 — 텍스트 앞(z:3). 여기서 드래그(플릭) 입력을 받음. */
+.deckFront {
+  z-index: 3;
   /* 드래그(플릭) 입력 — 세로 스크롤/텍스트 선택 막고, 잡는 커서 표시 */
   touch-action: none;
   user-select: none;
   cursor: grab;
 }
-.deck:active { cursor: grabbing; }
-/* 바깥 래퍼: 고정 기울기(대각 스윕)만 — 회전과 분리. 작업4: 각도 rotateZ-8·rotateX-20 유지, 스케일 복원 */
+.deckFront:active { cursor: grabbing; }
+/* 바깥 래퍼: 고정 기울기(대각 스윕)만 — 회전과 분리. 각도 rotateZ-8·rotateX-20 유지.
+   [1] 면(18)이 늘어 반경(원통)이 커진 만큼 --scale 을 낮춰 화면상 크기를 이전과 비슷하게 유지. */
 .deckTilt {
   position: absolute;
   left: 0;
   top: 0;
-  --scale: 0.8; /* 작업4: 0.72→0.8 로 살짝 키움. 각도(rotateZ-8·rotateX-20)는 그대로 */
+  --scale: 0.62; /* [1] 면 증가로 반경↑ → 0.8→0.62 로 낮춰 크기 보존. 각도(rotateZ-8·rotateX-20)는 그대로 */
   transform: translate(-50%, -50%) rotateZ(-8deg) rotateX(-20deg) scale(var(--scale, 1));
   transform-style: preserve-3d;
 }
@@ -151,14 +163,14 @@
   inset: 0;
   background: rgba(255, 255, 255, 0.5); /* 반투명 흰 패널 — 텍스트 은은히 비침 */
   border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 3px;
+  border-radius: 10px; /* [1] 각진 느낌 완화 — 3px→10px 로 모서리 둥글게(카드와 동일) */
 }
 /* 카드: 각도 기반 opacity 페이드. 이미지가 카드를 꽉 채움(padding 0 + overflow) */
 .card {
   position: absolute;
   inset: 0;
   background: #fff;
-  border-radius: 3px;
+  border-radius: 10px; /* [1] 각진 느낌 완화 — 3px→10px 로 모서리 둥글게 */
   padding: 0;
   overflow: hidden;
   display: flex;
@@ -168,6 +180,21 @@
   backface-visibility: hidden;
   transform: translateZ(0);
   transition: transform 0.25s ease;
+}
+/* [1] 곡면 음영 — 좌우 가장자리를 살짝 어둡게(중앙 밝음) 하는 세로 그라데이션 오버레이.
+   평면 카드가 원통 옆면처럼 살짝 말려 보이도록 하는 착시(면이 촘촘해진 것과 함께 곡률감 강화). */
+.card__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.16) 0%,
+    rgba(0, 0, 0, 0) 22%,
+    rgba(0, 0, 0, 0) 78%,
+    rgba(0, 0, 0, 0.16) 100%
+  );
 }
 .card.hovered {
   transform: scale(1.16) translateZ(0);
@@ -184,17 +211,17 @@
 
 /* 통일 브레이크포인트(1280 / 1024 / 767) — 덱은 항상 화면 중앙(텍스트와 겹침), 스케일만 단계 조정.
    각도(rotateZ-8·rotateX-20)·드래그·자동회전은 불변. */
-@media (max-width: 1280px) { /* 노트북 — 스케일만 축소(중앙 유지) */
-  .deckTilt { --scale: 0.72; }
+@media (max-width: 1280px) { /* 노트북 — 스케일만 축소(중앙 유지). 반경↑ 반영해 비례 하향(0.72→0.56) */
+  .deckTilt { --scale: 0.56; }
 }
-@media (max-width: 1024px) { /* 태블릿 — 스케일만 축소(중앙 유지) */
-  .deckTilt { --scale: 0.6; }
+@media (max-width: 1024px) { /* 태블릿 — 스케일만 축소(중앙 유지). 반경↑ 반영해 비례 하향(0.6→0.47) */
+  .deckTilt { --scale: 0.47; }
 }
 @media (max-width: 767px) {
   /* 모바일: 중앙 유지 + 균일 축소 → 원통 전체가 보이게.
      각도(rotateZ-8·rotateX-20)는 그대로, .deck 자체를 scale 로만 축소. */
   .deck { transform: scale(0.6); transform-origin: center; }
-  .deckTilt { --scale: 0.72; } /* 태블릿(0.6) 상속 방지 — 기준 스케일 복귀 후 .deck scale 로 축소 */
+  .deckTilt { --scale: 0.56; } /* 태블릿(0.47) 상속 방지 — 기준 스케일 복귀 후 .deck scale 로 축소 */
   /* 모바일: FILM / NOUVELLE 두 줄로 나누고(공백 .gap 을 블록으로 전환) 폰트를 키워 화면을 시원하게 채움.
      각 단어(FILM·NOUVELLE)는 nowrap 유지라 줄 안에서 안 쪼개짐. NOUVELLE(8자)가 폭에 맞도록 26vw 기준. */
   .title { font-size: clamp(3rem, 26vw, 9rem); }
