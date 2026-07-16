@@ -226,7 +226,6 @@ function LineupCard({
           fill
           sizes="(max-width: 600px) 50vw, (max-width: 980px) 50vw, 33vw"
         />
-        <span className={styles.card__idx}>{f.index}</span>
         <span className={styles.card__status}>{f.status}</span>
       </div>
       <div className={styles.card__body}>

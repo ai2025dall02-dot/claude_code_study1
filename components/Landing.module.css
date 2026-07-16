@@ -55,8 +55,8 @@
 }
 .title em {
   font-style: normal;
-  /* 라인 두께: 0.8px → 0.5px 로 더 얇게(가는 선, 심플). 모든 섹션 제목(TypeTitle)에 일괄 적용. */
-  -webkit-text-stroke: 0.5px #0b0b0c;
+  /* 라인 두께: 0.5px → 0.3px 로 절반 수준까지 더 얇게(아주 가는 선). 모든 섹션 제목(TypeTitle)에 일괄 적용. */
+  -webkit-text-stroke: 0.3px #0b0b0c;
   color: transparent;
 }
 .index {
@@ -221,16 +221,6 @@
   transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .card:hover .card__media :global(img) { transform: scale(1.05); }
-.card__idx {
-  position: absolute;
-  top: 10px;
-  left: 12px;
-  font-family: var(--font-meta, monospace);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  color: #fff;
-  mix-blend-mode: difference;
-}
 .card__status {
   position: absolute;
   left: 0;
@@ -250,7 +240,7 @@
   padding-top: 0.9rem;
 }
 .card__title {
-  font-family: "Arial Black", Helvetica, sans-serif;
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
   font-size: clamp(1.1rem, 1.5vw, 1.35rem);
   letter-spacing: -0.02em;
@@ -293,7 +283,7 @@
   letter-spacing: 0.1em;
 }
 .maker__name {
-  font-family: "Arial Black", Helvetica, sans-serif;
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
   font-size: clamp(1.5rem, 4vw, 2.6rem);
   letter-spacing: -0.02em;
@@ -420,7 +410,7 @@
 }
 .fmCard__name {
   margin: 0;
-  font-family: "Arial Black", Helvetica, sans-serif;
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
   font-size: clamp(1.5rem, 2.4vw, 2.1rem);
   letter-spacing: -0.02em;
@@ -569,7 +559,7 @@
 }
 .fest__name {
   display: block;
-  font-family: "Arial Black", Helvetica, sans-serif;
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
   font-size: clamp(2rem, 4.5vw, 3.6rem); /* [4] 대형화 */
   letter-spacing: -0.02em;
@@ -674,7 +664,7 @@
   align-self: center;
 }
 .post__title {
-  font-family: "Arial Black", Helvetica, sans-serif;
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
   /* 작업3: 볼드 제목 크기 축소 */
   font-size: clamp(0.92rem, 1.45vw, 1.15rem);
@@ -755,7 +745,7 @@
   height: clamp(13rem, 35vh, 27rem); /* 하단 여백 약 35% 축소 — 스크롤 늘어짐 완화 */
 }
 .quote {
-  font-family: "Arial Black", Helvetica, sans-serif;
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
   font-size: clamp(1.7rem, 5vw, 3.6rem);
   line-height: 1.18;
@@ -807,7 +797,7 @@
   color: #8a8a86;
 }
 .principle__title {
-  font-family: "Arial Black", Helvetica, sans-serif;
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
   font-size: 1.25rem;
   letter-spacing: -0.01em;
@@ -876,7 +866,7 @@
 /* 작업1: 좌측 — 대형 리드(킥커 문구 삭제) */
 .contactMain { grid-area: lead; }
 .contactLead {
-  font-family: "Arial Black", Helvetica, sans-serif;
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
   font-size: clamp(1.8rem, 4vw, 3rem);
   letter-spacing: -0.03em;
@@ -892,7 +882,7 @@
 }
 /* 작업2: 밑줄(border-bottom)/padding-bottom 제거. 색·화살표 이동 hover 만 유지 */
 .contactCta__link {
-  font-family: "Arial Black", Helvetica, sans-serif;
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
   font-size: clamp(1rem, 1.6vw, 1.25rem);
   letter-spacing: -0.01em;
@@ -942,7 +932,7 @@
   gap: 1.6rem;
 }
 .footer__brand {
-  font-family: "Arial Black", Helvetica, sans-serif;
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
   font-size: clamp(1.6rem, 4vw, 2.4rem);
   letter-spacing: 0.02em;
