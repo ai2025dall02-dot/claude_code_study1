@@ -21,7 +21,7 @@
   padding: 1.5rem clamp(1.4rem, 4vw, 3rem);
 }
 .nav__brand {
-  font-family: "Arial Black", Helvetica, sans-serif;
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
   font-size: clamp(15px, 1.7vw, 20px);
   letter-spacing: -0.02em;
@@ -32,7 +32,7 @@
   gap: clamp(1rem, 2.4vw, 2.6rem);
 }
 .nav__links a {
-  font-family: "Arial Black", Helvetica, sans-serif;
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 800;
   font-size: clamp(11px, 1vw, 13px);
   letter-spacing: 0.04em;

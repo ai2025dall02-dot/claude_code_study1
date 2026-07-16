@@ -26,7 +26,7 @@
   justify-content: center;
   text-align: center;
   padding: 0 clamp(1.4rem, 4vw, 3rem);
-  font-family: "Arial Black", Helvetica, sans-serif;
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
   font-size: clamp(1.9rem, 5vw, 4rem);
   line-height: 1.18;

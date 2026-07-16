@@ -19,10 +19,12 @@
   --danger: #d96b5b;
 
   /* — Type — */
-  --font-display: var(--font-display-en), var(--font-display-ko), Georgia, "Apple SD Gothic Neo", serif;
+  /* display: 라틴은 display-en, 한글은 Pretendard(display-ko 는 로드 불안정하므로 그 앞에) */
+  --font-display: var(--font-display-en), var(--font-pretendard), var(--font-display-ko), Georgia, "Apple SD Gothic Neo", serif;
   /* 본문/한글 전역 통일: Pretendard(self-host) 선두 → 사이트 전체 한글·라틴 본문에 일괄 적용. 뒤는 fallback. */
   --font-sans: var(--font-pretendard), var(--font-body), system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  --font-meta: var(--font-mono), ui-monospace, "SFMono-Regular", monospace;
+  /* meta(모노 라벨): 라틴·숫자는 모노 유지, 한글은 Pretendard 로(모노엔 한글 글리프 없음) */
+  --font-meta: var(--font-mono), var(--font-pretendard), ui-monospace, "SFMono-Regular", monospace;
 
   /* — Layout — */
   --maxw: 1280px;

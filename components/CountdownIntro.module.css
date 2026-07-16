@@ -78,7 +78,7 @@
 /* 카운트 숫자 */
 .num {
   position: relative;
-  font-family: "Arial Black", Helvetica, sans-serif;
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
   font-size: clamp(7rem, 22vw, 12rem);
   line-height: 1;
@@ -95,7 +95,7 @@
 .label {
   position: absolute;
   bottom: clamp(2rem, 7vh, 3.5rem);
-  font-family: "Arial Black", Helvetica, sans-serif;
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 800;
   font-size: 11px;
   letter-spacing: 0.5em;
