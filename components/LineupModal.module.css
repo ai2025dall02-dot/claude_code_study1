@@ -4,23 +4,24 @@
   inset: 0;
   z-index: 200; /* 네비(z:100) 위 */
   display: flex;
-  align-items: center;
+  align-items: flex-end; /* [3] 바텀시트: 패널을 뷰포트 바닥에 붙임(중앙 X) */
   justify-content: center;
-  padding: clamp(1rem, 4vw, 3rem);
-  background: rgba(8, 8, 10, 0.62);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  padding: 0; /* [3] 시트가 화면 하단·좌우에 꽉 차게(플러시) */
+  background: rgba(8, 8, 10, 0.34); /* [3] 딤 옅게 — 시트 위쪽 페이지가 비쳐 보이게 */
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 .panel {
   position: relative;
   display: flex;
-  width: min(1080px, 96vw);
-  height: min(88vh, 640px);
+  /* [3] 바텀시트: 거의 전체 폭 + 하단 ~62% 높이(위 ~38% 는 뒤 페이지 노출) */
+  width: min(1440px, 100vw); /* 거의 전체 폭 */
+  height: min(62vh, 620px); /* 시트 높이 — 키우면 페이지 덜 보이고, 줄이면 더 보임 */
   background: #0b0b0c;
-  border-radius: 6px;
+  border-radius: 12px 12px 0 0; /* 위 모서리만 둥글게, 바닥은 플러시 */
   overflow: hidden;
-  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 -18px 70px rgba(0, 0, 0, 0.42); /* 시트 위쪽으로 그림자 */
   will-change: transform;
 }
 
@@ -102,21 +103,22 @@
   color: #eaeae6;
 }
 
-/* 닫기(X) — 우측 상단 */
+/* 닫기(X) — 우측 상단. [1] 어두운 반투명 원 + 흰 아이콘 + 그림자로 밝은 포스터 위에서도 또렷하게. */
 .close {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 3;
-  width: 40px;
-  height: 40px;
+  top: 14px;
+  right: 14px;
+  z-index: 5; /* [1] 이미지/콘텐츠 위로 확실히 */
+  width: 42px;
+  height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 999px;
-  background: rgba(12, 12, 14, 0.55);
-  color: #fafafa;
+  background: rgba(0, 0, 0, 0.6); /* [1] 대비 강화 */
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5); /* [1] 밝은 배경과 분리 */
+  color: #fff;
   font-size: 16px;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
@@ -124,8 +126,8 @@
   appearance: none;
 }
 .close:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.78);
+  border-color: rgba(255, 255, 255, 0.6);
 }
 
 /* ── 모바일: 세로 풀스크린(상단 이미지 + 하단 상세) ── */
@@ -143,17 +145,23 @@
     flex-direction: column;
     border-radius: 0;
   }
+  /* [2] 포스터 영역을 크게(42vh → 58vh) → 세로형 포스터가 덜 잘리고 크게 보임. cover 유지. */
   .media {
-    flex: 0 0 42vh;
+    flex: 0 0 58vh; /* 키우면 포스터 더 크게(덜 잘림), 줄이면 텍스트 영역이 넓어짐 */
     width: 100%;
   }
+  /* [2] 텍스트 영역은 나머지 공간(약 42vh)만 차지하고 넘치면 스크롤(overflow-y:auto) */
   .body {
     flex: 1 1 auto;
     padding: clamp(1.4rem, 6vw, 2rem);
   }
+  /* [1] 모바일: 밝은 포스터 위라 대비 최대치로 */
   .close {
-    top: 14px;
-    right: 14px;
+    top: 16px;
+    right: 16px;
+    background: rgba(0, 0, 0, 0.66);
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+    z-index: 6;
   }
 }
 
