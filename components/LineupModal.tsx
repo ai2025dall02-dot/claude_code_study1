@@ -31,6 +31,8 @@ export default function LineupModal({
     const prevBody = body.style.overflow;
     html.style.overflow = "hidden";
     body.style.overflow = "hidden";
+    // 모달 열림 표시 — SiteNav 가 이 속성으로 모바일에서 네비를 잠시 숨김(닫기 X 와 겹침 방지)
+    body.setAttribute("data-modal-open", "true");
     const prevFocus = document.activeElement as HTMLElement | null;
     closeRef.current?.focus();
 
@@ -65,6 +67,7 @@ export default function LineupModal({
       document.removeEventListener("keydown", onKey);
       html.style.overflow = prevHtml;
       body.style.overflow = prevBody;
+      body.removeAttribute("data-modal-open"); // 닫히면 네비 복구
       prevFocus?.focus?.();
     };
   }, [film, onClose]);

@@ -15,24 +15,24 @@
 .panel {
   position: relative;
   display: flex;
-  /* [3] 바텀시트: 거의 전체 폭 + 하단 ~62% 높이(위 ~38% 는 뒤 페이지 노출) */
-  width: min(1440px, 100vw); /* 거의 전체 폭 */
+  /* 바텀시트: 화면 가로 100% 꽉 채움 + 하단 ~62% 높이(위 ~38% 는 뒤 페이지 노출) */
+  width: 100%; /* [1] 넓은 화면에서도 항상 전체 폭(1440 제한 제거) */
   height: min(62vh, 620px); /* 시트 높이 — 키우면 페이지 덜 보이고, 줄이면 더 보임 */
   background: #0b0b0c;
-  border-radius: 12px 12px 0 0; /* 위 모서리만 둥글게, 바닥은 플러시 */
+  border-radius: 0; /* [1] 각지게 — 바닥·좌우 완전 플러시 */
   overflow: hidden;
   box-shadow: 0 -18px 70px rgba(0, 0, 0, 0.42); /* 시트 위쪽으로 그림자 */
   will-change: transform;
 }
 
-/* 좌: 세로형 포스터 */
+/* 좌: 세로형 포스터. [2] 폭 비중을 줄여(44%→34%) 우측 텍스트를 더 길쭉하게, contain 으로 잘림 없이 전체 노출 */
 .media {
   position: relative;
-  flex: 0 0 44%;
-  background: #141416;
+  flex: 0 0 34%; /* [2] 좌 포스터 폭 비중 — 줄일수록 텍스트 영역이 넓어짐 */
+  background: #141416; /* [2] contain 여백(레터박스) 배경 — 포스터와 자연스럽게 이어짐 */
 }
 .media :global(img) {
-  object-fit: cover;
+  object-fit: contain; /* [2] 세로 포스터가 시트 높이 안에서 위아래 잘리지 않고 전체가 보이게 */
 }
 
 /* 우: 어두운 상세 패널(밝은 텍스트) */
@@ -145,10 +145,13 @@
     flex-direction: column;
     border-radius: 0;
   }
-  /* [2] 포스터 영역을 크게(42vh → 58vh) → 세로형 포스터가 덜 잘리고 크게 보임. cover 유지. */
+  /* 모바일: 포스터 영역을 크게(58vh) + 상단 이미지는 cover 로 꽉 채움(PC 만 contain). */
   .media {
     flex: 0 0 58vh; /* 키우면 포스터 더 크게(덜 잘림), 줄이면 텍스트 영역이 넓어짐 */
     width: 100%;
+  }
+  .media :global(img) {
+    object-fit: cover; /* 모바일 상단 이미지는 여백 없이 채움(PC 의 contain 을 무효화) */
   }
   /* [2] 텍스트 영역은 나머지 공간(약 42vh)만 차지하고 넘치면 스크롤(overflow-y:auto) */
   .body {

@@ -83,6 +83,13 @@
 .nav[data-open="true"] .hamburgerLine:nth-child(2) { opacity: 0; }
 .nav[data-open="true"] .hamburgerLine:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
+/* 모바일: LINEUP 상세 모달이 열려 있는 동안 네비 숨김(닫기 X 와 겹침 방지). 닫으면 복구. 데스크톱은 영향 없음. */
+@media (max-width: 767px) {
+  :global(body[data-modal-open="true"]) .nav {
+    display: none;
+  }
+}
+
 @media (max-width: 767px) { /* 모바일: 가로 메뉴 → 햄버거 드롭다운 */
   .nav { justify-content: flex-end; } /* 브랜드 없이 햄버거를 우측에 배치 */
   .hamburger { display: inline-flex; align-items: center; justify-content: center; }
