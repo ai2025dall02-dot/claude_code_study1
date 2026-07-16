@@ -290,6 +290,30 @@ export default function FlowHero() {
   // 덱 등장 트리거 — 타이틀 인트로 웨이브가 끝나고 상단 이동이 완료된 시점(FilmWordmark 콜백)
   const [titleSettled, setTitleSettled] = useState(false);
   const handleIntroComplete = useCallback(() => setTitleSettled(true), []);
+  // 인트로(글자 등장 → 웨이브 → 상단 이동 → 덱 등장) 전체 완료 여부 — sticky(스크롤 잠금) 해제 트리거
+  const [introComplete, setIntroComplete] = useState(false);
+
+  // ── sticky 히어로 ──
+  // 인트로가 모두 끝나기 전까지 페이지 스크롤을 잠가 히어로를 화면에 고정. 완료되면 해제 → 그때부터 ABOUT 으로 넘어감.
+  // CSS position:sticky 트랙 대신 스크롤 잠금 방식: (a) 시간 기반 GSAP 인트로가 스크롤 속도와 무관하게 반드시
+  // 끝난 뒤 넘어가도록 보장하고, (b) 히어로에 새 sticky 컨텍스트를 만들지 않아 아래 JOURNAL 의 sticky 블라인드와
+  // 스크롤상 충돌이 원천적으로 없음. reduce 모션이면 잠그지 않음(접근성). 안전장치로 최대 대기 후 강제 해제.
+  useEffect(() => {
+    if (reduce || introComplete) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const prevH = html.style.overflow;
+    const prevB = body.style.overflow;
+    window.scrollTo(0, 0); // 히어로가 최상단에 보이도록
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    const failsafe = window.setTimeout(() => setIntroComplete(true), 12000); // 콜백 누락 등 대비
+    return () => {
+      html.style.overflow = prevH;
+      body.style.overflow = prevB;
+      clearTimeout(failsafe);
+    };
+  }, [reduce, introComplete]);
 
   // 덱 등장 — 텍스트 상단 안착 후 아래에서 위로 올라오며 페이드인(GSAP). 각도·형태·크기·회전·드래그는 불변.
   // top(위치)만 애니메이션 → .deck 의 transform(모바일 scale 등)을 건드리지 않음. reduce 는 CSS 로 즉시 표시.
@@ -305,7 +329,10 @@ export default function FlowHero() {
         top: restTop,
         duration: 1.0,
         ease: "power3.out",
-        onComplete: () => gsap.set(deck, { clearProps: "top" }), // 반응형 top:50% 복귀
+        onComplete: () => {
+          gsap.set(deck, { clearProps: "top" }); // 반응형 top:50% 복귀
+          setIntroComplete(true); // 인트로 전체 완료 → 스크롤 잠금 해제(sticky 종료)
+        },
       },
     );
   }, [titleSettled, reduce]);
