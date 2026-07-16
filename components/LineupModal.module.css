@@ -56,17 +56,20 @@
 }
 .title {
   margin: 0.7rem 0 0.2rem;
-  font-family: var(--font-anton), "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
-  font-weight: 400;
+  /* [1] 제목 전체(한글·숫자·영문)를 Pretendard 하나로 → 숫자·영문(48 등)만 Anton 으로 굵게 튀던 문제 해결.
+     (영화 제목은 한글 위주라 Anton=한글없음 → 한글 Pretendard/숫자 Anton 로 갈려 무게가 어긋났음) */
+  font-family: var(--font-pretendard), "Apple SD Gothic Neo", sans-serif;
+  font-weight: 800; /* [1] 제목다운 굵기(Pretendard ExtraBold) — 한글·숫자 동일 무게로 균일 */
   font-size: clamp(2rem, 4.4vw, 3.6rem);
   line-height: 1.02;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em; /* 한글 제목에 어울리는 약간 좁은 자간 */
   color: #fafafa;
 }
 .titleEn {
-  font-family: var(--font-meta, monospace);
-  font-size: 12px;
-  letter-spacing: 0.1em;
+  /* [3] 영문 부제는 Anton 으로 통일(사이트 영문 타이틀 일관) */
+  font-family: var(--font-anton), "Arial Black", sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.14em; /* [3] Anton 소형 캡스 — 자간 넉넉히(좁게 뭉치지 않게) */
   text-transform: uppercase;
   color: #8a8a86;
 }

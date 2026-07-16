@@ -379,6 +379,9 @@
 }
 .fmBg .title em {
   -webkit-text-stroke-color: #0b0b0c;
+  /* [2] FILMMAKERS 는 크기가 커서 outline 이 유독 굵어 보임 → 다른 섹션(0.25px)보다 더 얇게 0.14px 로.
+     (글자가 커서 0.14px 하한에도 선이 끊기지 않고 표현됨) */
+  -webkit-text-stroke-width: 0.14px;
 }
 .fmHeadSub {
   display: block;
