@@ -69,7 +69,7 @@
   /* [3] 영문 부제는 Anton 으로 통일(사이트 영문 타이틀 일관) */
   font-family: var(--font-anton), "Arial Black", sans-serif;
   font-size: 13px;
-  letter-spacing: 0.14em; /* [3] Anton 소형 캡스 — 자간 넉넉히(좁게 뭉치지 않게) */
+  letter-spacing: 0.08em; /* [2] 영문 제목 자간 살짝 축소(0.14em → 0.08em, 레퍼런스 "THE SALT FLATS" 느낌) */
   text-transform: uppercase;
   color: #8a8a86;
 }
