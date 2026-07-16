@@ -27,7 +27,7 @@
   --font-meta: var(--font-mono), var(--font-pretendard), ui-monospace, "SFMono-Regular", monospace;
 
   /* — Layout — */
-  --maxw: 1280px;
+  --maxw: none; /* [3] 콘텐츠 폭 제한 제거 → 전체 폭. 좌우 여백은 --gutter(padding)로만 유지 */
   --gutter: clamp(1.25rem, 5vw, 4.5rem);
   --bar: clamp(28px, 6vh, 64px); /* letterbox bar height */
 

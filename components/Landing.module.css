@@ -18,7 +18,10 @@
   scroll-margin-top: 72px;
 }
 .inner {
-  max-width: 1280px;
+  /* [3] 폭 제한 제거 → 콘텐츠가 화면 가로를 꽉 채움(그리드·이미지·제목 등 레이아웃 요소).
+     좌우 여백은 --ln-gutter(padding)로만 유지해 화면 끝에 딱 붙지 않게. 긴 본문 텍스트는
+     각 요소(.aboutBody/.festsDesc 등)가 자체 max-width 로 읽기 좋은 줄 길이를 유지. */
+  max-width: none;
   margin: 0 auto;
   padding-inline: var(--ln-gutter);
 }
@@ -775,7 +778,8 @@
 }
 .aboutBody {
   margin-top: 2.4rem;
-  max-width: none; /* 영역(.inner) 전체 폭을 채움 */
+  /* [3] .inner 가 전체 폭이 되며 본문 줄이 과하게 길어지지 않게 읽기 좋은 상한 유지(약 60자). */
+  max-width: 60ch;
   color: #b9b9b4;
   /* 노트북에서 본문이 크게 느껴지지 않게 상한·vw 계수 하향 (1.5→1.25, 1.9vw→1.5). line-height 유지 */
   font-size: clamp(1.05rem, 1.5vw, 1.25rem);
