@@ -202,6 +202,17 @@
   flex-direction: column;
   text-decoration: none;
   color: inherit;
+  /* <a> → <button> 전환: 기본 버튼 스타일 리셋(모양은 기존 카드와 동일하게 유지) */
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
 }
 .card__media {
   position: relative;

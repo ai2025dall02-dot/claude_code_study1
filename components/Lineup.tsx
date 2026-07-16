@@ -12,6 +12,7 @@ import {
 } from "framer-motion";
 import { films, type Film } from "@/data/films";
 import TypeTitle from "./TypeTitle";
+import LineupModal from "./LineupModal";
 import styles from "./Landing.module.css";
 
 /* 라인업 작품에 사진 포스터 매핑 (public/posters-photo). 12편이 각각 고유 이미지 사용:
@@ -65,6 +66,9 @@ export default function Lineup() {
   const reduce = useReducedMotion();
   const sectionRef = useRef<HTMLElement | null>(null);
 
+  // 카드 클릭 시 열리는 상세 모달 대상 영화 (null = 닫힘)
+  const [selected, setSelected] = useState<Film | null>(null);
+
   // 모바일(≤767)에서는 .grid 가 1열로 쌓여 열마다 속도가 다른 패럴랙스가 서로 어긋난다
   // → 모바일에서는 패럴랙스 정지(y=0). 데스크톱/태블릿은 그대로 유지.
   const [isMobile, setIsMobile] = useState(false);
@@ -104,12 +108,20 @@ export default function Lineup() {
               speed={COL_SPEED[c]}
               reduce={!!reduce}
               noParallax={isMobile}
+              onOpen={setSelected}
               // 전체 항목을 열에 분배(전역 인덱스로 라운드로빈) — 페이지네이션 없이 한 흐름.
               items={ITEMS.map((f, i) => ({ f, i })).filter(({ i }) => i % COLS === c)}
             />
           ))}
         </div>
       </div>
+
+      {/* 카드 클릭 → 영화 상세 모달 */}
+      <LineupModal
+        film={selected}
+        image={selected ? (FILM_PHOTO[selected.id] ?? "/posters-photo/lineup_1.jpg") : undefined}
+        onClose={() => setSelected(null)}
+      />
     </section>
   );
 }
@@ -124,6 +136,7 @@ function ParallaxColumn({
   noParallax,
   className,
   items,
+  onOpen,
 }: {
   progress: MotionValue<number>;
   speed: number;
@@ -131,6 +144,7 @@ function ParallaxColumn({
   noParallax: boolean; // 모바일 1열 — 열 이동 정지
   className: string;
   items: { f: Film; i: number }[];
+  onOpen: (f: Film) => void; // 카드 클릭 → 상세 모달 열기
 }) {
   // 진입 밀림을 '완전 제거'가 아니라 '조금만 축소' — 기존 대칭 [-D, D] 에서
   // 시작값만 60%(-D*0.6)로 낮춰 진입 밀림이 약 40% 감소. 상단 여백은 적당히 줄되
@@ -155,6 +169,7 @@ function ParallaxColumn({
           conf={CONF[i % CONF.length]}
           topCard={colIdx === 0}
           reduce={reduce}
+          onOpen={onOpen}
           // 작업2(중요): opacity 위치 보정도 트랙과 "같은" 스무딩 값(ySmooth)을 구독 → 이미지 위치와
           // 페이드가 어긋나지 않음. (정지 시엔 undefined → 레이아웃 위치 기준으로 페이드)
           parallaxY={still ? undefined : ySmooth}
@@ -170,17 +185,19 @@ function LineupCard({
   topCard,
   reduce,
   parallaxY,
+  onOpen,
 }: {
   film: Film;
   conf: { mt: number; ar: string };
   topCard: boolean;
   reduce: boolean;
   parallaxY?: MotionValue<number>;
+  onOpen: (f: Film) => void;
 }) {
   // 각 열 '맨 위' 카드만 상단 여백 약간(75%) 축소 — [1] 패럴랙스로 이미 여백이 줄었으므로
   // 여기선 최소로만 걸어 제목 침범을 피함 (기존 절반 → 0.75 로 완화)
   const marginTop = topCard ? conf.mt * 0.75 : conf.mt;
-  const ref = useRef<HTMLAnchorElement | null>(null);
+  const ref = useRef<HTMLButtonElement | null>(null);
 
   // opacity 를 '카드의 실제 화면 위치(= 레이아웃 위치 + 패럴랙스 이동)' 기준으로 계산.
   //  - framer-motion 11 의 useScroll(target) 측정(calcInset)은 offsetTop 누적이라
@@ -218,7 +235,14 @@ function LineupCard({
   const opacity = reduce ? 1 : opRaw;
 
   return (
-    <motion.a ref={ref} className={styles.card} href="#contact" style={{ marginTop, opacity }}>
+    <motion.button
+      ref={ref}
+      type="button"
+      className={styles.card}
+      onClick={() => onOpen(f)}
+      aria-label={`${f.title} 상세 보기`}
+      style={{ marginTop, opacity }}
+    >
       <div className={styles.card__media} style={{ aspectRatio: conf.ar }}>
         <Image
           src={FILM_PHOTO[f.id] ?? "/posters-photo/lineup_1.jpg"}
@@ -235,6 +259,6 @@ function LineupCard({
           {f.director} · {f.country} {f.year} · {f.format} · {f.genre}
         </span>
       </div>
-    </motion.a>
+    </motion.button>
   );
 }
