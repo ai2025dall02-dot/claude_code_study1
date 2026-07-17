@@ -21,32 +21,31 @@ const DECAY = 0.94; // 관성 감쇠(프레임당)
 const HOVER_SCALE = 1.12; // 호버 시 카드 확대 배율(.hovered 상당)
 
 // ── 원통 형상(월드 좌표) ──
-// [1] 카드 총 개수를 6개로 고정(STEP=360/6=60° → 카드 하나가 차지하는 각이 커서 이미지 영역이 큼).
-const SLOT_COUNT = 6;
-// [4] 빈(이미지 없는) 슬롯 인덱스 — 이 자리는 텍스처를 로드하지 않고 반투명 회색 카드로 남음.
-//   (테스트: 6칸 중 2칸을 비워 회색이 보이는지 확인. 실제로는 images 길이/원하는 배치에 맞게 조정)
-const EMPTY_SLOTS = new Set<number>([2, 4]);
-const CARD_H = 4.4; // [2] 카드 높이(월드) — 6개로 줄어 STEP 커진 만큼 크게(세로형 포스터)
+// [1] 카드(슬롯) 총 개수 8개. 모든 슬롯을 images 순환으로 채워 앞으로 나오는 카드는 항상 이미지.
+const SLOT_COUNT = 8;
+const CARD_H = 4.2; // [2] 카드 높이(월드) — 세로형 포스터, 크게
 const CARD_AR = 0.7; // 카드 가로:세로 비 — 세로형 포스터 비율
-const CARD_W = CARD_H * CARD_AR; // 카드 폭(월드) = 3.08
-const FILL = 0.82; // [3] 카드가 차지하는 STEP 비율 — 촘촘하되 살짝 틈(0.8 이상)
-const SEG_W = 28; // 카드 가로 세그먼트(STEP 커진 만큼 곡면 세그먼트도 늘려 매끄럽게)
+const CARD_W = CARD_H * CARD_AR; // 카드 폭(월드)
+const FILL = 0.82; // [3] 카드가 차지하는 STEP 비율 — 촘촘하되 살짝 틈
+const SEG_W = 28; // 카드 가로 세그먼트(곡면 매끄럽게)
 
 // ── 기울기 ──
-// [3] FOLLOW.ART 형태: 원통을 살짝 뒤로 기울여 "안쪽 상단(윗면 안쪽)"이 들여다보이게. rotateX 를 양수로.
-const TILT_Z = THREE.MathUtils.degToRad(10); // 대각선 기울기 유지(좌하단→우상단)
+// FOLLOW.ART 형태: 원통을 살짝 뒤로 기울여 "안쪽 상단"이 보이게(rotateX 양수) + 살짝 대각선(rotateZ).
+const TILT_Z = THREE.MathUtils.degToRad(10); // 대각선 기울기(좌하단→우상단)
 const TILT_X = THREE.MathUtils.degToRad(14); // 뒤로 기울여 원통 안쪽 상단이 보임(+)
 
 // ── 카메라/스케일 ──
-const CAM_Z = 13; // [5] 카메라 거리 — 카드 6개·큰 사이즈에 맞춰 정면 카드가 크되 안 잘리게
+const CAM_Z = 14; // [6] 카메라 거리 — 8개·큰 카드에 맞춰(정면 카드 크되 안 잘리게, 측면 회색도 보이게)
 const CAM_FOV = 34; // 시야각
-const CENTER_Y = 1.4; // [3] 세로 위치 — 뒤로 기울이면 카드가 아래로 내려가므로 위로 올려 화면에 담음(월드 Y)
+const CENTER_Y = 1.6; // 세로 위치 — 뒤로 기울이면 카드가 내려가므로 위로 올려 담음(월드 Y)
 
-// ── 빈 카드 / 로드 전 플레이스홀더(반투명 회색) ──
-// [4] 빈 슬롯(deck[i] 가 falsy)은 텍스처를 로드하지 않고 계속 반투명 회색 카드로 남음 → 이미지 카드와 섞여 보임.
-//   또한 이미지 슬롯도 로드 전엔 회색 → 로드되면 이미지로 전환. 반투명이라 그 너머 FILMNOUVELLE 텍스트 비침.
-const PANEL_COLOR = 0x8a8a8a; // 회색(빈 카드 / 로드 전)
-const PANEL_OPACITY = 0.5; // 반투명 — 텍스트 비침 유지
+// ── 2겹 구조: 회색 뒷판 + 이미지 앞판 ──
+// [3][4] 카드 1장 = (a) 회색 뒷판(반투명, 상시) + (b) 이미지 앞판(반지름 +0.01, opacityAt 로 페이드).
+//   앞쪽 반구: 이미지 앞판 불투명 → 회색 가림 / 뒤쪽 반구: 이미지 페이드 → 뒤판 회색 드러남.
+//   회색은 반투명이라 그 너머 FILMNOUVELLE 텍스트가 비쳐 입체감.
+const PANEL_COLOR = 0x8a8a8a; // 회색 뒷판 색
+const PANEL_OPACITY = 0.5; // 회색 뒷판 불투명도(반투명 — 텍스트 비침)
+const CARD_GAP = 0.01; // [3] 이미지 앞판을 회색 뒷판보다 살짝 앞으로(반지름 +)
 // 반응형 스케일 — 그룹 전체에 곱함. [1] 카드/카메라를 키운 만큼(정면 큰 아치) 좁은 화면에선 더
 //   줄여야 아치가 안 잘리고 들어옴(모바일 0.62→0.42, 태블릿 하향). 데스크탑은 큰 카드 의도 유지.
 function scaleForWidth(w: number) {
@@ -151,20 +150,10 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
     tiltZ.add(tiltX);
     scene.add(tiltZ);
 
-    // [1][4] 카드 구성: 총 SLOT_COUNT(6) 슬롯. EMPTY_SLOTS 에 속한 인덱스는 빈 슬롯(undefined=이미지 없음 → 회색),
-    //   나머지는 images 를 순서대로 채움. images 가 부족하면(undefined) 그 슬롯도 자동으로 빈 회색 카드가 됨.
-    //   → 모든 슬롯을 이미지로 채우던 구조 제거. 빈 슬롯은 아래 루프에서 requestTex 를 아예 호출하지 않음.
-    const deck: (string | undefined)[] = [];
-    let imgIdx = 0;
-    for (let i = 0; i < SLOT_COUNT; i++) {
-      if (EMPTY_SLOTS.has(i)) {
-        deck.push(undefined); // 빈(회색) 슬롯 — 텍스처 로드 안 함
-      } else {
-        deck.push(images[imgIdx]); // images 부족분은 undefined → 역시 빈 회색
-        imgIdx++;
-      }
-    }
-    const COUNT = deck.length; // = SLOT_COUNT (6)
+    // [2] 카드 구성: 8개 슬롯 모두 images 를 순환해 채움 → 앞으로 나오는 카드는 항상 이미지.
+    const deck: string[] = [];
+    for (let i = 0; i < SLOT_COUNT; i++) deck.push(images[i % images.length]);
+    const COUNT = deck.length; // = SLOT_COUNT (8)
     const STEP = 360 / COUNT; // deg
     const cardAngle = THREE.MathUtils.degToRad(STEP) * FILL; // 카드 1장이 차지하는 각(틈 제외)
     const RADIUS = CARD_W / cardAngle; // 카드 폭 = 호 길이 → 반지름
@@ -173,21 +162,29 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
     const loader = new THREE.TextureLoader();
     const maxAniso = renderer.capabilities.getMaxAnisotropy();
     const textures: THREE.Texture[] = [];
-    const materials: THREE.MeshBasicMaterial[] = []; // 카드마다 머티리얼(로드 전 회색 → 로드 후 이미지)
-    const meshes: THREE.Mesh[] = [];
+    const materials: THREE.MeshBasicMaterial[] = []; // 이미지 앞판 머티리얼(카드마다)
+    const meshes: THREE.Mesh[] = []; // 이미지 앞판 메시(레이캐스트/호버 대상)
+    const grayMeshes: THREE.Mesh[] = []; // 회색 뒷판 메시(호버 시 앞판과 함께 확대)
     const baseAngle: number[] = []; // 카드 i 의 기준 각도(deg)
     const curScale: number[] = []; // 호버 확대 lerp 현재값
-    const loaded: boolean[] = []; // [4] 카드 텍스처 로드 여부(false=회색 플레이스홀더)
+    const loaded: boolean[] = []; // 카드 텍스처 로드 여부(false=이미지 앞판 숨김 → 회색 뒷판 노출)
 
-    // [4] 카드 머티리얼에 텍스처를 입힘 — 회색(map 없음) → 이미지(map + 흰색 틴트). 텍스처 1장은 여러 카드가 공유.
+    // [3] 회색 뒷판 공유 머티리얼(상시 반투명 회색). 모든 슬롯이 공유(상수라 하나면 충분).
+    const grayMaterial = new THREE.MeshBasicMaterial({
+      color: PANEL_COLOR,
+      transparent: true,
+      opacity: PANEL_OPACITY,
+      side: THREE.FrontSide, // 뒤로 완전히 돈 면은 컬링(뒤판도 앞쪽 반구에서만 보임)
+      depthWrite: false,
+    });
+
+    // 이미지 앞판에 텍스처 적용 — 텍스처 1장은 같은 경로의 여러 카드가 공유.
     const applyTex = (mat: THREE.MeshBasicMaterial, tex: THREE.Texture, idx: number) => {
       mat.map = tex;
-      mat.color.set(0xffffff); // 회색 틴트 해제(이미지 원색)
       mat.needsUpdate = true;
       loaded[idx] = true;
       if (reduceRef.current) applyAndRender(); // 정지 모드: 로드 시 다시 그림
     };
-    // 같은 경로는 텍스처 1장만 로드해 공유. 로드 완료 시 그 경로를 쓰는 모든 카드에 반영.
     const texState = new Map<string, { tex: THREE.Texture; ready: boolean; waiters: { mat: THREE.MeshBasicMaterial; idx: number }[] }>();
     const requestTex = (src: string, mat: THREE.MeshBasicMaterial, idx: number) => {
       let st = texState.get(src);
@@ -197,7 +194,7 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
           if (img?.width) coverFit(t, img.width, img.height);
           t.needsUpdate = true;
           st!.ready = true;
-          st!.waiters.forEach((w) => applyTex(w.mat, t, w.idx)); // 대기 중인 모든 카드에 반영
+          st!.waiters.forEach((w) => applyTex(w.mat, t, w.idx));
           st!.waiters.length = 0;
         });
         tex.colorSpace = THREE.SRGBColorSpace;
@@ -207,34 +204,40 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
         st = { tex, ready: false, waiters: [] };
         texState.set(src, st);
       }
-      if (st.ready) applyTex(mat, st.tex, idx); // 이미 로드됨 → 즉시
-      else st.waiters.push({ mat, idx }); // 로드 대기열
+      if (st.ready) applyTex(mat, st.tex, idx);
+      else st.waiters.push({ mat, idx });
     };
 
     for (let i = 0; i < COUNT; i++) {
       const slot = new THREE.Group();
       slot.rotation.y = THREE.MathUtils.degToRad(i * STEP); // 원통 둘레 배치
 
-      // 카드 머티리얼 — 처음엔 반투명 회색(플레이스홀더). 텍스처 로드되면 이미지로 전환.
-      const mat = new THREE.MeshBasicMaterial({
-        color: PANEL_COLOR, // 로드 전 회색
-        transparent: true, // 각도 페이드 + 반투명 회색
-        opacity: PANEL_OPACITY,
-        side: THREE.FrontSide, // 뒤로 돈 면은 페이드로 0
-        depthWrite: false, // 반투명 카드 간 z-파이팅 방지
+      // (a) 회색 뒷판 — 원통 안쪽 벽. 상시 반투명 회색. 앞판보다 뒤(렌더 먼저).
+      const grayMesh = new THREE.Mesh(geometry, grayMaterial);
+      grayMesh.position.z = RADIUS;
+      grayMesh.renderOrder = -1; // [5] 뒷판 < 앞판
+      slot.add(grayMesh);
+      grayMeshes.push(grayMesh);
+
+      // (b) 이미지 앞판 — 뒷판보다 살짝 앞(반지름 +CARD_GAP). 로드 전 opacity 0(숨김) → 회색 뒷판 노출.
+      const imgMat = new THREE.MeshBasicMaterial({
+        transparent: true,
+        opacity: 0, // 로드/각도에 따라 매 프레임 갱신
+        side: THREE.FrontSide,
+        depthWrite: false,
       });
-      const mesh = new THREE.Mesh(geometry, mat);
-      mesh.position.z = RADIUS; // 곡면 중심을 반지름 위로 → 카드가 원통 옆면에 안착
-      mesh.renderOrder = 0;
-      slot.add(mesh);
+      const imgMesh = new THREE.Mesh(geometry, imgMat);
+      imgMesh.position.z = RADIUS + CARD_GAP;
+      imgMesh.renderOrder = 0; // 뒷판 위
+      slot.add(imgMesh);
       ring.add(slot);
-      materials.push(mat);
-      meshes.push(mesh);
+
+      materials.push(imgMat);
+      meshes.push(imgMesh);
       baseAngle.push(i * STEP);
       curScale.push(1);
       loaded.push(false);
-      const src = deck[i];
-      if (src) requestTex(src, mat, i); // [4] 이미지 슬롯만 로드. 빈 슬롯은 회색 유지(loaded=false).
+      requestTex(deck[i], imgMat, i); // 8칸 모두 이미지
     }
 
     // ── 상태 ──
@@ -263,13 +266,16 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
       ring.rotation.y = THREE.MathUtils.degToRad(rot);
       for (let i = 0; i < COUNT; i++) {
         const o = opacityAt(baseAngle[i] + rot); // 1(정면)→0(뒤)
-        // [4] 각도 페이드 × (로드됨? 이미지 불투명 1 : 회색 플레이스홀더 반투명 PANEL_OPACITY).
-        //   로드된 카드는 정면에서 불투명 이미지, 로드 전엔 반투명 회색(텍스트 비침).
-        materials[i].opacity = o * (loaded[i] ? 1 : PANEL_OPACITY);
-        materials[i].visible = o > 0.001;
+        // [4] 이미지 앞판만 각도 페이드(로드 전엔 0=숨김). 앞쪽 반구 불투명 → 회색 뒷판 가림 /
+        //   뒤쪽 반구 페이드 0 → 아래 깔린 회색 뒷판이 드러남. 회색 뒷판(grayMaterial)은 상시 0.5(갱신 불필요).
+        const im = materials[i];
+        im.opacity = loaded[i] ? o : 0;
+        im.visible = loaded[i] && o > 0.001;
+        // 호버 확대는 앞·뒤판 함께
         const target = i === hovered ? HOVER_SCALE : 1;
         curScale[i] += (target - curScale[i]) * 0.18; // 부드러운 확대/복귀
         meshes[i].scale.setScalar(curScale[i]);
+        grayMeshes[i].scale.setScalar(curScale[i]);
       }
       renderer.render(scene, camera);
     }
@@ -379,6 +385,7 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
       wrap.removeEventListener("pointerleave", onPointerLeave);
       geometry.dispose();
       materials.forEach((m) => m.dispose());
+      grayMaterial.dispose();
       textures.forEach((t) => t.dispose());
       renderer.dispose();
       if (canvas.parentNode === wrap) wrap.removeChild(canvas);
