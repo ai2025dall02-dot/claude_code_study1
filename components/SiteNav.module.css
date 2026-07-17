@@ -46,17 +46,7 @@
 .menuBtnLabel { display: inline-block; }
 /* 밝은 배경(기본) 호버 = 검정 채움 + 흰 글자 */
 .menuBtn:hover { background: #0c0c0c; color: #f8f8f8; }
-
-/* [B] 어두운(검은) 배경 섹션 — 버튼을 흰 라인 + 흰 텍스트/점 으로 반전 */
-.nav[data-dark="true"] .menuBtn {
-  border-color: #f8f8f8;
-  color: #f8f8f8;
-}
-/* 어두운 배경 호버 = 흰색 채움 + 어두운 글자 */
-.nav[data-dark="true"] .menuBtn:hover {
-  background: #f8f8f8;
-  color: #0c0c0c;
-}
+/* (색반전 data-dark 로직은 현재 비활성 — 전 섹션이 밝은 배경으로 통일됨) */
 .menuDot {
   width: 7px;
   height: 7px;
@@ -150,22 +140,21 @@
 .closeX::before { transform: rotate(45deg); }
 .closeX::after { transform: rotate(-45deg); }
 
-/* [C] 메뉴 항목 — 패널 박스에 맞춰 폰트 축소, 타이트한 세로 나열(색상은 유지) */
+/* [C] 메뉴 항목 — 세로 나열. 번호 제거 + 행간/gap 을 넓게. (색상은 유지) */
 .menuList {
   display: flex;
   flex-direction: column;
-  padding: 0.2rem 1.1rem 0.4rem;
-  gap: 0.14rem;
+  padding: 0.35rem 1.1rem 0.6rem;
+  gap: 0.5rem; /* [C] 항목 사이 여유(0.14rem → 0.5rem) */
 }
 .menuList a {
   display: flex;
   align-items: baseline;
-  gap: 0.85rem;
   /* [D] 기본 비활성 회색 — 현재 섹션 항목만 활성 흰색 */
   color: #5c5c58;
   text-decoration: none;
-  font-size: clamp(1.1rem, 2.4vw, 1.8rem); /* [C] 패널 박스에 들어가도록 축소 */
-  line-height: 1.18;
+  font-size: clamp(1.1rem, 2.4vw, 1.8rem);
+  line-height: 1.5; /* [C] 행간 넓힘(1.18 → 1.5) */
   letter-spacing: 0.01em;
   text-transform: uppercase;
   /* 항목 등장: 아래에서 위로 + 페이드(패널 열림 시 stagger) */
@@ -176,38 +165,12 @@
 .menuWrap[data-open="true"] .menuList a {
   opacity: 1;
   transform: none;
-  transition-delay: calc(0.04s * var(--i) + 0.08s);
+  transition-delay: calc(0.045s * var(--i) + 0.1s);
 }
 /* [D] 현재 보고 있는 섹션 = 활성(흰색). 호버도 흰색으로 피드백. */
 .menuList a[data-active="true"] { color: #f6f6f3; }
 .menuList a:hover { color: #f6f6f3; }
-.menuIndex {
-  font-family: var(--font-meta, monospace);
-  font-size: clamp(9px, 0.85vw, 11px);
-  letter-spacing: 0.14em;
-  color: #4a4a47;
-  align-self: flex-start;
-  margin-top: 0.3em;
-  transition: color 0.25s;
-}
-/* [D] 활성 항목의 번호도 살짝 밝게 */
-.menuList a[data-active="true"] .menuIndex { color: #9a9a95; }
 .menuLabel { display: inline-block; }
-
-/* ── [B] 어두운 배경 섹션(data-dark="true") — 패널을 밝게 반전 ──
-   기본(밝은 배경)은 위의 어두운 패널(#0d0d0f) 유지. 색상은 .panel/.close/.menuList 의
-   transition 으로 부드럽게 전환. */
-.nav[data-dark="true"] .panel {
-  background: #f4f4f2;
-  color: #0c0c0c;
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.18);
-}
-.nav[data-dark="true"] .close { color: #0c0c0c; }
-.nav[data-dark="true"] .menuList a { color: #a2a29d; } /* 비활성 = 밝은 회색 */
-.nav[data-dark="true"] .menuList a[data-active="true"],
-.nav[data-dark="true"] .menuList a:hover { color: #0c0c0c; } /* 활성/호버 = 진한 검정 */
-.nav[data-dark="true"] .menuIndex { color: #b4b4af; }
-.nav[data-dark="true"] .menuList a[data-active="true"] .menuIndex { color: #6a6a66; }
 
 @media (prefers-reduced-motion: reduce) {
   .panel,

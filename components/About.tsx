@@ -1,5 +1,9 @@
 "use client";
 
+// ABOUT — noth.in "step aside" 레이아웃/스크롤 구조 참고(문구는 미사용, 지정 문구만).
+//  E: 좌측 정렬 대형 인용문 + 하단 영상(placeholder) 박스.
+//  F: 스크롤 진행에 따라 영상 박스가 우측 하단의 작은 박스로 축소·이동(되돌리면 역방향).
+//  G: 좌측 하단 소형 본문. (기존 원형 reveal/원칙/배경반전 애니메이션은 전부 제거)
 import { useEffect, useRef, useState } from "react";
 import {
   motion,
@@ -8,45 +12,17 @@ import {
   useSpring,
   useTransform,
   type MotionStyle,
-  type Variants,
 } from "framer-motion";
-import { TextReveal } from "./TextReveal";
-import TypeTitle from "./TypeTitle";
-import styles from "./Landing.module.css";
+import styles from "./About.module.css";
 
-const PRINCIPLES = [
-  {
-    label: "Curation",
-    title: "변방을 중심으로",
-    text: "이미 검증된 흥행이 아니라, 아직 자리를 얻지 못한 목소리를 먼저 봅니다. 배급은 발견에서 시작합니다.",
-  },
-  {
-    label: "Authorship",
-    title: "감독의 첫 문장을 지킨다",
-    text: "러닝타임도, 결말도, 침묵도 줄이지 않습니다. 만든 사람이 의도한 그대로 극장에 건넵니다.",
-  },
-  {
-    label: "Theatre",
-    title: "극장이라는 약속",
-    text: "작은 영화일수록 큰 화면이 필요합니다. 전국 예술영화관과 함께 상영의 자리를 끝까지 지킵니다.",
-  },
-];
+// 영상 자리 placeholder — 실제 영상은 나중에 교체. 지금은 로컬 이미지로 대체.
+const PLACEHOLDER = "/posters-photo/m4.jpg";
 
 export default function About() {
   const ref = useRef<HTMLElement | null>(null);
   const reduce = useReducedMotion();
-
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"],
-  });
-  // 작업1: 스크롤 진행도를 스프링으로 스무딩(부드러움 유지) + 빠릿하게 stiffness 70→90(damping 28 로
-  //   출렁임 억제). 조절점: stiffness 높을수록 빠릿/낮을수록 무거움 / damping 높을수록 덜 출렁.
-  const smoothEnter = useSpring(scrollYProgress, { stiffness: 90, damping: 28, mass: 1.1 });
-  const enterInput = reduce ? scrollYProgress : smoothEnter; // reduce 면 spring 우회
-  // 모바일(≤767)에서는 pin(원형 reveal) 이 해제되므로, ABOUT 이탈~LINEUP 진입을 '배경색 페이드 +
-  // 글자색 반전'으로 처리(데스크톱은 원형 reveal 유지). matchMedia 로 감지.
   const [isMobile, setIsMobile] = useState(false);
+
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
     const sync = () => setIsMobile(mq.matches);
@@ -55,236 +31,44 @@ export default function About() {
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  // 작업1: 전환 구간 [0,0.28] → [0,0.16] 으로 좁혀 더 빨리 검게(부드러움은 spring 이 유지). 셋 다 같은 입력 공유.
-  // 데스크톱: 진입만(밝→검). 모바일: 진입(밝→검) + 이탈(검→밝) 을 한 곡선에 담아 LINEUP 배경으로 페이드.
-  const bgDesktop = useTransform(enterInput, [0, 0.16], ["#f8f8f8", "#0b0b0c"]);
-  // 모바일 배경/글자 반전은 스프링(enterInput)이 아니라 '원시 스크롤(scrollYProgress)'에 직접 연동한다.
-  // enterInput 스프링은 지연(lag)이 커서 실제 스크롤 속도로 넘길 때 이탈 구간을 놓쳐 배경이 안 바뀌어
-  // 보였음(핵심 원인). 원시 진행도에 연동하면 스크롤 위치에 1:1 로 붙어 항상 눈에 보이게 전환됨.
-  // 이탈 구간(0.72~0.9)은 본문/원칙이 아직 보이는 동안 배경이 밝아지도록 잡음. 끝값 = LINEUP 배경.
-  const bgMobile = useTransform(
-    scrollYProgress,
-    [0, 0.16, 0.72, 0.9],
-    ["#f8f8f8", "#0b0b0c", "#0b0b0c", "#f8f8f8"]
-  );
-  const backgroundColor = isMobile ? bgMobile : bgDesktop;
-  // 모바일 본문 글자색: 어두운 배경 구간엔 밝게, 이탈해 배경이 밝아지면 어둡게(대비 유지). .inner 의
-  // color + CSS 변수(--about-fg)로 내려 주요 텍스트(inherit)와 아웃라인 제목(stroke)이 함께 반전됨.
-  // 배경과 같은 원시 진행도에 연동 → 배경이 밝아지는 것과 정확히 맞물려 글자가 어두워짐.
-  const mobileFg = useTransform(
-    scrollYProgress,
-    [0, 0.74, 0.9],
-    ["#ececea", "#ececea", "#101010"]
-  );
-  // 인용문 글자색: 밝은 배경에선 어둡게, 어두워지면 밝게 (대비 유지)
-  const quoteFill = useTransform(enterInput, [0, 0.16], ["#1a1a1a", "#f4f4f2"]);
-  const quoteGhost = useTransform(
-    enterInput,
-    [0, 0.16],
-    ["rgba(26,26,26,0.22)", "rgba(244,244,242,0.16)"]
-  );
-
-  // 원형 reveal — TextReveal 과 동일한 wrap+sticky pin 패턴.
-  // 본문·원칙이 다 나온 뒤 pin 래퍼(바깥 200vh)에 진입하면 안쪽 sticky(100vh)가 화면에 고정되고,
-  // 그 고정 상태에서 스크롤하는 동안 원이 그 자리에서 0→최대로 커진다. 이후 고정이 풀리며 LINEUP 으로.
-  const pinRef = useRef<HTMLDivElement | null>(null);
-  const { scrollYProgress: growProgress } = useScroll({
-    target: pinRef,
-    offset: ["start start", "end start"],
+  // [F] 섹션 스크롤 진행도(0=진입, 1=이탈). sticky 가 고정된 동안 이 값으로 영상 크기를 줄인다.
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end end"],
   });
-  // 작업2: 원형 reveal 진행도도 스프링으로 스무딩 → 원이 관성 있게 묵직하게 커지다 부드럽게 정착.
-  //   조절점: stiffness 낮을수록 무거움 / damping 높을수록 덜 출렁 / mass 관성.
-  const smoothGrow = useSpring(growProgress, { stiffness: 70, damping: 26, mass: 1.1 });
-  const growInput = reduce ? growProgress : smoothGrow; // reduce 면 spring 우회(원은 아래서 미렌더)
-  // sticky(100vh)는 pin 래퍼(200vh)의 앞 절반 동안 고정. 0~0.2 는 '텍스트 감상+정지' 구간(원 반경 0 유지),
-  // 0.2 부터 원이 커지기 시작해 0.6 에 최대(170) → 텍스트 fade-up 이 끝난 뒤에 원이 시작됨.
-  const revealRadius = useTransform(growInput, [0.2, 0.6], [0, 170]);
-  const revealClip = useTransform(revealRadius, (v) => `circle(${v}% at 50% 50%)`);
+  const p = useSpring(scrollYProgress, { stiffness: 90, damping: 30, mass: 1 });
+  // 초기: 하단을 넓게(92vw × 54vh) → 진행할수록 우측 하단 작은 박스(30vw × 26vh)로 축소.
+  //   우측 하단 앵커(CSS right/bottom)라 줄어들면서 자연히 우측 하단으로 물러남.
+  const width = useTransform(p, [0, 0.85], ["90vw", "30vw"]);
+  const height = useTransform(p, [0, 0.85], ["42vh", "25vh"]);
 
-  // 마우스 따라다니는 옅은 흰 스포트라이트 (rAF throttle)
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let raf = 0;
-    let nx = 0;
-    let ny = 0;
-    const apply = () => {
-      raf = 0;
-      el.style.setProperty("--mx", `${nx}px`);
-      el.style.setProperty("--my", `${ny}px`);
-    };
-    const onMove = (e: PointerEvent) => {
-      const r = el.getBoundingClientRect();
-      nx = e.clientX - r.left;
-      ny = e.clientY - r.top;
-      if (!raf) raf = requestAnimationFrame(apply);
-    };
-    const onEnter = () => el.classList.add(styles.spotOn);
-    const onLeave = () => el.classList.remove(styles.spotOn);
-    el.addEventListener("pointermove", onMove);
-    el.addEventListener("pointerenter", onEnter);
-    el.addEventListener("pointerleave", onLeave);
-    return () => {
-      el.removeEventListener("pointermove", onMove);
-      el.removeEventListener("pointerenter", onEnter);
-      el.removeEventListener("pointerleave", onLeave);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  const group: Variants = {
-    hidden: {},
-    show: { transition: { staggerChildren: 0.18, delayChildren: 0.15 } },
-  };
-  const innerGroup: Variants = {
-    hidden: {},
-    show: { transition: { staggerChildren: 0.18 } },
-  };
-  const item: Variants = {
-    hidden: { opacity: 0, y: reduce ? 0 : 44 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
-    },
-  };
-  // 가로 라인: 좌측을 기준으로 우측으로 길어짐 (scaleX 0→1)
-  const line: Variants = {
-    hidden: { scaleX: reduce ? 1 : 0 },
-    show: {
-      scaleX: 1,
-      transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] },
-    },
-  };
+  // reduce / 모바일: 모션 없이 정적 크기(모바일은 CSS 가 full-width 로 override).
+  const vidStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { width, height };
 
   return (
-    <motion.section
-      ref={ref}
-      id="about"
-      className={`${styles.section} ${styles.about}`}
-      style={{ backgroundColor }}
-    >
-      <TextReveal
-        text={["좋은 영화는 사라지지 않는다.", "다만 옮겨질 곳을 기다릴 뿐이다."]}
-        fillColor={quoteFill}
-        ghostColor={quoteGhost}
-      />
+    <section ref={ref} id="about" className={styles.about}>
+      <div className={styles.pin}>
+        <div className={styles.sticky}>
+          <span className={styles.eyebrow}>About — 배급사 소개</span>
 
-      {/* pin 구간: 본문·원칙을 sticky(100vh) 안에 넣어, 본문이 화면 중앙에 온 채로 고정되고
-          그 위 레이어(lineupReveal)로 원이 정중앙에서 커지며 텍스트를 덮는다.
-          (reduce 시 CSS 로 pin 해제 → 일반 흐름으로 본문 표시, 원 미렌더) */}
-      <div ref={pinRef} className={styles.aboutPin}>
-        <div className={styles.aboutPinSticky}>
-          <motion.div
-            className={styles.inner}
-            // 모바일: 이탈 시 배경이 밝아지는 것에 맞춰 본문 글자색 반전. color 는 일반 텍스트(inherit),
-            // --about-fg 는 아웃라인 제목(.title em)의 stroke 색으로 사용 → 둘 다 함께 반전.
-            style={
-              isMobile
-                ? ({ color: mobileFg, "--about-fg": mobileFg } as MotionStyle)
-                : undefined
-            }
-            variants={group}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "-40% 0px" }}
-          >
-            <motion.header className={styles.head} variants={item}>
-              <div>
-                <span className={styles.eyebrow}>About — 배급사 소개</span>
-                <TypeTitle solid="FILM " outline="NOUVELLE" />
-              </div>
-              <span className={styles.index}>Since 2014 · Seoul</span>
-            </motion.header>
+          <h2 className={styles.quote}>
+            좋은 영화는 사라지지 않는다.
+            <br />
+            다만 옮겨질 곳을 기다릴 뿐이다.
+          </h2>
 
-            <motion.div
-              className={`${styles.aboutLine} ${styles.aboutLineHead}`}
-              variants={line}
-              aria-hidden="true"
-            />
+          <p className={styles.body}>
+            필름 누벨은 2014년부터 독립영화와 예술영화를 다시 스크린으로 선보여 왔습니다. 매년
+            엄선한 소수의 작품을 극장 개봉, 특별전, 공동체 상영, 아카이브까지 이어지는 여정 속에서
+            관객과 연결합니다.
+          </p>
 
-            <motion.p className={styles.aboutBody} variants={item}>
-              필름 누벨은 2014년, 극장에서 사라져 가던 독립·예술영화를 다시 스크린에
-              올리기 위해 시작했습니다. 우리는 한 해에 단 몇 편만을 고릅니다. 적게
-              고르는 대신, 한 편의 영화가 관객을 만나는 모든 길 — 개봉, 기획전, 공동체
-              상영, 아카이브 — 을 끝까지 동행합니다.
-            </motion.p>
-
-            <motion.div
-              className={`${styles.aboutLine} ${styles.aboutLinePrin}`}
-              variants={line}
-              aria-hidden="true"
-            />
-
-            <motion.div className={styles.principles} variants={innerGroup}>
-              {PRINCIPLES.map((pr) => (
-                <motion.div key={pr.title} variants={item}>
-                  <span className={styles.principle__label}>원칙 / {pr.label}</span>
-                  <h3 className={styles.principle__title}>{pr.title}</h3>
-                  <p className={styles.principle__text}>{pr.text}</p>
-                </motion.div>
-              ))}
-            </motion.div>
+          <motion.div className={styles.video} style={vidStyle}>
+            <img src={PLACEHOLDER} alt="필름 누벨 소개 영상 (placeholder)" />
+            <span className={styles.videoTag}>Showreel</span>
           </motion.div>
-
-          {/* 본문 위 레이어 — 화면 정중앙에서 원이 0→최대로 커지며 밝은 배경을 채움 */}
-          {!reduce && (
-            <motion.div
-              className={styles.lineupReveal}
-              aria-hidden="true"
-              style={{ clipPath: revealClip }}
-            />
-          )}
-
-          {/* 반전 텍스트 레이어 — 본문·원칙 복제(반전색). 원과 '동일한' revealClip 을 공유해
-              원 안쪽에서만 보임 → 원 안: 밝은 배경 + 어두운 글자, 원 밖: 원래(어두운 배경 + 밝은 글자) */}
-          {!reduce && (
-            <motion.div
-              className={styles.aboutInvert}
-              aria-hidden="true"
-              style={{ clipPath: revealClip }}
-            >
-              <div className={styles.inner}>
-              <header className={styles.head}>
-                <div>
-                  <span className={styles.eyebrow}>About — 배급사 소개</span>
-                  <h2 className={styles.title}>
-                    <span>FILM </span>
-                    <em>NOUVELLE</em>
-                  </h2>
-                </div>
-                <span className={styles.index}>Since 2014 · Seoul</span>
-              </header>
-
-              <div className={`${styles.aboutLine} ${styles.aboutLineHead}`} />
-
-              <p className={styles.aboutBody}>
-                필름 누벨은 2014년, 극장에서 사라져 가던 독립·예술영화를 다시 스크린에
-                올리기 위해 시작했습니다. 우리는 한 해에 단 몇 편만을 고릅니다. 적게
-                고르는 대신, 한 편의 영화가 관객을 만나는 모든 길 — 개봉, 기획전, 공동체
-                상영, 아카이브 — 을 끝까지 동행합니다.
-              </p>
-
-              <div className={`${styles.aboutLine} ${styles.aboutLinePrin}`} />
-
-              <div className={styles.principles}>
-                {PRINCIPLES.map((pr) => (
-                  <div key={pr.title}>
-                    <span className={styles.principle__label}>원칙 / {pr.label}</span>
-                    <h3 className={styles.principle__title}>{pr.title}</h3>
-                    <p className={styles.principle__text}>{pr.text}</p>
-                  </div>
-                ))}
-              </div>
-              </div>
-            </motion.div>
-          )}
         </div>
       </div>
-
-      {/* 마우스 따라다니는 옅은 흰 스포트라이트 */}
-      <div className={styles.spotlight} aria-hidden="true" />
-    </motion.section>
+    </section>
   );
 }
