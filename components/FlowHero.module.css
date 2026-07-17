@@ -44,39 +44,39 @@
   .nav__links { display: none; }
 }
 
-/* ── 워드마크 FILMNOUVELLE — GSAP 글자 인트로 + 커서 인터랙션 ──
-   위치/이동은 .titleWrap(래퍼)이 담당(GSAP 가 xPercent·y 로 제어): 인트로는 화면 중앙,
-   완료 후 중앙 상단(네비 아래)으로 이동. z축은 WebGL 덱(z:3)보다 뒤(z:1) → 투명 캔버스 너머로
-   텍스트가 비치고, 이미지 카드가 지나갈 땐 카드가 텍스트를 가림.
-   pre-JS 기본값은 상단 정렬(top:0). reduce/JS 지연 시에도 네비를 안 가리는 안전한 자리. */
+/* ── 워드마크 — FILM(좌상단) / NOUVELLE(우하단) 두 그룹 ──
+   [D] 각 단어를 독립 요소로 두고 GSAP 가 x/y(transform)로 코너에 배치. 래퍼는 전체 스테이지를 덮되
+   입력은 막지 않음(호버는 window pointermove 로 처리). z:1 → WebGL 덱 캔버스(z:3)보다 뒤 → 카드 틈으로 비침. */
 .titleWrap {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0; /* 전폭 + text-align:center → 제목이 뷰포트보다 넓어도 항상 화면 가로 중앙 */
-  z-index: 1; /* WebGL 덱 캔버스(z:3)보다 뒤 → 카드 틈/페이드 영역으로 비침 */
-  text-align: center;
-  pointer-events: none; /* 인터랙션은 캔버스가 처리 → 텍스트는 입력을 막지 않음 */
-  will-change: transform; /* GSAP 는 세로 이동(y)만 제어 — 가로 중앙은 text-align 이 담당 */
+  inset: 0;
+  z-index: 1; /* WebGL 덱 캔버스(z:3)보다 뒤 */
+  pointer-events: none; /* 인터랙션은 캔버스/‑window 가 처리 */
 }
-/* 세로로 길쭉한 Anton(단일 weight 400) — className 으로 폰트 적용, 여기선 메트릭만.
-   letter-spacing/line-height 는 첨부 HTML 기준(-0.02em / 0.9). */
-.title {
-  display: inline-block; /* text-align:center 로 가로 중앙 정렬됨 */
+/* 각 단어 그룹 — 절대배치(좌상단 0,0 기준) + GSAP x/y 로 이동. 세로로 길쭉한 Anton. */
+.word {
+  position: absolute;
+  left: 0;
+  top: 0;
   margin: 0;
-  /* 좌우 여백 축소 위해 확대(13.5vw/15rem → 16.5vw/18rem). nowrap 이라 뷰포트 밖으로 넘치지 않는 선에서 최대. */
-  font-size: clamp(2.6rem, 16.5vw, 18rem);
-  /* [3] Anton 은 좁게 뭉치기 쉬움 → 큰 워드마크에서 답답하지 않게 자간 살짝 개방(-0.02em → 0.01em) */
+  display: inline-block;
+  white-space: nowrap; /* 단어는 한 줄 유지 */
+  /* 코너 라벨 크기 — 두 단어가 코너에 들어가도록(NOUVELLE 8자가 폭에 맞게) */
+  font-size: clamp(2rem, 11vw, 9rem);
   letter-spacing: 0.01em;
   line-height: 0.9;
   text-transform: uppercase;
-  color: #0c0c0c;
-  white-space: nowrap;
   user-select: none;
-  /* 호버 판정: 제목 텍스트 박스(글자+글자 사이 여백)에서만 pointermove 수신 → 커서 x 로 글자/여백 판정.
-     박스는 텍스트 크기라 좌우 넓은 빈 영역은 통과(titleWrap none). WebGL 캔버스(z:3)가 위라 겹치는 구간은 캔버스가 입력을 받음. */
-  pointer-events: auto;
-  cursor: default;
+  will-change: transform;
+}
+/* FILM — 솔리드 검정 */
+.wordFilm {
+  color: #0c0c0c;
+}
+/* [E] NOUVELLE — 아웃라인(라인) 스타일: 속 비고 외곽선만 */
+.wordNouvelle {
+  color: transparent;
+  -webkit-text-stroke: 1.5px #0c0c0c;
 }
 /* 각 글자 = 바깥 span(.letter) + 안쪽 span(.letterInner).
    .letter = 고정 마스크 창: clip-path(inset) 로 글자 원래 영역만 남기고(가로=글자 폭, 세로는 넉넉히 열어 잉크 안 잘림),
@@ -94,11 +94,6 @@
   display: inline-block;
   will-change: transform;
 }
-/* 단어 사이 공백(애니메이션 대상 아님) — 데스크톱: 고정 폭 여백으로 "FILM NOUVELLE". */
-.gap {
-  display: inline-block;
-  width: 0.3em;
-}
 
 /* ── 원통형 카드 덱은 WebGL(three.js) 컴포넌트(CylinderDeck)가 렌더 ──
    투명 캔버스가 스테이지 전체를 덮되(inset:0, z:3) 텍스트(z:1) 위에 겹쳐, 이미지 카드는 텍스트를
@@ -106,12 +101,10 @@
    반응형·reduce 는 모두 컴포넌트 내부(three.js)에서 처리 → 별도 덱 CSS 불필요. */
 
 @media (max-width: 767px) {
-  /* 모바일: FILM / NOUVELLE 두 줄로 나누고(공백 .gap 을 블록으로 전환) 폰트를 키워 화면을 시원하게 채움.
-     각 단어(FILM·NOUVELLE)는 nowrap 유지라 줄 안에서 안 쪼개짐. NOUVELLE(8자)가 폭에 맞도록 26vw 기준. */
-  .title { font-size: clamp(3rem, 26vw, 9rem); }
-  .gap {
-    display: block; /* 인라인 흐름을 끊어 다음 단어(NOUVELLE)를 새 줄로 */
-    width: 100%;
-    height: 0;
+  /* 모바일: NOUVELLE(8자)가 좁은 폭에서 우하단에 들어가도록 폰트 축소.
+     FILM=좌상단 / NOUVELLE=우하단 배치는 JS(코너 좌표)가 담당 — 두 단어가 겹치거나 화면 밖으로 안 나감. */
+  .word {
+    font-size: clamp(1.7rem, 12vw, 4rem);
+    -webkit-text-stroke-width: 1px; /* 아웃라인도 폭에 맞춰 얇게 */
   }
 }

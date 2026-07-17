@@ -34,7 +34,10 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 //     타이틀이 중앙 상단으로 이동.
 //  2) 호버 — 글자에 커서를 올리면 그 인접 영역 글자만 동일한 커튼 웨이브를 1회 재생(상시 추적 아님).
 // prefers-reduced-motion 이면 웨이브·호버 모두 비활성(중앙 상단 고정).
-const TITLE = "FILM NOUVELLE"; // 공백은 애니메이션 대상 아님(별도 .gap span). 웨이브/호버는 공백 제외한 글자만.
+// [D] 두 단어를 별도 그룹으로 분리 → 각자 코너로 이동(FILM 좌상단 / NOUVELLE 우하단).
+const FILM = "FILM";
+const NOUVELLE = "NOUVELLE";
+const FILM_LEN = FILM.length; // 글자 인덱스: 0~3=FILM, 4~11=NOUVELLE
 // 인트로·호버가 공유하는 "슬라이드 마스크 웨이브" 파라미터.
 // 각 글자는 형태 왜곡 없이 똑바로 선 채, 고정된 clip-path 창(=글자 원래 영역)을 "통과"하며 좌→우로 슬라이드함:
 //   퇴장 — 글자가 좌→우로 밀려나 창 오른쪽 밖으로 빠져 사라짐
@@ -70,72 +73,95 @@ function FilmWordmark({
 }: {
   revealed: boolean;
   reduce: boolean;
-  onIntroComplete?: () => void; // 타이틀이 중앙 상단으로 이동 완료된 시점(=덱 등장 트리거)
+  onIntroComplete?: () => void; // 두 단어가 코너로 이동 완료된 시점(=덱 등장 트리거)
 }) {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null); // pointermove 로 커서 x 판정
-  const letterRefs = useRef<HTMLSpanElement[]>([]); // 바깥 span = 고정 마스크 창(box 판정용)
-  const innerRefs = useRef<HTMLSpanElement[]>([]); // 안쪽 span = 실제 글자(이동 애니메이션 대상)
+  const filmRef = useRef<HTMLHeadingElement>(null); // FILM 그룹
+  const nouvRef = useRef<HTMLHeadingElement>(null); // NOUVELLE 그룹
+  const letterRefs = useRef<HTMLSpanElement[]>([]); // 바깥 span(고정 마스크 창) 0~11
+  const innerRefs = useRef<HTMLSpanElement[]>([]); // 안쪽 span(이동 애니메이션 대상) 0~11
 
   useEffect(() => {
-    const wrap = wrapRef.current;
-    const title = titleRef.current;
+    const film = filmRef.current;
+    const nouv = nouvRef.current;
     const letters = letterRefs.current.filter(Boolean);
     const inners = innerRefs.current.filter(Boolean);
-    if (!wrap || !title || letters.length === 0) return;
+    if (!film || !nouv || letters.length === 0) return;
 
-    // 최종 배치: 화면 중앙 상단(네비 아래 충분한 여백). 인트로: 화면 세로 중앙.
-    const topY = () => Math.round(clamp(window.innerHeight * 0.11, 88, 150)); // 네비를 안 가리는 top 여백
-    const centerY = () => Math.round(window.innerHeight / 2 - wrap.offsetHeight / 2);
+    // ── 반응형 여백/좌표 계산 ──
+    const pad = () => Math.round(clamp(window.innerWidth * 0.028, 14, 56)); // 좌우 여백
+    const topPad = () => Math.round(clamp(window.innerHeight * 0.11, 76, 140)); // 상단(네비 아래)
+    const botPad = () => Math.round(clamp(window.innerHeight * 0.06, 24, 90)); // 하단
+    // [D] 코너 배치 — FILM 좌상단, NOUVELLE 우하단(우측·하단 정렬은 그룹 크기 반영)
+    const cornerPos = () => ({
+      film: { x: pad(), y: topPad() },
+      nouv: {
+        x: Math.max(pad(), window.innerWidth - pad() - nouv.offsetWidth),
+        y: window.innerHeight - botPad() - nouv.offsetHeight,
+      },
+    });
+    // 인트로 중앙 배치 — 두 단어를 한 줄로 화면 가운데(웨이브를 함께 재생)
+    const centerPos = () => {
+      const fw = film.offsetWidth;
+      const fh = film.offsetHeight;
+      const nw = nouv.offsetWidth;
+      const gap = Math.round(fh * 0.3); // 단어 사이 여백
+      const total = fw + gap + nw;
+      const sx = Math.round(window.innerWidth / 2 - total / 2);
+      const cy = Math.round(window.innerHeight / 2 - fh / 2);
+      return { film: { x: sx, y: cy }, nouv: { x: sx + fw + gap, y: cy } };
+    };
 
-    // reduce: 애니메이션·인터랙션 모두 없이 중앙 상단 고정 (가로 중앙은 CSS text-align). 글자 제자리 노출.
+    // reduce: 애니메이션 없이 FILM=좌상단 / NOUVELLE=우하단 즉시 고정(아웃라인은 CSS 유지)
     if (reduce) {
-      gsap.set(wrap, { y: topY() });
-      gsap.set(inners, { clearProps: "all" });
+      const c = cornerPos();
+      gsap.set(film, { x: c.film.x, y: c.film.y, autoAlpha: 1 });
+      gsap.set(nouv, { x: c.nouv.x, y: c.nouv.y, autoAlpha: 1 });
+      gsap.set(inners, { clearProps: "xPercent,yPercent" });
       return;
     }
-    // 인트로 시작 타이밍 — 카운트다운 종료(revealed) 흐름과 연결
-    if (!revealed) return;
+    if (!revealed) return; // 인트로 시작 타이밍(카운트다운 종료)
 
     let introDone = false;
 
-    // 공유 슬라이드 마스크 웨이브 — 안쪽 글자를 좌→우 stagger 로 "창 오른쪽 밖으로 밀어내(퇴장)" 곧바로
-    // "왼쪽 밖에서 들어오게(등장)" 하는 키프레임. 마스크 창(바깥 span)은 고정이라 글자가 창을 통과하며 교체되듯 보임.
-    // 항상 xPercent 0(제자리)로 복귀. 반환 tween 으로 onComplete 훅 가능.
+    // 공유 슬라이드 마스크 웨이브(퇴장 좌→우 → 등장 좌→우, 제자리 복귀)
     const playWave = (els: HTMLSpanElement[]) =>
       gsap.to(els, {
         keyframes: [
-          { xPercent: WAVE.slide, duration: WAVE.exitDur, ease: WAVE.exitEase }, // 퇴장: 좌→우로 밀려나 창 밖으로
-          { xPercent: -WAVE.slide, duration: 0 }, // 즉시 왼쪽 밖으로 순간 이동(창 밖=안 보임 → 점프 안 보임)
-          { xPercent: 0, duration: WAVE.enterDur, ease: WAVE.enterEase }, // 등장: 왼쪽에서 좌→우로 들어와 제자리
+          { xPercent: WAVE.slide, duration: WAVE.exitDur, ease: WAVE.exitEase },
+          { xPercent: -WAVE.slide, duration: 0 },
+          { xPercent: 0, duration: WAVE.enterDur, ease: WAVE.enterEase },
         ],
-        stagger: { each: WAVE.each, from: "start" }, // 좌→우 순차 전파(슬라이드 파도)
+        stagger: { each: WAVE.each, from: "start" },
       });
 
-    // 1) 인트로 — [신규] 아래→위 마스크 등장 → 좌→우 슬라이드 웨이브 → 중앙 상단 이동 → 덱 등장
-    gsap.from(wrap, { autoAlpha: 0, duration: 0.3, ease: "power1.out" }); // 화면 중앙에서 부드럽게 등장
-    gsap.set(wrap, { y: centerY() }); // 인트로는 화면 세로 중앙에서 시작
-    gsap.set(letters, { clipPath: CLIP_REVEAL }); // 창 하단 닫음 → 창 아래 글자는 가려짐
-    gsap.set(inners, { xPercent: 0, yPercent: REVEAL.fromY }); // 글자를 창 아래에서 시작
+    // 1) 인트로 — 중앙 배치 → 아래→위 등장 → 좌→우 웨이브 → 두 그룹 개별 코너 이동
+    const cen = centerPos();
+    gsap.set(film, { x: cen.film.x, y: cen.film.y });
+    gsap.set(nouv, { x: cen.nouv.x, y: cen.nouv.y });
+    gsap.from([film, nouv], { autoAlpha: 0, duration: 0.3, ease: "power1.out" });
+    gsap.set(letters, { clipPath: CLIP_REVEAL });
+    gsap.set(inners, { xPercent: 0, yPercent: REVEAL.fromY });
 
-    // (신규) 아래→위 마스크 등장 — 글자가 닫힌 창을 뚫고 위로 올라오며 드러남(좌→우 stagger)
     const reveal = gsap.to(inners, {
       yPercent: 0,
       duration: REVEAL.dur,
       ease: REVEAL.ease,
       stagger: { each: REVEAL.each, from: "start" },
       onComplete: () => {
-        gsap.set(letters, { clipPath: CLIP_OPEN }); // 상·하 열어 가로 웨이브가 정상 작동하도록 전환
-        // 이어서 좌→우 슬라이드 웨이브 → 완료 후 중앙 상단 이동
+        gsap.set(letters, { clipPath: CLIP_OPEN });
         const wave = playWave(inners);
         wave.eventCallback("onComplete", () => {
-          gsap.to(wrap, {
-            y: topY(),
+          // [D] wrap 하나를 topY 로 올리던 단계를 → 두 그룹을 각자 코너로 이동
+          const c = cornerPos();
+          gsap.to(film, { x: c.film.x, y: c.film.y, duration: 1.0, ease: "power3.inOut" });
+          gsap.to(nouv, {
+            x: c.nouv.x,
+            y: c.nouv.y,
             duration: 1.0,
             ease: "power3.inOut",
             onComplete: () => {
               introDone = true;
-              measureBoxes(); // 상단 안착 후 글자 box 위치 캐시(호버 판정 기준)
+              measureBoxes(); // 코너 안착 후 글자 box 캐시(호버 판정 기준)
               onIntroComplete?.(); // 덱 등장 트리거
             },
           });
@@ -143,67 +169,76 @@ function FilmWordmark({
       },
     });
 
-    // 2) 호버 — .title 에서 pointermove 로 커서 x 판정: 글자 위=그 글자 하나 / 글자 사이 여백=양옆 두 글자.
-    // 영역이 "바뀌는 순간"에만 1회 재생(같은 영역 머무는 동안 반복 없음). playing Set 으로 진행중 중복 방지.
+    // 2) 호버 — 각 단어 그룹 내부에서만 좌→우 판정(두 단어가 코너로 떨어져도 그룹 단위로 처리).
     const playing = new Set<number>();
-    // 각 글자 바깥 box 의 화면 좌표(고정 창이라 안정적). 모바일 2줄에서도 y 로 줄을 구분하려 t/b 도 저장.
-    let boxes: { l: number; r: number; t: number; b: number; i: number }[] = [];
+    // g: 0=FILM(글자 0~3) / 1=NOUVELLE(글자 4~11)
+    let boxes: { l: number; r: number; t: number; b: number; i: number; g: number }[] = [];
     const measureBoxes = () => {
-      boxes = letters.map((el, i) => {
+      boxes = letters.map((el, k) => {
         const r = el.getBoundingClientRect();
-        return { l: r.left, r: r.right, t: r.top, b: r.bottom, i };
+        return { l: r.left, r: r.right, t: r.top, b: r.bottom, i: k, g: k < FILM_LEN ? 0 : 1 };
       });
     };
-    // 커서 (x,y) → 재생 대상 인덱스 배열 + 영역 키(같은 영역 판정용).
-    // 먼저 커서가 있는 "줄"(y 로 필터)만 추림 → 그 줄 안에서 x 로 판정.
-    // 글자 box 중앙 코어(HIT_CORE) 안 → 그 글자 하나 / 코어 바깥 가장자리·글자 사이(공백 포함) → 양옆 두 글자.
+    // 커서가 어느 그룹 위인지 → 그 그룹 글자만으로 x 판정.
     const regionAt = (x: number, y: number): { idxs: number[]; key: string } | null => {
       if (boxes.length === 0) return null;
-      let line = boxes.filter((b) => y >= b.t - 4 && y <= b.b + 4); // 커서가 걸친 줄
-      if (line.length === 0) line = boxes.slice(); // 위/아래 여백이면 전체에서 판정
-      line.sort((a, b) => a.l - b.l); // 좌→우 정렬
-      if (x < line[0].l) return { idxs: [line[0].i], key: `H${line[0].i}` }; // 줄 맨 왼쪽 밖 → 첫 글자
-      if (x > line[line.length - 1].r) return { idxs: [line[line.length - 1].i], key: `T${line[line.length - 1].i}` }; // 맨 오른쪽 밖 → 끝 글자
-      for (let k = 0; k < line.length; k++) {
-        const b = line[k];
-        if (x >= b.l && x <= b.r) {
-          const margin = ((b.r - b.l) * (1 - HIT_CORE)) / 2; // 좌우 가장자리 폭
-          if (x >= b.l + margin && x <= b.r - margin) return { idxs: [b.i], key: `L${b.i}` }; // 중앙 코어 → 글자 하나
-          if (x < b.l + margin && k > 0) return { idxs: [line[k - 1].i, b.i], key: `G${line[k - 1].i}` }; // 왼쪽 가장자리 → 왼 이웃과
-          if (x > b.r - margin && k < line.length - 1) return { idxs: [b.i, line[k + 1].i], key: `G${b.i}` }; // 오른쪽 가장자리 → 오른 이웃과
-          return { idxs: [b.i], key: `L${b.i}` }; // 줄 양 끝 바깥 가장자리 → 그 글자 하나
-        }
-        if (x < b.l) {
-          // box 사이 여백(공백 포함) → 양옆 두 글자
-          if (k > 0) return { idxs: [line[k - 1].i, b.i], key: `G${line[k - 1].i}` };
-          return { idxs: [b.i], key: `H${b.i}` };
+      for (const g of [0, 1]) {
+        const gb = boxes.filter((b) => b.g === g);
+        if (gb.length === 0) continue;
+        const gl = Math.min(...gb.map((b) => b.l));
+        const gr = Math.max(...gb.map((b) => b.r));
+        const gt = Math.min(...gb.map((b) => b.t));
+        const gbot = Math.max(...gb.map((b) => b.b));
+        const m = 26; // 그룹 히트 여유
+        if (x < gl - m || x > gr + m || y < gt - m || y > gbot + m) continue;
+        // 이 그룹 안에서 좌→우 판정(기존 로직)
+        const line = gb.slice().sort((a, b) => a.l - b.l);
+        const pre = `g${g}`;
+        if (x < line[0].l) return { idxs: [line[0].i], key: `${pre}H${line[0].i}` };
+        if (x > line[line.length - 1].r)
+          return { idxs: [line[line.length - 1].i], key: `${pre}T${line[line.length - 1].i}` };
+        for (let k = 0; k < line.length; k++) {
+          const b = line[k];
+          if (x >= b.l && x <= b.r) {
+            const margin = ((b.r - b.l) * (1 - HIT_CORE)) / 2;
+            if (x >= b.l + margin && x <= b.r - margin) return { idxs: [b.i], key: `${pre}L${b.i}` };
+            if (x < b.l + margin && k > 0) return { idxs: [line[k - 1].i, b.i], key: `${pre}G${line[k - 1].i}` };
+            if (x > b.r - margin && k < line.length - 1) return { idxs: [b.i, line[k + 1].i], key: `${pre}G${b.i}` };
+            return { idxs: [b.i], key: `${pre}L${b.i}` };
+          }
+          if (x < b.l) {
+            if (k > 0) return { idxs: [line[k - 1].i, b.i], key: `${pre}G${line[k - 1].i}` };
+            return { idxs: [b.i], key: `${pre}H${b.i}` };
+          }
         }
       }
       return null;
     };
 
     let lastKey = "";
+    // 덱 캔버스(z:3)가 위를 덮으므로 window 에서 pointermove 를 받아 호버 판정(요소 이벤트로는 안 옴).
     const onPointerMove = (e: PointerEvent) => {
       if (!introDone) return;
       const region = regionAt(e.clientX, e.clientY);
-      if (!region) return;
-      if (region.key === lastKey) return; // 같은 영역 머무는 동안 반복 재생 안 함
+      if (!region) {
+        lastKey = "";
+        return;
+      }
+      if (region.key === lastKey) return;
       lastKey = region.key;
-      if (region.idxs.some((k) => playing.has(k))) return; // 진행 중이면 무시(중복 방지)
+      if (region.idxs.some((k) => playing.has(k))) return;
       region.idxs.forEach((k) => playing.add(k));
-      const t = playWave(region.idxs.map((k) => inners[k])); // 대상 글자만 좌→우 웨이브
+      const t = playWave(region.idxs.map((k) => inners[k]));
       t.eventCallback("onComplete", () => region.idxs.forEach((k) => playing.delete(k)));
     };
-    const onPointerLeave = () => {
-      lastKey = ""; // 벗어났다 다시 들어오면 같은 영역도 재생되도록 리셋
-    };
-    title.addEventListener("pointermove", onPointerMove);
-    title.addEventListener("pointerleave", onPointerLeave);
+    window.addEventListener("pointermove", onPointerMove);
 
     const onResize = () => {
       if (introDone) {
-        gsap.set(wrap, { y: topY() }); // 상단 위치 유지
-        measureBoxes(); // box 위치 갱신
+        const c = cornerPos();
+        gsap.set(film, { x: c.film.x, y: c.film.y });
+        gsap.set(nouv, { x: c.nouv.x, y: c.nouv.y });
+        measureBoxes();
       }
     };
     window.addEventListener("resize", onResize);
@@ -211,44 +246,44 @@ function FilmWordmark({
     return () => {
       reveal.kill();
       gsap.killTweensOf(inners);
-      gsap.killTweensOf(wrap);
-      title.removeEventListener("pointermove", onPointerMove);
-      title.removeEventListener("pointerleave", onPointerLeave);
+      gsap.killTweensOf([film, nouv]);
+      window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("resize", onResize);
       gsap.set(inners, { clearProps: "all" });
       gsap.set(letters, { clearProps: "clipPath" });
     };
   }, [revealed, reduce, onIntroComplete]);
 
+  // 글자 span 생성 — i 는 전역 글자 인덱스(0~11)
+  const letterSpan = (ch: string, i: number) => (
+    <span
+      key={i}
+      ref={(el) => {
+        if (el) letterRefs.current[i] = el;
+      }}
+      className={styles.letter}
+      aria-hidden="true"
+    >
+      <span
+        ref={(el) => {
+          if (el) innerRefs.current[i] = el;
+        }}
+        className={styles.letterInner}
+      >
+        {ch}
+      </span>
+    </span>
+  );
+
   return (
-    <div className={styles.titleWrap} ref={wrapRef}>
-      <h1 className={`${styles.title} ${anton.className}`} aria-label={TITLE} ref={titleRef}>
-        {TITLE.split("").map((ch, i) =>
-          ch === " " ? (
-            // 공백: 애니메이션/측정 대상 아님. 데스크톱=단어 사이 여백, 모바일=블록 전환으로 줄바꿈(FILM / NOUVELLE).
-            <span key={i} className={styles.gap} aria-hidden="true">
-              {" "}
-            </span>
-          ) : (
-            <span
-              key={i}
-              ref={(el) => {
-                if (el) letterRefs.current[i] = el;
-              }}
-              className={styles.letter}
-              aria-hidden="true"
-            >
-              <span
-                ref={(el) => {
-                  if (el) innerRefs.current[i] = el;
-                }}
-                className={styles.letterInner}
-              >
-                {ch}
-              </span>
-            </span>
-          ),
-        )}
+    <div className={styles.titleWrap} aria-hidden="true">
+      {/* FILM — 좌상단, 솔리드 검정 */}
+      <h1 className={`${styles.word} ${styles.wordFilm} ${anton.className}`} ref={filmRef} aria-label="FILM">
+        {FILM.split("").map((ch, i) => letterSpan(ch, i))}
+      </h1>
+      {/* NOUVELLE — 우하단, 아웃라인(라인) 스타일 */}
+      <h1 className={`${styles.word} ${styles.wordNouvelle} ${anton.className}`} ref={nouvRef} aria-label="NOUVELLE">
+        {NOUVELLE.split("").map((ch, j) => letterSpan(ch, FILM_LEN + j))}
       </h1>
     </div>
   );
