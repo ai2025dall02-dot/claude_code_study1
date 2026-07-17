@@ -166,7 +166,6 @@ export default function SiteNav() {
                 onClick={() => setOpen(false)}
                 tabIndex={open ? 0 : -1}
               >
-                <span className={styles.menuIndex}>{String(i + 1).padStart(2, "0")}</span>
                 <span className={styles.menuLabel}>{l.label}</span>
               </a>
             ))}

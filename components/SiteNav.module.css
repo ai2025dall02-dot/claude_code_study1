@@ -7,18 +7,8 @@
   align-items: center;
   justify-content: flex-end; /* Menu 버튼만 우측 상단 */
   padding: 1.25rem clamp(1.4rem, 4vw, 3rem);
+  /* [D] 헤더는 항상 투명 — 스크롤 시 상단 흰 띠(반투명 배경/blur/보더) 제거 */
   background: transparent;
-  border-bottom: 1px solid transparent;
-  transition: background 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
-    border-color 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
-    padding 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-.nav[data-scrolled="true"] {
-  background: rgba(248, 248, 248, 0.82);
-  backdrop-filter: blur(12px) saturate(1.1);
-  -webkit-backdrop-filter: blur(12px) saturate(1.1);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  padding-block: 0.85rem;
 }
 
 /* [A] 버튼 + 패널을 감싸는 앵커 컨테이너 — 패널이 이 버튼 위치를 기준으로 펼쳐짐 */
@@ -31,8 +21,13 @@
 .menuBtn {
   appearance: none;
   -webkit-appearance: none;
-  background: transparent;
-  border: 1px solid #0c0c0c;
+  /* [D] 흰 라인 버튼 — 검은 카드 위에선 흰 선/글자가 또렷, 밝은 히어로(#f8f8f8) 위에선
+     옅은 반투명 어두운 배경 + 살짝 그림자로 흰 선이 흐려지지 않게. */
+  background: rgba(12, 12, 14, 0.52);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  border: 1px solid #f8f8f8; /* [D] 또렷한 흰 라인 */
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.22);
   border-radius: 9px;
   cursor: pointer;
   display: inline-flex;
@@ -46,15 +41,20 @@
   font-size: clamp(12px, 1.05vw, 14px);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #0c0c0c;
+  color: #f8f8f8; /* [D] 텍스트/점 흰색 */
   /* 배경/색(호버 반전) + 인트로 등장(위에서 내려오며 페이드) */
-  transition: background 0.22s ease, color 0.22s ease,
+  transition: background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease,
     opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: 0s, 0s, 0.2s, 0.2s;
+  transition-delay: 0s, 0s, 0s, 0.2s, 0.2s;
 }
 .menuBtnLabel { display: inline-block; }
-.menuBtn:hover { background: #0c0c0c; color: #f8f8f8; } /* 호버 시 반전(채움) */
+/* [D] 호버 반전 — 흰 라인 기준: 흰색으로 채우고 글자/점은 어둡게 */
+.menuBtn:hover {
+  background: #f8f8f8;
+  color: #0c0c0c;
+  box-shadow: 0 2px 18px rgba(0, 0, 0, 0.22);
+}
 .menuDot {
   width: 7px;
   height: 7px;
@@ -88,17 +88,18 @@
   transform-origin: top right; /* 버튼(우상단)에서 자라나는 느낌 */
   opacity: 0;
   visibility: hidden;
-  transform: scale(0.9) translateY(-6px);
+  /* [C] scale 튀어나옴 대신 세로로 살짝 접혔다 펴짐(scaleY) — "버튼이 아래로 늘어나 패널이 되는" 확장 */
+  transform: scaleY(0.94) translateY(-10px);
   pointer-events: none;
-  transition: opacity 0.26s ease, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-    visibility 0s linear 0.32s;
+  transition: opacity 0.42s ease, transform 0.52s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s linear 0.52s;
 }
 .menuWrap[data-open="true"] .panel {
   opacity: 1;
   visibility: visible;
   transform: none;
   pointer-events: auto;
-  transition: opacity 0.26s ease, transform 0.34s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.4s ease, transform 0.52s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* 패널 상단 바 — 우측 Close */
@@ -150,18 +151,17 @@
 .menuList {
   display: flex;
   flex-direction: column;
-  padding: 0.2rem 1.1rem 0.4rem;
-  gap: 0.14rem;
+  padding: 0.35rem 1.1rem 0.55rem;
+  gap: 0.5rem; /* [B] 항목 사이 여유 있게(0.14rem → 0.5rem) */
 }
 .menuList a {
   display: flex;
   align-items: baseline;
-  gap: 0.85rem;
   /* [D] 기본 비활성 회색 — 현재 섹션 항목만 활성 흰색 */
   color: #5c5c58;
   text-decoration: none;
-  font-size: clamp(1.1rem, 2.4vw, 1.8rem); /* [C] 패널 박스에 들어가도록 축소 */
-  line-height: 1.18;
+  font-size: clamp(1.1rem, 2.4vw, 1.8rem); /* 패널 박스에 들어가도록 축소 */
+  line-height: 1.5; /* [B] 행간 넓힘(1.18 → 1.5) */
   letter-spacing: 0.01em;
   text-transform: uppercase;
   /* 항목 등장: 아래에서 위로 + 페이드(패널 열림 시 stagger) */
@@ -172,22 +172,12 @@
 .menuWrap[data-open="true"] .menuList a {
   opacity: 1;
   transform: none;
-  transition-delay: calc(0.04s * var(--i) + 0.08s);
+  /* [C] 패널 확장(≈0.52s)과 자연스럽게 이어지도록 시작 딜레이·간격 미세조정 */
+  transition-delay: calc(0.045s * var(--i) + 0.14s);
 }
 /* [D] 현재 보고 있는 섹션 = 활성(흰색). 호버도 흰색으로 피드백. */
 .menuList a[data-active="true"] { color: #f6f6f3; }
 .menuList a:hover { color: #f6f6f3; }
-.menuIndex {
-  font-family: var(--font-meta, monospace);
-  font-size: clamp(9px, 0.85vw, 11px);
-  letter-spacing: 0.14em;
-  color: #4a4a47;
-  align-self: flex-start;
-  margin-top: 0.3em;
-  transition: color 0.25s;
-}
-/* [D] 활성 항목의 번호도 살짝 밝게 */
-.menuList a[data-active="true"] .menuIndex { color: #9a9a95; }
 .menuLabel { display: inline-block; }
 
 @media (prefers-reduced-motion: reduce) {
