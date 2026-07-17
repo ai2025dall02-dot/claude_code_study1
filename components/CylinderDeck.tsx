@@ -31,23 +31,23 @@ const SEG_W = 28; // 카드 가로 세그먼트(곡면 매끄럽게)
 
 // ── 기울기 ──
 // dayonedream: 원통을 꽤 눕혀 "안쪽 상단" 판들이 위로 길게 펼쳐지게(rotateX 양수 키움) + 살짝 대각선(rotateZ).
-const TILT_Z = THREE.MathUtils.degToRad(10); // 대각선 기울기(좌하단→우상단)
-const TILT_X = THREE.MathUtils.degToRad(20); // [5] 뒤로 더 기울여 위쪽 빈 판이 더 보이게(14→20)
+const TILT_Z = THREE.MathUtils.degToRad(8); // [3] 대각선 기울기 — DayOneDream 처럼 살짝만(10→8)
+const TILT_X = THREE.MathUtils.degToRad(24); // [3] 뒤로 더 눕혀 위쪽 빈 판이 펼쳐지고 좌우 카드가 곡면 따라 휘게(20→24)
 
 // ── 카메라/스케일 ──
 const CAM_Z = 15; // [3] 카메라 거리 — 8개·큰 카드에 맞춰(정면 카드 크되 안 잘리게)
 const CAM_FOV = 34; // 시야각
-const CENTER_Y = 1.9; // 세로 위치 — 더 눕힌 만큼 위로 더 올려 담음(월드 Y)
+const CENTER_Y = 2.3; // [3] 세로 위치 — 더 눕힌 만큼 위로 더 올려 담음(월드 Y)
 
 // ── 2겹 구조: 빈 뒷판(옅은 흰 유리판) + 이미지 앞판 ──
 // [1][4] 카드 1장 = (a) 빈 뒷판(옅은 흰 회색 반투명 "유리판" — 둥근 모서리 + 얇은 밝은 테두리, 상시) +
 //   (b) 이미지 앞판(반지름 +CARD_GAP, opacityAt 로 페이드). 앞쪽 반구: 이미지 불투명 → 유리판 가림 /
 //   뒤쪽 반구: 이미지 페이드 → 옅은 유리판 드러남. 반투명이라 뒤 텍스트가 살짝 비침.
-const PANEL_COLOR = "#f2f2f2"; // [1] 빈 뒷판 유리판 — 거의 흰색(옅은 회색)
-const PANEL_BORDER = "rgba(255,255,255,0.95)"; // [2] 얇고 밝은 테두리
-const PANEL_OPACITY = 0.42; // [1] 은은한 반투명(0.35~0.5)
-const CORNER_R = 0.08; // [2] 둥근 모서리 반경(카드 폭 대비 비율)
-const CARD_GAP = 0.01; // [3] 이미지 앞판을 뒷판보다 살짝 앞으로(반지름 +)
+const PANEL_COLOR = "#f2f2f2"; // 빈 뒷판 유리판 — 거의 흰색(옅은 회색)
+const PANEL_BORDER = "rgba(255,255,255,0.95)"; // 얇고 밝은 테두리
+const PANEL_OPACITY = 0.42; // 은은한 반투명(0.35~0.5)
+const CARD_GAP = 0.01; // 이미지 앞판을 뒷판보다 살짝 앞으로(반지름 +)
+// [1][2] 모서리는 각지게(직사각형) — DayOneDream 처럼 라운딩 없음(둥근 마스크/반경 제거).
 // 반응형 스케일 — 그룹 전체에 곱함. [1] 카드/카메라를 키운 만큼(정면 큰 아치) 좁은 화면에선 더
 //   줄여야 아치가 안 잘리고 들어옴(모바일 0.62→0.42, 태블릿 하향). 데스크탑은 큰 카드 의도 유지.
 function scaleForWidth(w: number) {
@@ -141,7 +141,7 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
     camera.position.set(0, 0, CAM_Z);
     camera.lookAt(0, 0, 0);
 
-    // 기울기 그룹 중첩: tiltZ(10°) > tiltX(+20°, 뒤로 눕혀 안쪽 상단) > ring(rotateY) — deckTilt/deckRing 대응.
+    // 기울기 그룹 중첩: tiltZ(8°) > tiltX(+24°, 뒤로 눕혀 안쪽 상단) > ring(rotateY) — deckTilt/deckRing 대응.
     const tiltZ = new THREE.Group();
     tiltZ.rotation.z = TILT_Z;
     tiltZ.position.y = CENTER_Y; // 세로 위치 보정
@@ -171,50 +171,24 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
     const curScale: number[] = []; // 호버 확대 lerp 현재값
     const loaded: boolean[] = []; // 카드 텍스처 로드 여부(false=이미지 앞판 숨김 → 뒷판 노출)
 
-    // [2] 둥근 사각형 path 헬퍼
-    const roundedPath = (g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
-      g.beginPath();
-      g.moveTo(x + r, y);
-      g.arcTo(x + w, y, x + w, y + h, r);
-      g.arcTo(x + w, y + h, x, y + h, r);
-      g.arcTo(x, y + h, x, y, r);
-      g.arcTo(x, y, x + w, y, r);
-      g.closePath();
-    };
     const TW = 256; // 텍스처 가로 픽셀
     const TH = Math.round(TW / CARD_AR); // 세로형 카드 비율
-    const RR = Math.round(TW * CORNER_R); // 둥근 모서리 반경(px)
 
-    // [1][2] 빈 뒷판 "유리판" 텍스처 — 투명 바깥 + 옅은 흰 채움 + 얇은 밝은 테두리(RGBA).
+    // [2] 빈 뒷판 "유리판" 텍스처 — 직사각형(각진 모서리) + 옅은 흰 채움 + 얇은 밝은 테두리(RGBA).
     const plateCanvas = document.createElement("canvas");
     plateCanvas.width = TW;
     plateCanvas.height = TH;
     const pg = plateCanvas.getContext("2d")!;
-    roundedPath(pg, 3, 3, TW - 6, TH - 6, RR);
     pg.fillStyle = PANEL_COLOR; // 옅은 흰 회색
-    pg.fill();
+    pg.fillRect(0, 0, TW, TH);
     pg.lineWidth = 2;
-    pg.strokeStyle = PANEL_BORDER; // 얇고 밝은 테두리
-    pg.stroke();
+    pg.strokeStyle = PANEL_BORDER; // 얇고 밝은 테두리(안쪽으로 1px)
+    pg.strokeRect(1, 1, TW - 2, TH - 2);
     const plateTex = new THREE.CanvasTexture(plateCanvas);
     plateTex.colorSpace = THREE.SRGBColorSpace;
     plateTex.anisotropy = maxAniso;
 
-    // [2] 둥근 모서리 알파 마스크(이미지 앞판용) — 흰 라운드렉트 / 검정 바깥.
-    const maskCanvas = document.createElement("canvas");
-    maskCanvas.width = TW;
-    maskCanvas.height = TH;
-    const mg = maskCanvas.getContext("2d")!;
-    mg.fillStyle = "#000";
-    mg.fillRect(0, 0, TW, TH);
-    roundedPath(mg, 3, 3, TW - 6, TH - 6, RR);
-    mg.fillStyle = "#fff";
-    mg.fill();
-    const maskTex = new THREE.CanvasTexture(maskCanvas);
-    maskTex.colorSpace = THREE.NoColorSpace; // 알파 마스크는 선형
-    maskTex.anisotropy = maxAniso;
-
-    // [1] 빈 뒷판 공유 머티리얼 — 옅은 흰 유리판 텍스처(둥근 모서리+테두리 내장), 상시 반투명.
+    // [1] 빈 뒷판 공유 머티리얼 — 옅은 흰 유리판 텍스처(각진 모서리+테두리), 상시 반투명.
     const grayMaterial = new THREE.MeshBasicMaterial({
       map: plateTex,
       color: 0xffffff, // 텍스처 원색 유지(틴트 없음)
@@ -266,9 +240,8 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
       grayMeshes.push(grayMesh);
 
       // (b) 이미지 앞판 — 뒷판보다 살짝 앞(반지름 +CARD_GAP). 로드 전 opacity 0(숨김) → 뒷판 노출.
-      //   alphaMap(둥근 마스크)으로 이미지 모서리도 둥글게. 텍스처(map)는 로드 시 주입.
+      //   [1] 각진 모서리(둥근 alphaMap 제거) — 이미지가 곡면 카드 전체를 직각으로 꽉 채움. 텍스처(map)는 로드 시 주입.
       const imgMat = new THREE.MeshBasicMaterial({
-        alphaMap: maskTex, // [2] 둥근 모서리
         transparent: true,
         opacity: 0, // 로드/각도에 따라 매 프레임 갱신
         side: THREE.FrontSide,
@@ -435,7 +408,6 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
       materials.forEach((m) => m.dispose());
       grayMaterial.dispose();
       plateTex.dispose();
-      maskTex.dispose();
       textures.forEach((t) => t.dispose());
       renderer.dispose();
       if (canvas.parentNode === wrap) wrap.removeChild(canvas);
