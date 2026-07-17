@@ -1,11 +1,11 @@
-/* [C] 미니멀 헤더(좌 브랜드 / 우 Menu 버튼) + 전체 오버레이 메뉴 — tsitsipas.com 무드 */
+/* 미니멀 헤더(우 Menu 버튼) + 버튼 자리에서 아래로 펼쳐지는 패널 메뉴 — tsitsipas.com 무드 */
 .nav {
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 100;
   display: flex;
   align-items: center;
-  justify-content: flex-end; /* [C] 브랜드 제거 → Menu 버튼만 우측 상단 */
+  justify-content: flex-end; /* Menu 버튼만 우측 상단 */
   padding: 1.25rem clamp(1.4rem, 4vw, 3rem);
   background: transparent;
   border-bottom: 1px solid transparent;
@@ -21,38 +21,37 @@
   padding-block: 0.85rem;
 }
 
-/* 좌측 브랜드 */
-.brand {
-  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
-  font-weight: 900;
-  font-size: clamp(14px, 1.5vw, 18px);
-  letter-spacing: -0.01em;
-  color: #0c0c0c;
-  text-decoration: none;
+/* [A] 버튼 + 패널을 감싸는 앵커 컨테이너 — 패널이 이 버튼 위치를 기준으로 펼쳐짐 */
+.menuWrap {
+  position: relative;
+  display: inline-block;
 }
 
-/* [A] 우측 Menu 버튼 — tsitsipas.com 처럼 "살짝만 둥근 직사각형 + 가로로 넓은" 박스.
-   좌: MENU 볼드 / 우 끝: 작은 원형 점 (space-between 으로 넓게 벌림). 색상은 기존 유지. */
+/* 우측 Menu 버튼 — 살짝 둥근 직사각형 + 가로로 넓은 박스. 좌: MENU / 우 끝: 점. */
 .menuBtn {
   appearance: none;
   -webkit-appearance: none;
   background: transparent;
   border: 1px solid #0c0c0c;
-  border-radius: 9px; /* [A] 완전 알약(999px) → 모서리만 살짝 둥근 직사각형 */
+  border-radius: 9px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  justify-content: space-between; /* [A] MENU(좌) ~ 점(우 끝) 넓게 벌림 */
-  min-width: clamp(180px, 18vw, 240px); /* [A] 가로로 넓은 직사각형 비율 */
+  justify-content: space-between; /* MENU(좌) ~ 점(우 끝) 넓게 벌림 */
+  min-width: clamp(180px, 18vw, 240px);
   gap: 0.7rem;
-  padding: 0.7rem 1.1rem; /* [A] 세로도 이미지처럼 여유 있게 */
+  padding: 0.7rem 1.1rem;
   font-family: Helvetica, Arial, sans-serif;
   font-weight: 700;
   font-size: clamp(12px, 1.05vw, 14px);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #0c0c0c;
-  transition: background 0.22s ease, color 0.22s ease;
+  /* 배경/색(호버 반전) + 인트로 등장(위에서 내려오며 페이드) */
+  transition: background 0.22s ease, color 0.22s ease,
+    opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: 0s, 0s, 0.2s, 0.2s;
 }
 .menuBtnLabel { display: inline-block; }
 .menuBtn:hover { background: #0c0c0c; color: #f8f8f8; } /* 호버 시 반전(채움) */
@@ -62,14 +61,6 @@
   border-radius: 50%;
   background: currentColor; /* 라벨색 따라감 → 호버 반전 시 점도 밝아짐 */
   display: inline-block;
-}
-
-/* 인트로 등장: 버튼이 살짝 위에서 내려오며 페이드인 (배경/색 트랜지션과 분리) */
-.menuBtn {
-  transition: background 0.22s ease, color 0.22s ease,
-    opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: 0s, 0s, 0.2s, 0.2s;
 }
 .nav[data-revealed="false"] .menuBtn {
   opacity: 0;
@@ -82,40 +73,40 @@
   }
 }
 
-/* ── 전체 오버레이 메뉴 ── */
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 300; /* 히어로/덱 캔버스(z:3)·헤더(z:100) 위 */
-  display: flex;
-  flex-direction: column;
+/* ── [A] 버튼 앵커 패널 — 풀스크린 아님. 버튼 top-right 를 기준으로 아래로 확장되는 박스 ── */
+.panel {
+  position: absolute;
+  top: 0;
+  right: 0; /* 버튼 우측 모서리에 정렬 → 왼쪽·아래로 펼쳐짐 */
+  z-index: 2; /* 같은 wrap 안에서 버튼 위(버튼을 가려 "박스로 변형"된 것처럼) */
+  width: min(340px, 84vw);
   background: #0d0d0f;
   color: #f4f4f2;
+  border-radius: 10px;
+  padding-bottom: 0.7rem;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.3);
+  transform-origin: top right; /* 버튼(우상단)에서 자라나는 느낌 */
   opacity: 0;
   visibility: hidden;
-  pointer-events: none; /* 닫힘: 아래(히어로) 입력 통과 */
-  transition: opacity 0.5s ease, visibility 0s linear 0.5s;
+  transform: scale(0.9) translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.26s ease, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s linear 0.32s;
 }
-.overlay[data-open="true"] {
+.menuWrap[data-open="true"] .panel {
   opacity: 1;
   visibility: visible;
-  pointer-events: auto; /* 열림: 배경/덱 입력 차단 */
-  transition: opacity 0.5s ease;
+  transform: none;
+  pointer-events: auto;
+  transition: opacity 0.26s ease, transform 0.34s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 오버레이 상단 바(브랜드 + Close) */
-.overlayBar {
+/* 패널 상단 바 — 우측 Close */
+.panelBar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem clamp(1.4rem, 4vw, 3rem);
-}
-.overlayBrand {
-  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
-  font-weight: 900;
-  font-size: clamp(14px, 1.5vw, 18px);
-  letter-spacing: -0.01em;
-  color: #f4f4f2;
+  justify-content: flex-end;
+  padding: 0.7rem 0.85rem 0.35rem;
 }
 .close {
   appearance: none;
@@ -125,11 +116,11 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.5rem;
   padding: 6px 2px;
   font-family: Helvetica, Arial, sans-serif;
   font-weight: 600;
-  font-size: clamp(12px, 1.05vw, 14px);
+  font-size: clamp(11px, 1vw, 13px);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #f4f4f2;
@@ -138,8 +129,8 @@
 .close:hover { opacity: 0.6; }
 .closeX {
   position: relative;
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   display: inline-block;
 }
 .closeX::before,
@@ -155,67 +146,68 @@
 .closeX::before { transform: rotate(45deg); }
 .closeX::after { transform: rotate(-45deg); }
 
-/* [B/C] 메뉴 항목 — 크게 세로 나열하되, 상단 기준으로 모아 펼침(위→아래). 행간·gap 타이트하게. */
+/* [C] 메뉴 항목 — 패널 박스에 맞춰 폰트 축소, 타이트한 세로 나열(색상은 유지) */
 .menuList {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* [C] 중앙 정렬 → 상단 기준(위쪽에 모여 펼쳐지는 느낌) */
-  padding: clamp(1.5rem, 5vh, 3.5rem) clamp(1.4rem, 6vw, 6rem) 3rem;
-  gap: clamp(0.05rem, 0.4vh, 0.3rem); /* [C] 항목 사이 간격 축소(너무 벌어지지 않게) */
+  padding: 0.2rem 1.1rem 0.4rem;
+  gap: 0.14rem;
 }
 .menuList a {
   display: flex;
   align-items: baseline;
-  gap: clamp(0.8rem, 2vw, 1.8rem);
-  /* [E] 기본은 비활성 회색 — 현재 섹션 항목만 활성 흰색으로 두드러지게 */
+  gap: 0.85rem;
+  /* [D] 기본 비활성 회색 — 현재 섹션 항목만 활성 흰색 */
   color: #5c5c58;
   text-decoration: none;
-  font-size: clamp(2rem, 7vw, 5.5rem);
-  line-height: 1.0; /* [C] 큰 글자 + 타이트한 행간 */
+  font-size: clamp(1.1rem, 2.4vw, 1.8rem); /* [C] 패널 박스에 들어가도록 축소 */
+  line-height: 1.18;
   letter-spacing: 0.01em;
   text-transform: uppercase;
-  /* 항목 등장: 아래에서 위로 + 페이드(오버레이 열림 시 stagger) */
+  /* 항목 등장: 아래에서 위로 + 페이드(패널 열림 시 stagger) */
   opacity: 0;
-  transform: translateY(26px);
-  transition: opacity 0.5s ease, transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s;
+  transform: translateY(12px);
+  transition: opacity 0.4s ease, transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s;
 }
-.overlay[data-open="true"] .menuList a {
+.menuWrap[data-open="true"] .menuList a {
   opacity: 1;
   transform: none;
-  transition-delay: calc(0.055s * var(--i) + 0.12s);
+  transition-delay: calc(0.04s * var(--i) + 0.08s);
 }
-/* [E] 현재 보고 있는 섹션 = 활성(흰색). 호버도 흰색으로 피드백. */
+/* [D] 현재 보고 있는 섹션 = 활성(흰색). 호버도 흰색으로 피드백. */
 .menuList a[data-active="true"] { color: #f6f6f3; }
 .menuList a:hover { color: #f6f6f3; }
 .menuIndex {
   font-family: var(--font-meta, monospace);
-  font-size: clamp(10px, 1vw, 13px);
+  font-size: clamp(9px, 0.85vw, 11px);
   letter-spacing: 0.14em;
   color: #4a4a47;
   align-self: flex-start;
-  margin-top: 0.35em;
+  margin-top: 0.3em;
   transition: color 0.25s;
 }
-/* [E] 활성 항목의 번호도 살짝 밝게 */
+/* [D] 활성 항목의 번호도 살짝 밝게 */
 .menuList a[data-active="true"] .menuIndex { color: #9a9a95; }
 .menuLabel { display: inline-block; }
 
 @media (prefers-reduced-motion: reduce) {
-  .overlay,
-  .overlay[data-open="true"] { transition: opacity 0.2s ease; }
+  .panel,
+  .menuWrap[data-open="true"] .panel {
+    transition: opacity 0.18s ease;
+    transform: none;
+  }
   .menuList a {
     opacity: 1;
     transform: none;
     transition: color 0.25s;
   }
-  .overlay[data-open="true"] .menuList a { transition-delay: 0s; }
+  .menuWrap[data-open="true"] .menuList a { transition-delay: 0s; }
 }
 
-/* 모바일: LINEUP 상세 모달이 열려 있는 동안 헤더 숨김(닫기 X 와 겹침 방지). 오버레이 메뉴는 영향 없음. */
+/* 모바일: 패널이 화면 밖으로 안 나가게 폭 여유 + LINEUP 상세 모달 중 헤더 숨김 */
 @media (max-width: 767px) {
   :global(body[data-modal-open="true"]) .nav {
     display: none;
   }
-  .menuList { justify-content: flex-start; padding-top: 8vh; }
+  .panel { width: min(320px, 86vw); }
 }
