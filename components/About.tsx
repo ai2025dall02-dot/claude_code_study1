@@ -37,16 +37,13 @@ export default function About() {
     offset: ["start start", "end end"],
   });
   const p = useSpring(scrollYProgress, { stiffness: 90, damping: 30, mass: 1 });
-  // [A] 비율 고정(aspect-ratio, CSS) + '단일 scale' 로만 축소 → 가로세로가 따로 놀지 않음.
-  //   초기 크게(scale 1, 58vw 폭) → 진행할수록 우측 하단 작은 박스(scale 0.42)로. origin: bottom right.
-  const scale = useTransform(p, [0, 0.85], [1, 0.42]);
-  const vidStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { scale };
+  // 초기: 하단을 넓게(92vw × 54vh) → 진행할수록 우측 하단 작은 박스(30vw × 26vh)로 축소.
+  //   우측 하단 앵커(CSS right/bottom)라 줄어들면서 자연히 우측 하단으로 물러남.
+  const width = useTransform(p, [0, 0.85], ["90vw", "30vw"]);
+  const height = useTransform(p, [0, 0.85], ["42vh", "25vh"]);
 
-  // [B] 좌측 하단 본문 — 스크롤 후반부(영상이 우하단으로 물러날 때)에 페이드/상승하며 드러남.
-  const bodyOpacity = useTransform(p, [0.5, 0.82], [0, 1]);
-  const bodyY = useTransform(p, [0.5, 0.82], [18, 0]);
-  const bodyStyle: MotionStyle | undefined =
-    reduce || isMobile ? undefined : { opacity: bodyOpacity, y: bodyY };
+  // reduce / 모바일: 모션 없이 정적 크기(모바일은 CSS 가 full-width 로 override).
+  const vidStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { width, height };
 
   return (
     <section ref={ref} id="about" className={styles.about}>
@@ -60,11 +57,11 @@ export default function About() {
             다만 옮겨질 곳을 기다릴 뿐이다.
           </h2>
 
-          <motion.p className={styles.body} style={bodyStyle}>
+          <p className={styles.body}>
             필름 누벨은 2014년부터 독립영화와 예술영화를 다시 스크린으로 선보여 왔습니다. 매년
             엄선한 소수의 작품을 극장 개봉, 특별전, 공동체 상영, 아카이브까지 이어지는 여정 속에서
             관객과 연결합니다.
-          </motion.p>
+          </p>
 
           <motion.div className={styles.video} style={vidStyle}>
             <img src={PLACEHOLDER} alt="필름 누벨 소개 영상 (placeholder)" />

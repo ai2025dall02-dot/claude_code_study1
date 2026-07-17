@@ -172,8 +172,10 @@ export default function Landing() {
     >
       <motion.header className={styles.head} variants={contentItem}>
         <div>
-          {/* [E] CONTACT 제목 텍스트 제거 — 라벨/레이아웃/블라인드는 유지 */}
           <span className={styles.eyebrow}>Contact &amp; Acquisitions</span>
+          <h2 className={styles.title}>
+            CON<em>TACT</em>
+          </h2>
         </div>
       </motion.header>
 
