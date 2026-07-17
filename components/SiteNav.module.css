@@ -94,7 +94,8 @@
   transform: scale(0.9) translateY(-6px);
   pointer-events: none;
   transition: opacity 0.26s ease, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-    visibility 0s linear 0.32s;
+    visibility 0s linear 0.32s,
+    background 0.4s ease, color 0.4s ease; /* [B] 어두운↔밝은 반전 부드럽게 */
 }
 .menuWrap[data-open="true"] .panel {
   opacity: 1;
@@ -127,7 +128,7 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #f4f4f2;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, color 0.4s ease; /* [B] 반전 부드럽게 */
 }
 .close:hover { opacity: 0.6; }
 .closeX {
@@ -192,6 +193,21 @@
 /* [D] 활성 항목의 번호도 살짝 밝게 */
 .menuList a[data-active="true"] .menuIndex { color: #9a9a95; }
 .menuLabel { display: inline-block; }
+
+/* ── [B] 어두운 배경 섹션(data-dark="true") — 패널을 밝게 반전 ──
+   기본(밝은 배경)은 위의 어두운 패널(#0d0d0f) 유지. 색상은 .panel/.close/.menuList 의
+   transition 으로 부드럽게 전환. */
+.nav[data-dark="true"] .panel {
+  background: #f4f4f2;
+  color: #0c0c0c;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.18);
+}
+.nav[data-dark="true"] .close { color: #0c0c0c; }
+.nav[data-dark="true"] .menuList a { color: #a2a29d; } /* 비활성 = 밝은 회색 */
+.nav[data-dark="true"] .menuList a[data-active="true"],
+.nav[data-dark="true"] .menuList a:hover { color: #0c0c0c; } /* 활성/호버 = 진한 검정 */
+.nav[data-dark="true"] .menuIndex { color: #b4b4af; }
+.nav[data-dark="true"] .menuList a[data-active="true"] .menuIndex { color: #6a6a66; }
 
 @media (prefers-reduced-motion: reduce) {
   .panel,

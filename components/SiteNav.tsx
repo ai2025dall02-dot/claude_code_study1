@@ -35,23 +35,36 @@ export default function SiteNav() {
   const wrapRef = useRef<HTMLDivElement>(null); // 버튼+패널 앵커(바깥 클릭 판정 기준)
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // [D] 각 섹션을 관찰 → 뷰포트 세로 중앙선을 지나는 섹션을 activeSection 으로.
-  //   (메뉴가 닫혀 있어도 계속 갱신 → 열 때 즉시 반영)
+  // [A] 현재 섹션(active) 결정 — 스크롤 위치 기반으로 "매번 하나"를 확정 계산.
+  //   기준선(뷰포트 상단에서 35%)을 통과한 마지막 섹션 = 현재 섹션. 위/아래 어느 방향으로 스크롤해도
+  //   끊기지 않고 갱신 → 밝은 섹션(#home)으로 올라오면 반드시 active=home(→ isDark=false)으로 복구.
+  //   (교차 이벤트가 안 잡혀 이전 값에 고정되던 IntersectionObserver 방식의 버그 해결)
   useEffect(() => {
     const sections = LINKS.map((l) => document.getElementById(l.href.slice(1))).filter(
       (el): el is HTMLElement => !!el
     );
     if (sections.length === 0) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) setActive(e.target.id);
-        }
-      },
-      { rootMargin: "-50% 0px -50% 0px", threshold: 0 }
-    );
-    sections.forEach((s) => obs.observe(s));
-    return () => obs.disconnect();
+    let raf = 0;
+    const compute = () => {
+      raf = 0;
+      const refY = window.innerHeight * 0.35; // 기준선
+      let current = sections[0].id;
+      for (const s of sections) {
+        if (s.getBoundingClientRect().top - refY <= 0) current = s.id; // 기준선 위로 올라온 마지막 섹션
+      }
+      setActive(current);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(compute);
+    };
+    compute();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
   // [B] 열림: 배경 스크롤 잠금 + 첫 항목 포커스 + ESC/바깥클릭 닫기 + 포커스 트랩(Tab 순환).
