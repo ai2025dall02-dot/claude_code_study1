@@ -5,12 +5,15 @@
   position: relative;
   background: #f8f8f8;
   color: #0c0c0c;
+  /* [C] 히어로와 ABOUT 사이 살짝 간격(밝은 여백 — 섹션 자체 배경이라 어두운 틈 없음) */
+  padding-top: clamp(3rem, 9vh, 8rem);
 }
 
-/* 스크롤 트랙 — 이 높이만큼 스크롤하는 동안 sticky 가 고정되며 애니메이션 진행 */
+/* 스크롤 트랙 — 이 높이만큼 스크롤하는 동안 sticky 가 고정되며 애니메이션 진행.
+   [C] 살짝 더 긴 트랙(240→264vh)으로 sticky 고정 구간을 넉넉히. */
 .pin {
   position: relative;
-  height: 240vh;
+  height: 264vh;
 }
 .sticky {
   position: sticky;
@@ -43,28 +46,32 @@
   color: #0c0c0c;
 }
 
-/* 좌측 하단 — 작은 폰트 본문(영상 축소 후 드러남) */
+/* 좌측 하단 — 작은 폰트 본문(영상 축소 후 드러남). [B] 등장은 JS(opacity/y)가 후반부에 연동. */
 .body {
   position: absolute;
   left: var(--ln-gutter, clamp(1.4rem, 4vw, 3rem));
   bottom: clamp(1.8rem, 5vh, 3rem);
-  max-width: 44ch;
+  max-width: 40ch;
   margin: 0;
   font-size: clamp(0.86rem, 1.05vw, 1.02rem);
   line-height: 1.75;
   color: #454542;
 }
 
-/* 영상 placeholder 박스 — 우측 하단 앵커. width/height 는 스크롤 모션이 제어(초기 크게→작게). */
+/* 영상 placeholder 박스 — 우측 하단 앵커 + 고정 비율(aspect-ratio).
+   [A] 축소는 '단일 scale' 로만(가로세로 따로 X) → transform-origin: bottom right 로 우측 하단으로 물러남. */
 .video {
   position: absolute;
   right: var(--ln-gutter, clamp(1.4rem, 4vw, 3rem));
   bottom: clamp(1.8rem, 5vh, 3rem);
+  width: 58vw; /* 초기 폭 넓게 */
+  aspect-ratio: 16 / 10; /* 폭에 비례한 높은 세로(비율 고정) */
+  transform-origin: bottom right;
   overflow: hidden;
   border-radius: 6px;
   background: #e3e3e0;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.16);
-  will-change: width, height;
+  will-change: transform;
 }
 .video img {
   width: 100%;
@@ -114,11 +121,14 @@
     position: static;
     max-width: none;
     margin-top: clamp(1.6rem, 5vh, 2.4rem);
+    opacity: 1 !important; /* 모바일: 본문 항상 표시 */
+    transform: none !important;
   }
   .video {
     position: static;
     width: 100% !important;
-    height: 56vw !important;
+    aspect-ratio: 16 / 10;
+    transform: none !important; /* 모바일: scale 축소 없음 */
     margin-top: clamp(1.6rem, 5vh, 2.4rem);
   }
 }
