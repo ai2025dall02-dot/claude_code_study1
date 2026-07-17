@@ -31,18 +31,21 @@
   text-decoration: none;
 }
 
-/* [C] 우측 Menu 버튼 — 테두리 있는 알약(둥근 사각) 박스. 좌: MENU 볼드 / 우: 작은 원형 점. */
+/* [A] 우측 Menu 버튼 — tsitsipas.com 처럼 "살짝만 둥근 직사각형 + 가로로 넓은" 박스.
+   좌: MENU 볼드 / 우 끝: 작은 원형 점 (space-between 으로 넓게 벌림). 색상은 기존 유지. */
 .menuBtn {
   appearance: none;
   -webkit-appearance: none;
   background: transparent;
   border: 1px solid #0c0c0c;
-  border-radius: 999px;
+  border-radius: 9px; /* [A] 완전 알약(999px) → 모서리만 살짝 둥근 직사각형 */
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.7rem; /* 라벨과 점 사이 여백(우측 끝에 점) */
-  padding: 0.5rem 1.05rem; /* 가로로 넉넉한 알약 형태 */
+  justify-content: space-between; /* [A] MENU(좌) ~ 점(우 끝) 넓게 벌림 */
+  min-width: clamp(180px, 18vw, 240px); /* [A] 가로로 넓은 직사각형 비율 */
+  gap: 0.7rem;
+  padding: 0.7rem 1.1rem; /* [A] 세로도 이미지처럼 여유 있게 */
   font-family: Helvetica, Arial, sans-serif;
   font-weight: 700;
   font-size: clamp(12px, 1.05vw, 14px);
@@ -152,14 +155,14 @@
 .closeX::before { transform: rotate(45deg); }
 .closeX::after { transform: rotate(-45deg); }
 
-/* 메뉴 항목 — 크게 세로 나열, 세로 중앙 정렬 */
+/* [B/C] 메뉴 항목 — 크게 세로 나열하되, 상단 기준으로 모아 펼침(위→아래). 행간·gap 타이트하게. */
 .menuList {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 2rem clamp(1.4rem, 6vw, 6rem) 3rem;
-  gap: clamp(0.15rem, 0.8vh, 0.6rem);
+  justify-content: flex-start; /* [C] 중앙 정렬 → 상단 기준(위쪽에 모여 펼쳐지는 느낌) */
+  padding: clamp(1.5rem, 5vh, 3.5rem) clamp(1.4rem, 6vw, 6rem) 3rem;
+  gap: clamp(0.05rem, 0.4vh, 0.3rem); /* [C] 항목 사이 간격 축소(너무 벌어지지 않게) */
 }
 .menuList a {
   display: flex;
@@ -169,7 +172,7 @@
   color: #5c5c58;
   text-decoration: none;
   font-size: clamp(2rem, 7vw, 5.5rem);
-  line-height: 1.04;
+  line-height: 1.0; /* [C] 큰 글자 + 타이트한 행간 */
   letter-spacing: 0.01em;
   text-transform: uppercase;
   /* 항목 등장: 아래에서 위로 + 페이드(오버레이 열림 시 stagger) */
