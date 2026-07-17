@@ -832,9 +832,9 @@
 .contact {
   position: relative;
   overflow: hidden;
-  /* [B] 히어로와 동일한 밝은 배경 + 진한 잉크로 통일(기존 다크 #0b0b0c 제거) */
-  background: #f8f8f8;
-  color: #0c0c0c;
+  /* [D] 블라인드 전환을 위해 CONTACT 는 다크 배경 복구(전 섹션 통일 예외 — 블라인드 대비용) */
+  background: #0b0b0c;
+  color: #f4f4f2;
 }
 /* 작업3: CONTACT 를 JOURNAL sticky 패널 안 오버레이로 얹음(블라인드 z5 위 z6).
    y 100%(패널 아래) → 0%(제자리)로 올라옴. 콘텐츠는 세로 중앙 정렬. */
@@ -868,7 +868,7 @@
 }
 .blind__slat {
   flex: 1 1 0; /* 동일 높이의 수평 슬랫 */
-  background: #f8f8f8; /* [B] 검은 블라인드 → 밝은색(밝은 CONTACT 와 통일, 검은 플래시 제거) */
+  background: #0b0b0c; /* [D] 블라인드 복구 — 밝은 JOURNAL 위 검은 슬랫이 차오르는 전환 */
   transform-origin: center; /* scaleY 0→1 로 제자리에서 펼쳐지며 밝은 영역을 덮음 */
   will-change: transform;
 }
@@ -891,7 +891,7 @@
   letter-spacing: -0.03em;
   line-height: 1.12;
   max-width: 16ch;
-  color: #0c0c0c; /* [B] 밝은 배경에 맞춰 진한 잉크 */
+  color: #f4f4f2; /* [D] 다크 CONTACT 복구 */
 }
 /* 작업1: 우측 상단 — CTA 링크(우측 열 좌측 정렬) */
 .contactCta {
@@ -905,12 +905,12 @@
   font-weight: 900;
   font-size: clamp(1rem, 1.6vw, 1.25rem);
   letter-spacing: -0.01em;
-  color: #0c0c0c; /* [B] */
+  color: #f4f4f2; /* [D] */
   white-space: nowrap;
   transition: color 0.25s;
 }
 .contactCta__link span { display: inline-block; transition: transform 0.25s; }
-.contactCta__link:hover { color: #6f6f6b; }
+.contactCta__link:hover { color: #fff; }
 .contactCta__link:hover span { transform: translateX(4px); }
 /* 작업1: 우측 하단 — 연락처 2×2 그리드(레퍼런스의 BUSINESS ENQUIRY / SOCIAL 식) */
 .ciList {
@@ -919,7 +919,7 @@
   grid-template-columns: repeat(2, 1fr);
   gap: clamp(1.4rem, 3vw, 2.2rem);
   padding-top: clamp(1.8rem, 3vw, 2.4rem);
-  border-top: 1px solid rgba(0, 0, 0, 0.14); /* [B] */
+  border-top: 1px solid rgba(255, 255, 255, 0.16); /* [D] */
 }
 .ci__label {
   font-family: var(--font-meta, monospace);
@@ -931,19 +931,19 @@
 }
 .ci__value {
   font-size: 1.05rem;
-  color: #0c0c0c; /* [B] */
+  color: #f4f4f2; /* [D] */
 }
 .ci__value a {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.28); /* [B] */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3); /* [D] */
   padding-bottom: 1px;
   transition: border-color 0.25s, color 0.25s;
 }
-.ci__value a:hover { color: #6f6f6b; border-color: #6f6f6b; }
+.ci__value a:hover { color: #fff; border-color: #fff; }
 
 .footer {
   margin-top: clamp(3.5rem, 8vw, 6rem);
   padding-top: 2rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.14); /* [B] */
+  border-top: 1px solid rgba(255, 255, 255, 0.16); /* [D] */
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;

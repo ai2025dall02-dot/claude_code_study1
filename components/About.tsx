@@ -37,13 +37,13 @@ export default function About() {
     offset: ["start start", "end end"],
   });
   const p = useSpring(scrollYProgress, { stiffness: 90, damping: 30, mass: 1 });
-  // 초기: 하단을 넓게(92vw × 54vh) → 진행할수록 우측 하단 작은 박스(30vw × 26vh)로 축소.
-  //   우측 하단 앵커(CSS right/bottom)라 줄어들면서 자연히 우측 하단으로 물러남.
-  const width = useTransform(p, [0, 0.85], ["90vw", "30vw"]);
-  const height = useTransform(p, [0, 0.85], ["42vh", "25vh"]);
+  // [A] 폭(width) '하나만' 축소 → 세로는 CSS aspect-ratio 로 자동 계산(비율 항상 유지).
+  //   [B] 초기 폭 넓게(94vw) → 세로도 그 비율만큼 큰 박스로 시작. 진행하면 우측 하단 작은 박스(30vw)로.
+  //   [C] 초기엔 이 큰 박스가 좌측 하단 .body 를 물리적으로 덮음 → 우하단으로 작아지며 그 자리를 비켜 줌.
+  const width = useTransform(p, [0, 0.82], ["100vw", "30vw"]);
 
   // reduce / 모바일: 모션 없이 정적 크기(모바일은 CSS 가 full-width 로 override).
-  const vidStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { width, height };
+  const vidStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { width };
 
   return (
     <section ref={ref} id="about" className={styles.about}>

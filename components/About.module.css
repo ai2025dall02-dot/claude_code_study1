@@ -36,35 +36,40 @@
   max-width: 32ch; /* 각 문장이 한 줄로(총 2줄) — 하단 영상과 겹치지 않게 */
   font-family: var(--font-anton), "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
-  font-size: clamp(1.7rem, 4.4vw, 4rem);
+  font-size: clamp(1.5rem, 3.9vw, 3.5rem); /* 넓은 초기 영상이 인용문을 덮지 않도록 상단에 컴팩트하게 */
   line-height: 1.12;
   letter-spacing: 0.005em;
   text-transform: none;
   color: #0c0c0c;
 }
 
-/* 좌측 하단 — 작은 폰트 본문(영상 축소 후 드러남) */
+/* 좌측 하단 — 작은 폰트 본문. [C] opacity 애니 없음. 큰 영상(위 z)에 가려졌다가 영상이 축소되며 물리적으로 드러남. */
 .body {
   position: absolute;
   left: var(--ln-gutter, clamp(1.4rem, 4vw, 3rem));
   bottom: clamp(1.8rem, 5vh, 3rem);
-  max-width: 44ch;
+  z-index: 1; /* 영상보다 아래 → 큰 영상이 덮음 */
+  max-width: 40ch;
   margin: 0;
   font-size: clamp(0.86rem, 1.05vw, 1.02rem);
   line-height: 1.75;
   color: #454542;
 }
 
-/* 영상 placeholder 박스 — 우측 하단 앵커. width/height 는 스크롤 모션이 제어(초기 크게→작게). */
+/* 영상 placeholder 박스 — 우측 하단 앵커 + 고정 aspect-ratio.
+   [A] 폭(width)만 스크롤 모션이 제어 → 세로는 aspect-ratio 로 자동 → 비율 항상 유지.
+   [C] z 가 .body 위 → 초기 큰 폭일 때 좌측 하단 본문을 덮고, 우하단으로 작아지며 비켜 줌. */
 .video {
   position: absolute;
   right: var(--ln-gutter, clamp(1.4rem, 4vw, 3rem));
   bottom: clamp(1.8rem, 5vh, 3rem);
+  z-index: 2; /* .body 위 */
+  aspect-ratio: 12 / 5; /* 폭 넓게 잡아도 세로가 화면을 넘지 않게 하는 넓은 비율(세로도 충분히 큼) */
   overflow: hidden;
   border-radius: 6px;
   background: #e3e3e0;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.16);
-  will-change: width, height;
+  will-change: width;
 }
 .video img {
   width: 100%;
@@ -118,7 +123,7 @@
   .video {
     position: static;
     width: 100% !important;
-    height: 56vw !important;
+    aspect-ratio: 16 / 9; /* 모바일 스택: 일반 영상 비율(세로 자동) */
     margin-top: clamp(1.6rem, 5vh, 2.4rem);
   }
 }
