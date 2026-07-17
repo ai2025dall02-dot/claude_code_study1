@@ -21,23 +21,26 @@ const DECAY = 0.94; // 관성 감쇠(프레임당)
 const HOVER_SCALE = 1.12; // 호버 시 카드 확대 배율(.hovered 상당)
 
 // ── 원통 형상(월드 좌표) ──
-const REPEAT = 2; // 포스터 배열을 몇 바퀴 반복할지
-const CARD_H = 3.5; // [1] 카드 높이(월드) — 세로형 포스터라 높이 키움(2.5→3.5)
-const CARD_AR = 0.7; // [1] 카드 가로:세로 비 — 가로형(1.4)→세로형(0.7) 포스터 비율
-const CARD_W = CARD_H * CARD_AR; // 카드 폭(월드) = 2.45
-const FILL = 0.78; // [2] 카드가 차지하는 STEP 비율 — 0.6→0.78(간격 좁혀 촘촘하되 살짝 틈)
-const SEG_W = 24; // 카드 가로 세그먼트(클수록 곡면이 매끄러움)
-const EMPTY_EVERY = 4; // [4] 이 슬롯마다 1개는 빈(이미지 없는) 회색 카드 — 이미지/회색 카드가 섞이게
+// [1] 카드 총 개수를 6개로 고정(STEP=360/6=60° → 카드 하나가 차지하는 각이 커서 이미지 영역이 큼).
+const SLOT_COUNT = 6;
+// [4] 빈(이미지 없는) 슬롯 인덱스 — 이 자리는 텍스처를 로드하지 않고 반투명 회색 카드로 남음.
+//   (테스트: 6칸 중 2칸을 비워 회색이 보이는지 확인. 실제로는 images 길이/원하는 배치에 맞게 조정)
+const EMPTY_SLOTS = new Set<number>([2, 4]);
+const CARD_H = 4.4; // [2] 카드 높이(월드) — 6개로 줄어 STEP 커진 만큼 크게(세로형 포스터)
+const CARD_AR = 0.7; // 카드 가로:세로 비 — 세로형 포스터 비율
+const CARD_W = CARD_H * CARD_AR; // 카드 폭(월드) = 3.08
+const FILL = 0.82; // [3] 카드가 차지하는 STEP 비율 — 촘촘하되 살짝 틈(0.8 이상)
+const SEG_W = 28; // 카드 가로 세그먼트(STEP 커진 만큼 곡면 세그먼트도 늘려 매끄럽게)
 
 // ── 기울기 ──
 // [3] FOLLOW.ART 형태: 원통을 살짝 뒤로 기울여 "안쪽 상단(윗면 안쪽)"이 들여다보이게. rotateX 를 양수로.
 const TILT_Z = THREE.MathUtils.degToRad(10); // 대각선 기울기 유지(좌하단→우상단)
-const TILT_X = THREE.MathUtils.degToRad(14); // [3] 부호 반전(-6→+14) — 뒤로 기울여 원통 안쪽 상단이 보임
+const TILT_X = THREE.MathUtils.degToRad(14); // 뒤로 기울여 원통 안쪽 상단이 보임(+)
 
 // ── 카메라/스케일 ──
-const CAM_Z = 17; // [5] 카메라 거리 — 세로형·좁은 간격으로 반경이 바뀐 만큼 조정(정면 카드 안 잘리게)
+const CAM_Z = 13; // [5] 카메라 거리 — 카드 6개·큰 사이즈에 맞춰 정면 카드가 크되 안 잘리게
 const CAM_FOV = 34; // 시야각
-const CENTER_Y = 1.2; // [3] 세로 위치 — 뒤로 기울이면 카드가 아래로 내려가므로 위로 올려 화면에 담음(월드 Y)
+const CENTER_Y = 1.4; // [3] 세로 위치 — 뒤로 기울이면 카드가 아래로 내려가므로 위로 올려 화면에 담음(월드 Y)
 
 // ── 빈 카드 / 로드 전 플레이스홀더(반투명 회색) ──
 // [4] 빈 슬롯(deck[i] 가 falsy)은 텍스처를 로드하지 않고 계속 반투명 회색 카드로 남음 → 이미지 카드와 섞여 보임.
@@ -148,22 +151,20 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
     tiltZ.add(tiltX);
     scene.add(tiltZ);
 
-    // [4] 카드 구성: 이미지(images×REPEAT)를 채우되, EMPTY_EVERY 마다 1개는 빈 슬롯(undefined=이미지 없음 → 회색).
-    //   이미지 카드와 빈 회색 카드가 원통 위에 섞여 보임.
+    // [1][4] 카드 구성: 총 SLOT_COUNT(6) 슬롯. EMPTY_SLOTS 에 속한 인덱스는 빈 슬롯(undefined=이미지 없음 → 회색),
+    //   나머지는 images 를 순서대로 채움. images 가 부족하면(undefined) 그 슬롯도 자동으로 빈 회색 카드가 됨.
+    //   → 모든 슬롯을 이미지로 채우던 구조 제거. 빈 슬롯은 아래 루프에서 requestTex 를 아예 호출하지 않음.
     const deck: (string | undefined)[] = [];
-    const TARGET = images.length * REPEAT; // 이미지로 채울 목표 장수
     let imgIdx = 0;
-    let slotIdx = 0;
-    while (imgIdx < TARGET) {
-      if ((slotIdx + 1) % EMPTY_EVERY === 0) {
-        deck.push(undefined); // 빈(회색) 슬롯
+    for (let i = 0; i < SLOT_COUNT; i++) {
+      if (EMPTY_SLOTS.has(i)) {
+        deck.push(undefined); // 빈(회색) 슬롯 — 텍스처 로드 안 함
       } else {
-        deck.push(images[imgIdx % images.length]);
+        deck.push(images[imgIdx]); // images 부족분은 undefined → 역시 빈 회색
         imgIdx++;
       }
-      slotIdx++;
     }
-    const COUNT = deck.length;
+    const COUNT = deck.length; // = SLOT_COUNT (6)
     const STEP = 360 / COUNT; // deg
     const cardAngle = THREE.MathUtils.degToRad(STEP) * FILL; // 카드 1장이 차지하는 각(틈 제외)
     const RADIUS = CARD_W / cardAngle; // 카드 폭 = 호 길이 → 반지름
