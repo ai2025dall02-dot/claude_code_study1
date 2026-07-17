@@ -43,7 +43,7 @@ const CENTER_Y = 0.6; // [B] 세로 위치 — 원통을 화면 세로 중앙쯤
 // [1][4] 카드 1장 = (a) 빈 뒷판(옅은 흰 회색 반투명 "유리판" — 둥근 모서리 + 얇은 밝은 테두리, 상시) +
 //   (b) 이미지 앞판(반지름 +CARD_GAP, opacityAt 로 페이드). 앞쪽 반구: 이미지 불투명 → 유리판 가림 /
 //   뒤쪽 반구: 이미지 페이드 → 옅은 유리판 드러남. 반투명이라 뒤 텍스트가 살짝 비침.
-const PANEL_COLOR = "#ededed"; // 빈 뒷판 유리판 — 옅은 회색(거의 흰색)
+const PANEL_COLOR = "#d9d9d9"; // [A] 빈 뒷판 유리판 — 한 단계 진한 회색(#ededed→#d9d9d9). 반투명도는 유지.
 const PANEL_BORDER = "rgba(255,255,255,0.95)"; // 얇고 밝은 테두리(유지)
 const PANEL_OPACITY = 0.25; // [A] 더 투명하게(0.42→0.25) — 뒤 FILM NOUVELLE 텍스트가 은은히 비침(형태는 인지)
 const CARD_GAP = 0.01; // 이미지 앞판을 뒷판보다 살짝 앞으로(반지름 +)
@@ -51,10 +51,16 @@ const CARD_GAP = 0.01; // 이미지 앞판을 뒷판보다 살짝 앞으로(반�
 // 반응형 스케일 — 그룹 전체에 곱함. [1] 카드/카메라를 키운 만큼(정면 큰 아치) 좁은 화면에선 더
 //   줄여야 아치가 안 잘리고 들어옴(모바일 0.62→0.42, 태블릿 하향). 데스크탑은 큰 카드 의도 유지.
 function scaleForWidth(w: number) {
-  if (w <= 767) return 0.42; // 모바일 — 아치가 좁은 폭에 다 들어오게 축소
-  if (w <= 1024) return 0.55; // 태블릿
+  if (w <= 767) return 0.6; // [B] 모바일 — 덱 크게(0.42→0.6). 확대분 상단 잘림은 centerYForWidth 로 보정.
+  if (w <= 1024) return 0.62; // [B] 태블릿 살짝 상향(0.55→0.62)
   if (w <= 1280) return 0.72; // 노트북
-  return 0.86; // 데스크탑 — 큰 정면 카드 유지
+  return 0.86; // 데스크탑(>1280) — 그대로 유지
+}
+// [B] 세로 위치 — 모바일은 덱을 키운 만큼 아래로 내려 위쪽 빈 판이 상단에서 안 잘리게.
+function centerYForWidth(w: number) {
+  if (w <= 767) return CENTER_Y - 0.9; // 모바일: 확대된 아치가 상단 밖으로 안 나가도록 하향
+  if (w <= 1024) return CENTER_Y - 0.35; // 태블릿: 소폭 하향
+  return CENTER_Y; // 그 외(노트북/데스크탑) 그대로
 }
 
 function norm(a: number) {
@@ -281,6 +287,7 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       tiltZ.scale.setScalar(scaleForWidth(window.innerWidth));
+      tiltZ.position.y = centerYForWidth(window.innerWidth); // [B] 폭별 세로 위치(모바일 확대분 보정)
     };
     applySize();
 

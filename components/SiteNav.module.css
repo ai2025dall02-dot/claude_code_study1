@@ -5,7 +5,7 @@
   z-index: 100;
   display: flex;
   align-items: center;
-  justify-content: space-between; /* 좌 브랜드 · 우 Menu */
+  justify-content: flex-end; /* [C] 브랜드 제거 → Menu 버튼만 우측 상단 */
   padding: 1.25rem clamp(1.4rem, 4vw, 3rem);
   background: transparent;
   border-bottom: 1px solid transparent;
@@ -31,48 +31,48 @@
   text-decoration: none;
 }
 
-/* 우측 Menu 버튼 */
+/* [C] 우측 Menu 버튼 — 테두리 있는 알약(둥근 사각) 박스. 좌: MENU 볼드 / 우: 작은 원형 점. */
 .menuBtn {
   appearance: none;
   -webkit-appearance: none;
   background: transparent;
-  border: 0;
+  border: 1px solid #0c0c0c;
+  border-radius: 999px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  padding: 6px 2px;
+  gap: 0.7rem; /* 라벨과 점 사이 여백(우측 끝에 점) */
+  padding: 0.5rem 1.05rem; /* 가로로 넉넉한 알약 형태 */
   font-family: Helvetica, Arial, sans-serif;
-  font-weight: 600;
+  font-weight: 700;
   font-size: clamp(12px, 1.05vw, 14px);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #0c0c0c;
-  transition: opacity 0.2s;
+  transition: background 0.22s ease, color 0.22s ease;
 }
-.menuBtn:hover { opacity: 0.55; }
+.menuBtnLabel { display: inline-block; }
+.menuBtn:hover { background: #0c0c0c; color: #f8f8f8; } /* 호버 시 반전(채움) */
 .menuDot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #0c0c0c;
+  background: currentColor; /* 라벨색 따라감 → 호버 반전 시 점도 밝아짐 */
   display: inline-block;
 }
 
-/* 인트로 등장: 브랜드/버튼이 살짝 위에서 내려오며 페이드인 */
-.brand,
+/* 인트로 등장: 버튼이 살짝 위에서 내려오며 페이드인 (배경/색 트랜지션과 분리) */
 .menuBtn {
-  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+  transition: background 0.22s ease, color 0.22s ease,
+    opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: 0.2s;
+  transition-delay: 0s, 0s, 0.2s, 0.2s;
 }
-.nav[data-revealed="false"] .brand,
 .nav[data-revealed="false"] .menuBtn {
   opacity: 0;
   transform: translateY(-12px);
 }
 @media (prefers-reduced-motion: reduce) {
-  .nav[data-revealed="false"] .brand,
   .nav[data-revealed="false"] .menuBtn {
     opacity: 1;
     transform: none;
@@ -165,7 +165,8 @@
   display: flex;
   align-items: baseline;
   gap: clamp(0.8rem, 2vw, 1.8rem);
-  color: #f4f4f2;
+  /* [E] 기본은 비활성 회색 — 현재 섹션 항목만 활성 흰색으로 두드러지게 */
+  color: #5c5c58;
   text-decoration: none;
   font-size: clamp(2rem, 7vw, 5.5rem);
   line-height: 1.04;
@@ -181,15 +182,20 @@
   transform: none;
   transition-delay: calc(0.055s * var(--i) + 0.12s);
 }
-.menuList a:hover { color: #b9b9b4; }
+/* [E] 현재 보고 있는 섹션 = 활성(흰색). 호버도 흰색으로 피드백. */
+.menuList a[data-active="true"] { color: #f6f6f3; }
+.menuList a:hover { color: #f6f6f3; }
 .menuIndex {
   font-family: var(--font-meta, monospace);
   font-size: clamp(10px, 1vw, 13px);
   letter-spacing: 0.14em;
-  color: #7a7a76;
+  color: #4a4a47;
   align-self: flex-start;
   margin-top: 0.35em;
+  transition: color 0.25s;
 }
+/* [E] 활성 항목의 번호도 살짝 밝게 */
+.menuList a[data-active="true"] .menuIndex { color: #9a9a95; }
 .menuLabel { display: inline-block; }
 
 @media (prefers-reduced-motion: reduce) {

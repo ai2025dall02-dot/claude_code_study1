@@ -1,7 +1,9 @@
 "use client";
 
-// [C] tsitsipas.com 스타일 미니멀 네비 — 좌: 브랜드 / 우: "Menu" 버튼 하나.
-// 클릭 시 전체 오버레이가 열리고 메뉴 항목을 크게 세로로 나열(우상단 Close). 데스크톱·모바일 동일.
+// [C/D/E] tsitsipas.com 스타일 미니멀 네비.
+//  C: 헤더는 우측 상단 "Menu" 알약 버튼 하나(테두리+점). 좌측 브랜드 로고 제거.
+//  D: 클릭 시 전체 오버레이 — 우상단 Close + 큰 세로 메뉴(언어 EN/GR 없음).
+//  E: IntersectionObserver 로 현재 보고 있는 섹션 추적 → 해당 항목만 활성(흰색), 나머지 비활성(회색).
 import { useEffect, useRef, useState } from "react";
 import { useIntroRevealed } from "./Intro";
 import { anton } from "@/app/fonts";
@@ -23,6 +25,7 @@ export default function SiteNav() {
   const revealed = useIntroRevealed();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false); // 오버레이 메뉴 열림 상태
+  const [active, setActive] = useState<string>(LINKS[0].href.slice(1)); // [E] 현재 섹션 id(기본 home)
   const btnRef = useRef<HTMLButtonElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -32,6 +35,26 @@ export default function SiteNav() {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // [E] 각 섹션을 관찰 → 뷰포트 세로 중앙선을 지나는 섹션을 activeSection 으로.
+  //   rootMargin 으로 루트를 화면 중앙의 얇은 띠로 만들어, 그 띠에 걸친 섹션이 활성.
+  //   (메뉴가 닫혀 있어도 계속 갱신 → 열 때 즉시 반영)
+  useEffect(() => {
+    const sections = LINKS.map((l) => document.getElementById(l.href.slice(1))).filter(
+      (el): el is HTMLElement => !!el
+    );
+    if (sections.length === 0) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) setActive(e.target.id);
+        }
+      },
+      { rootMargin: "-50% 0px -50% 0px", threshold: 0 }
+    );
+    sections.forEach((s) => obs.observe(s));
+    return () => obs.disconnect();
   }, []);
 
   // 열림: 배경 스크롤 잠금 + 첫 항목 포커스 + ESC 닫기 + 포커스 트랩(Tab 순환).
@@ -81,10 +104,8 @@ export default function SiteNav() {
 
   return (
     <>
+      {/* [C] 헤더 — 우측 상단 Menu 알약 버튼 하나(브랜드 로고 제거, flex-end 정렬) */}
       <header className={styles.nav} data-scrolled={scrolled} data-revealed={revealed}>
-        <a className={styles.brand} href="#home">
-          FILM NOUVELLE
-        </a>
         <button
           ref={btnRef}
           type="button"
@@ -94,12 +115,12 @@ export default function SiteNav() {
           aria-controls={MENU_ID}
           onClick={() => setOpen(true)}
         >
+          <span className={styles.menuBtnLabel}>Menu</span>
           <span className={styles.menuDot} aria-hidden="true" />
-          Menu
         </button>
       </header>
 
-      {/* 전체 오버레이 메뉴 — z 최상단(히어로/덱 위). 닫힘 시 opacity/visibility 로 숨김 + 입력 차단 해제. */}
+      {/* [D] 전체 오버레이 메뉴 — z 최상단(히어로/덱 위). 닫힘 시 opacity/visibility 로 숨김 + 입력 차단 해제. */}
       <div
         ref={overlayRef}
         id={MENU_ID}
@@ -130,6 +151,9 @@ export default function SiteNav() {
               href={l.href}
               className={anton.className}
               style={{ "--i": i } as React.CSSProperties}
+              // [E] 현재 섹션과 일치하는 항목만 활성(흰색), 나머지 비활성(회색)
+              data-active={active === l.href.slice(1)}
+              aria-current={active === l.href.slice(1) ? "true" : undefined}
               onClick={() => setOpen(false)}
               tabIndex={open ? 0 : -1}
             >
