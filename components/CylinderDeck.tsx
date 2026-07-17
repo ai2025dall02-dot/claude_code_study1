@@ -22,27 +22,27 @@ const HOVER_SCALE = 1.12; // 호버 시 카드 확대 배율(.hovered 상당)
 
 // ── 원통 형상(월드 좌표) ──
 const REPEAT = 2; // 포스터 배열을 몇 바퀴 반복할지
-const CARD_H = 2.5; // [3] 카드 높이(월드) — 가로형이라 높이 낮춤(3.7→2.5)
-const CARD_AR = 1.4; // [3] 카드 가로:세로 비 — 세로형(0.71)→가로형(1.4)
-const CARD_W = CARD_H * CARD_AR; // 카드 폭(월드) = 3.5
-const FILL = 0.6; // [3] 카드가 차지하는 STEP 비율 — 0.86→0.6(틈 크게, 카드끼리 확실히 분리)
+const CARD_H = 3.5; // [1] 카드 높이(월드) — 세로형 포스터라 높이 키움(2.5→3.5)
+const CARD_AR = 0.7; // [1] 카드 가로:세로 비 — 가로형(1.4)→세로형(0.7) 포스터 비율
+const CARD_W = CARD_H * CARD_AR; // 카드 폭(월드) = 2.45
+const FILL = 0.78; // [2] 카드가 차지하는 STEP 비율 — 0.6→0.78(간격 좁혀 촘촘하되 살짝 틈)
 const SEG_W = 24; // 카드 가로 세그먼트(클수록 곡면이 매끄러움)
+const EMPTY_EVERY = 4; // [4] 이 슬롯마다 1개는 빈(이미지 없는) 회색 카드 — 이미지/회색 카드가 섞이게
 
 // ── 기울기 ──
-// [1][2] FOLLOW.ART 형태: 원통을 거의 세우고(rotateX 작게) 좌하단→우상단으로 살짝만 대각선(rotateZ).
+// [3] FOLLOW.ART 형태: 원통을 살짝 뒤로 기울여 "안쪽 상단(윗면 안쪽)"이 들여다보이게. rotateX 를 양수로.
 const TILT_Z = THREE.MathUtils.degToRad(10); // 대각선 기울기 유지(좌하단→우상단)
-const TILT_X = THREE.MathUtils.degToRad(-6); // [1] 원통 세우기 — -18→-6(바닥 타원 축소, 카드가 정면을 봄)
+const TILT_X = THREE.MathUtils.degToRad(14); // [3] 부호 반전(-6→+14) — 뒤로 기울여 원통 안쪽 상단이 보임
 
 // ── 카메라/스케일 ──
-const CAM_Z = 23; // [5] 카메라 거리 — 가로형·낮은 FILL 로 반경이 커져 카메라를 멀리(정면 카드 크게 보이게 조정)
+const CAM_Z = 17; // [5] 카메라 거리 — 세로형·좁은 간격으로 반경이 바뀐 만큼 조정(정면 카드 안 잘리게)
 const CAM_FOV = 34; // 시야각
-const CENTER_Y = -0.4; // 세운 원통 기준 세로 위치(월드 Y)
+const CENTER_Y = 1.2; // [3] 세로 위치 — 뒤로 기울이면 카드가 아래로 내려가므로 위로 올려 화면에 담음(월드 Y)
 
-// ── 이미지 로드 전 카드 플레이스홀더(개별 반투명 회색) ──
-// [4] 뒷벽(연속 실린더) 제거. 대신 각 카드는 텍스처 로드 전엔 반투명 회색 사각형으로 보이고(카드별 분리),
-//   로드되면 그 카드만 이미지로 바뀜 → 회색이 원통 전체로 이어지지 않고 카드 하나하나가 떨어져 보임.
-//   반투명이라 그 너머 FILMNOUVELLE 텍스트는 비침.
-const PANEL_COLOR = 0x8a8a8a; // 회색(로드 전 플레이스홀더)
+// ── 빈 카드 / 로드 전 플레이스홀더(반투명 회색) ──
+// [4] 빈 슬롯(deck[i] 가 falsy)은 텍스처를 로드하지 않고 계속 반투명 회색 카드로 남음 → 이미지 카드와 섞여 보임.
+//   또한 이미지 슬롯도 로드 전엔 회색 → 로드되면 이미지로 전환. 반투명이라 그 너머 FILMNOUVELLE 텍스트 비침.
+const PANEL_COLOR = 0x8a8a8a; // 회색(빈 카드 / 로드 전)
 const PANEL_OPACITY = 0.5; // 반투명 — 텍스트 비침 유지
 // 반응형 스케일 — 그룹 전체에 곱함. [1] 카드/카메라를 키운 만큼(정면 큰 아치) 좁은 화면에선 더
 //   줄여야 아치가 안 잘리고 들어옴(모바일 0.62→0.42, 태블릿 하향). 데스크탑은 큰 카드 의도 유지.
@@ -137,7 +137,7 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
     camera.position.set(0, 0, CAM_Z);
     camera.lookAt(0, 0, 0);
 
-    // 기울기 그룹 중첩: tiltZ(10°) > tiltX(-6°, 거의 세움) > ring(rotateY 회전) — 기존 deckTilt/deckRing 대응.
+    // 기울기 그룹 중첩: tiltZ(10°) > tiltX(+14°, 뒤로 기울여 안쪽 상단) > ring(rotateY) — deckTilt/deckRing 대응.
     const tiltZ = new THREE.Group();
     tiltZ.rotation.z = TILT_Z;
     tiltZ.position.y = CENTER_Y; // 세로 위치 보정
@@ -148,9 +148,21 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
     tiltZ.add(tiltX);
     scene.add(tiltZ);
 
-    // [2] 카드 구성: 모든 슬롯에 이미지(images 순환) — 빈 슬롯 없음. 정면엔 항상 포스터가 옴.
-    const deck: string[] = [];
-    for (let r = 0; r < REPEAT; r++) deck.push(...images);
+    // [4] 카드 구성: 이미지(images×REPEAT)를 채우되, EMPTY_EVERY 마다 1개는 빈 슬롯(undefined=이미지 없음 → 회색).
+    //   이미지 카드와 빈 회색 카드가 원통 위에 섞여 보임.
+    const deck: (string | undefined)[] = [];
+    const TARGET = images.length * REPEAT; // 이미지로 채울 목표 장수
+    let imgIdx = 0;
+    let slotIdx = 0;
+    while (imgIdx < TARGET) {
+      if ((slotIdx + 1) % EMPTY_EVERY === 0) {
+        deck.push(undefined); // 빈(회색) 슬롯
+      } else {
+        deck.push(images[imgIdx % images.length]);
+        imgIdx++;
+      }
+      slotIdx++;
+    }
     const COUNT = deck.length;
     const STEP = 360 / COUNT; // deg
     const cardAngle = THREE.MathUtils.degToRad(STEP) * FILL; // 카드 1장이 차지하는 각(틈 제외)
@@ -220,7 +232,8 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
       baseAngle.push(i * STEP);
       curScale.push(1);
       loaded.push(false);
-      requestTex(deck[i], mat, i); // 텍스처 요청(로드되면 회색→이미지)
+      const src = deck[i];
+      if (src) requestTex(src, mat, i); // [4] 이미지 슬롯만 로드. 빈 슬롯은 회색 유지(loaded=false).
     }
 
     // ── 상태 ──
