@@ -61,10 +61,10 @@
   margin: 0;
   display: inline-block;
   white-space: nowrap; /* 단어는 한 줄 유지 */
-  /* 코너 라벨 크기 — 두 단어가 코너에 들어가도록(NOUVELLE 8자가 폭에 맞게) */
-  font-size: clamp(2rem, 11vw, 9rem);
-  letter-spacing: 0.01em;
-  line-height: 0.9;
+  /* [A] 코너 라벨을 시원하게 크게 — 화면을 채우되 NOUVELLE(8자)가 폭에 들어가는 선. */
+  font-size: clamp(3rem, 18vw, 15rem);
+  letter-spacing: 0.005em;
+  line-height: 0.86;
   text-transform: uppercase;
   user-select: none;
   will-change: transform;
@@ -73,10 +73,10 @@
 .wordFilm {
   color: #0c0c0c;
 }
-/* [E] NOUVELLE — 아웃라인(라인) 스타일: 속 비고 외곽선만 */
+/* [E] NOUVELLE — 아웃라인(라인) 스타일: 속 비고 외곽선만. [A] 커진 폰트에 맞게 두께 살짝 굵게. */
 .wordNouvelle {
   color: transparent;
-  -webkit-text-stroke: 1.5px #0c0c0c;
+  -webkit-text-stroke: 2.5px #0c0c0c;
 }
 /* 각 글자 = 바깥 span(.letter) + 안쪽 span(.letterInner).
    .letter = 고정 마스크 창: clip-path(inset) 로 글자 원래 영역만 남기고(가로=글자 폭, 세로는 넉넉히 열어 잉크 안 잘림),
@@ -101,10 +101,12 @@
    반응형·reduce 는 모두 컴포넌트 내부(three.js)에서 처리 → 별도 덱 CSS 불필요. */
 
 @media (max-width: 767px) {
-  /* 모바일: NOUVELLE(8자)가 좁은 폭에서 우하단에 들어가도록 폰트 축소.
+  /* 모바일: NOUVELLE(8자)가 좁은 폭에서 우하단에 들어가도록 폰트 축소(커진 데스크탑 기준을 그대로 두면 넘침).
      FILM=좌상단 / NOUVELLE=우하단 배치는 JS(코너 좌표)가 담당 — 두 단어가 겹치거나 화면 밖으로 안 나감. */
   .word {
-    font-size: clamp(1.7rem, 12vw, 4rem);
-    -webkit-text-stroke-width: 1px; /* 아웃라인도 폭에 맞춰 얇게 */
+    font-size: clamp(2rem, 15vw, 6rem);
+  }
+  .wordNouvelle {
+    -webkit-text-stroke-width: 1.6px; /* 아웃라인도 폭에 맞춰 얇게 */
   }
 }

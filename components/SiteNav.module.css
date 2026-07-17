@@ -1,11 +1,11 @@
-/* Fixed site navigation — overlays the white hero, gains a light bar on scroll. */
+/* [C] 미니멀 헤더(좌 브랜드 / 우 Menu 버튼) + 전체 오버레이 메뉴 — tsitsipas.com 무드 */
 .nav {
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 100;
   display: flex;
   align-items: center;
-  justify-content: center; /* 브랜드 제거 → 메뉴를 헤더 중앙에 배치 */
+  justify-content: space-between; /* 좌 브랜드 · 우 Menu */
   padding: 1.25rem clamp(1.4rem, 4vw, 3rem);
   background: transparent;
   border-bottom: 1px solid transparent;
@@ -21,101 +21,192 @@
   padding-block: 0.85rem;
 }
 
-/* 인트로 등장: 중앙 메뉴가 살짝 위에서 내려오며 페이드인 */
-.links {
-  display: flex;
-  gap: clamp(1rem, 2.4vw, 2.6rem);
-  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: 0.2s;
-}
-.nav[data-revealed="false"] .links { opacity: 0; transform: translateY(-12px); }
-@media (prefers-reduced-motion: reduce) {
-  .nav[data-revealed="false"] .links {
-    opacity: 1;
-    transform: none;
-  }
-}
-.links a {
-  /* 작업3: 일반 산세리프 + weight 낮춰 얇게(가독성 유지) */
-  font-family: Helvetica, Arial, sans-serif;
-  font-weight: 500;
-  font-size: clamp(11px, 1vw, 13px);
-  letter-spacing: 0.04em;
+/* 좌측 브랜드 */
+.brand {
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: clamp(14px, 1.5vw, 18px);
+  letter-spacing: -0.01em;
   color: #0c0c0c;
-  transition: opacity 0.2s;
+  text-decoration: none;
 }
-.links a:hover { opacity: 0.45; }
 
-/* ── 햄버거 버튼 (모바일 전용) ── */
-.hamburger {
-  display: none; /* 데스크톱(≥768): 숨김 — 가로 메뉴 그대로 */
+/* 우측 Menu 버튼 */
+.menuBtn {
   appearance: none;
   -webkit-appearance: none;
   background: transparent;
   border: 0;
-  padding: 8px;
-  margin: -8px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 6px 2px;
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: 600;
+  font-size: clamp(12px, 1.05vw, 14px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: #0c0c0c;
-  z-index: 2; /* 열린 패널 위에 유지 */
+  transition: opacity 0.2s;
 }
-.hamburgerBox {
+.menuBtn:hover { opacity: 0.55; }
+.menuDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #0c0c0c;
+  display: inline-block;
+}
+
+/* 인트로 등장: 브랜드/버튼이 살짝 위에서 내려오며 페이드인 */
+.brand,
+.menuBtn {
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: 0.2s;
+}
+.nav[data-revealed="false"] .brand,
+.nav[data-revealed="false"] .menuBtn {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav[data-revealed="false"] .brand,
+  .nav[data-revealed="false"] .menuBtn {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── 전체 오버레이 메뉴 ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300; /* 히어로/덱 캔버스(z:3)·헤더(z:100) 위 */
+  display: flex;
+  flex-direction: column;
+  background: #0d0d0f;
+  color: #f4f4f2;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none; /* 닫힘: 아래(히어로) 입력 통과 */
+  transition: opacity 0.5s ease, visibility 0s linear 0.5s;
+}
+.overlay[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto; /* 열림: 배경/덱 입력 차단 */
+  transition: opacity 0.5s ease;
+}
+
+/* 오버레이 상단 바(브랜드 + Close) */
+.overlayBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem clamp(1.4rem, 4vw, 3rem);
+}
+.overlayBrand {
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: clamp(14px, 1.5vw, 18px);
+  letter-spacing: -0.01em;
+  color: #f4f4f2;
+}
+.close {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 6px 2px;
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: 600;
+  font-size: clamp(12px, 1.05vw, 14px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f4f4f2;
+  transition: opacity 0.2s;
+}
+.close:hover { opacity: 0.6; }
+.closeX {
   position: relative;
-  display: block;
-  width: 26px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
+  display: inline-block;
 }
-.hamburgerLine {
+.closeX::before,
+.closeX::after {
+  content: "";
   position: absolute;
+  top: 50%;
   left: 0;
   width: 100%;
-  height: 2px;
+  height: 1.5px;
   background: currentColor;
-  border-radius: 2px;
-  transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.2s ease;
 }
-.hamburgerLine:nth-child(1) { top: 0; }
-.hamburgerLine:nth-child(2) { top: 7px; }
-.hamburgerLine:nth-child(3) { top: 14px; }
-/* 열림 → X 자로 */
-.nav[data-open="true"] .hamburgerLine:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.nav[data-open="true"] .hamburgerLine:nth-child(2) { opacity: 0; }
-.nav[data-open="true"] .hamburgerLine:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.closeX::before { transform: rotate(45deg); }
+.closeX::after { transform: rotate(-45deg); }
 
-/* 모바일: LINEUP 상세 모달이 열려 있는 동안 네비 숨김(닫기 X 와 겹침 방지). 닫으면 복구. 데스크톱은 영향 없음. */
+/* 메뉴 항목 — 크게 세로 나열, 세로 중앙 정렬 */
+.menuList {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem clamp(1.4rem, 6vw, 6rem) 3rem;
+  gap: clamp(0.15rem, 0.8vh, 0.6rem);
+}
+.menuList a {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.8rem, 2vw, 1.8rem);
+  color: #f4f4f2;
+  text-decoration: none;
+  font-size: clamp(2rem, 7vw, 5.5rem);
+  line-height: 1.04;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  /* 항목 등장: 아래에서 위로 + 페이드(오버레이 열림 시 stagger) */
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.5s ease, transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s;
+}
+.overlay[data-open="true"] .menuList a {
+  opacity: 1;
+  transform: none;
+  transition-delay: calc(0.055s * var(--i) + 0.12s);
+}
+.menuList a:hover { color: #b9b9b4; }
+.menuIndex {
+  font-family: var(--font-meta, monospace);
+  font-size: clamp(10px, 1vw, 13px);
+  letter-spacing: 0.14em;
+  color: #7a7a76;
+  align-self: flex-start;
+  margin-top: 0.35em;
+}
+.menuLabel { display: inline-block; }
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .overlay[data-open="true"] { transition: opacity 0.2s ease; }
+  .menuList a {
+    opacity: 1;
+    transform: none;
+    transition: color 0.25s;
+  }
+  .overlay[data-open="true"] .menuList a { transition-delay: 0s; }
+}
+
+/* 모바일: LINEUP 상세 모달이 열려 있는 동안 헤더 숨김(닫기 X 와 겹침 방지). 오버레이 메뉴는 영향 없음. */
 @media (max-width: 767px) {
   :global(body[data-modal-open="true"]) .nav {
     display: none;
   }
-}
-
-@media (max-width: 767px) { /* 모바일: 가로 메뉴 → 햄버거 드롭다운 */
-  .nav { justify-content: flex-end; } /* 브랜드 없이 햄버거를 우측에 배치 */
-  .hamburger { display: inline-flex; align-items: center; justify-content: center; }
-  /* 링크: 헤더 아래 드롭다운 패널. 기본 닫힘(display:none) → data-open 시 세로로 펼침. */
-  .links {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    display: none;
-    flex-direction: column;
-    gap: 0;
-    padding: 0.4rem clamp(1.4rem, 6vw, 3rem) 1.1rem;
-    background: rgba(248, 248, 248, 0.96);
-    backdrop-filter: blur(12px) saturate(1.1);
-    -webkit-backdrop-filter: blur(12px) saturate(1.1);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  }
-  .links[data-open="true"] { display: flex; }
-  .links a {
-    padding: 0.9rem 0;
-    font-size: 15px;
-    letter-spacing: 0.05em;
-    border-top: 1px solid rgba(0, 0, 0, 0.07);
-  }
-  .links a:first-child { border-top: 0; }
-  /* 인트로 등장의 translateX 가 세로 패널을 밀지 않도록(펼침 시엔 제자리) */
-  .nav[data-revealed="false"] .links { transform: none; }
+  .menuList { justify-content: flex-start; padding-top: 8vh; }
 }

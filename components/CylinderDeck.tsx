@@ -189,12 +189,14 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
     plateTex.anisotropy = maxAniso;
 
     // [1] 빈 뒷판 공유 머티리얼 — 옅은 흰 유리판 텍스처(각진 모서리+테두리), 상시 반투명.
+    // [B] side: DoubleSide → 원통 뒤쪽/위쪽 반구로 넘어간 판의 뒷면도 렌더 → 안쪽 상단 아치가 반투명 회색으로 연결돼 보임.
+    //   (FrontSide 면 뒤로 돈 판이 컬링돼 사라져 아치가 안 보였음.) depthWrite:false 유지로 z-파이팅 방지.
     const grayMaterial = new THREE.MeshBasicMaterial({
       map: plateTex,
       color: 0xffffff, // 텍스처 원색 유지(틴트 없음)
       transparent: true,
       opacity: PANEL_OPACITY,
-      side: THREE.FrontSide, // 뒤로 완전히 돈 면은 컬링(뒤판도 앞쪽 반구에서만 보임)
+      side: THREE.DoubleSide, // [B] 앞·뒷면 모두 렌더 → 뒤쪽 반구(안쪽 상단 아치)도 보이게
       depthWrite: false,
     });
 
