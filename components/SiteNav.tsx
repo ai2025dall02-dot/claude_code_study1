@@ -19,24 +19,21 @@ const LINKS: { label: string; href: string }[] = [
   { label: "CONTACT", href: "#contact" },
 ];
 
+// [B] 어두운(검은) 배경을 가진 섹션 id 목록 — 이 섹션이 보일 때 Menu 버튼을 흰색으로 반전.
+//   이 사이트는 히어로(#home)만 밝은 배경(#f8f8f8)이고 그 아래 본문(body)은 어두움(--ink).
+//   여기에 넣은 id 가 현재 섹션이면 isDark=true. 필요 시 자유롭게 추가/삭제하세요.
+const DARK_SECTIONS = ["about", "lineup", "filmmakers", "festivals", "journal", "contact"];
+
 const MENU_ID = "site-menu";
 
 export default function SiteNav() {
   const revealed = useIntroRevealed();
-  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false); // 패널 열림 상태
-  const [active, setActive] = useState<string>(LINKS[0].href.slice(1)); // [D] 현재 섹션 id(기본 home)
+  const [active, setActive] = useState<string>(LINKS[0].href.slice(1)); // 현재 섹션 id(기본 home)
+  const isDark = DARK_SECTIONS.includes(active); // [B] 현재 섹션이 어두운 배경인가 → 버튼 흰색 반전
   const btnRef = useRef<HTMLButtonElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null); // 버튼+패널 앵커(바깥 클릭 판정 기준)
   const panelRef = useRef<HTMLDivElement>(null);
-
-  // 스크롤 시 헤더에 옅은 바 표시
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   // [D] 각 섹션을 관찰 → 뷰포트 세로 중앙선을 지나는 섹션을 activeSection 으로.
   //   (메뉴가 닫혀 있어도 계속 갱신 → 열 때 즉시 반영)
@@ -112,7 +109,7 @@ export default function SiteNav() {
   }, [open]);
 
   return (
-    <header className={styles.nav} data-scrolled={scrolled} data-revealed={revealed}>
+    <header className={styles.nav} data-dark={isDark} data-revealed={revealed}>
       {/* [A] 버튼+패널 앵커 — 패널이 이 버튼 위치를 기준으로 아래로 펼쳐짐(풀스크린 아님) */}
       <div ref={wrapRef} className={styles.menuWrap} data-open={open}>
         <button

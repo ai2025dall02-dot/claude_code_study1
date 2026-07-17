@@ -7,18 +7,8 @@
   align-items: center;
   justify-content: flex-end; /* Menu 버튼만 우측 상단 */
   padding: 1.25rem clamp(1.4rem, 4vw, 3rem);
+  /* [A] 헤더는 항상 투명 — 스크롤해도 상단 흰 띠(배경/blur/보더) 없음 */
   background: transparent;
-  border-bottom: 1px solid transparent;
-  transition: background 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
-    border-color 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
-    padding 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-.nav[data-scrolled="true"] {
-  background: rgba(248, 248, 248, 0.82);
-  backdrop-filter: blur(12px) saturate(1.1);
-  -webkit-backdrop-filter: blur(12px) saturate(1.1);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  padding-block: 0.85rem;
 }
 
 /* [A] 버튼 + 패널을 감싸는 앵커 컨테이너 — 패널이 이 버튼 위치를 기준으로 펼쳐짐 */
@@ -47,20 +37,33 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #0c0c0c;
-  /* 배경/색(호버 반전) + 인트로 등장(위에서 내려오며 페이드) */
-  transition: background 0.22s ease, color 0.22s ease,
+  /* [C] 어두운↔밝은 배경 반전을 부드럽게(border-color/color/background 0.4s) + 인트로 등장 */
+  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease,
     opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: 0s, 0s, 0.2s, 0.2s;
+  transition-delay: 0s, 0s, 0s, 0.2s, 0.2s;
 }
 .menuBtnLabel { display: inline-block; }
-.menuBtn:hover { background: #0c0c0c; color: #f8f8f8; } /* 호버 시 반전(채움) */
+/* 밝은 배경(기본) 호버 = 검정 채움 + 흰 글자 */
+.menuBtn:hover { background: #0c0c0c; color: #f8f8f8; }
+
+/* [B] 어두운(검은) 배경 섹션 — 버튼을 흰 라인 + 흰 텍스트/점 으로 반전 */
+.nav[data-dark="true"] .menuBtn {
+  border-color: #f8f8f8;
+  color: #f8f8f8;
+}
+/* 어두운 배경 호버 = 흰색 채움 + 어두운 글자 */
+.nav[data-dark="true"] .menuBtn:hover {
+  background: #f8f8f8;
+  color: #0c0c0c;
+}
 .menuDot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: currentColor; /* 라벨색 따라감 → 호버 반전 시 점도 밝아짐 */
+  background: currentColor; /* 라벨색 따라감 → 반전/호버 시 점도 같이 */
   display: inline-block;
+  transition: background 0.4s ease; /* [C] 색 반전 부드럽게 */
 }
 .nav[data-revealed="false"] .menuBtn {
   opacity: 0;
