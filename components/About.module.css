@@ -1,31 +1,16 @@
-/* ABOUT — noth.in "step aside" 무드로 재구성.
-   히어로와 동일한 밝은 하이키 화이트(#f8f8f8) + 진한 잉크. 좌측 정렬 대형 인용문 +
-   하단 영상(placeholder) 박스가 스크롤에 따라 우측 하단의 작은 박스로 축소·이동. */
+/* ABOUT — 텍스트는 일반 흐름 스크롤, 영상만 sticky 로 붙어 우측 하단 미니플레이어로 축소.
+   히어로와 동일한 밝은 하이키 화이트(#f8f8f8) + 진한 잉크. */
 .about {
   position: relative;
   background: #f8f8f8;
   color: #0c0c0c;
 }
 
-/* 스크롤 트랙 — 이 높이만큼 스크롤하는 동안 애니메이션 진행.
-   [B] 340 → 460vh 로 더 늘려 흰 배경 노출·축소 흐름을 여유롭게(스크롤 여정 길게). */
-.pin {
-  position: relative;
-  height: 460vh;
-}
-/* [A] sticky 안에서 스크롤에 맞춰 위로 흘러가는 리드(눈썹+인용문) — 화면이 함께 내려가는 진행감 */
+/* 리드(눈썹+인용문) — 일반 흐름 블록(고정 없음). 자연스럽게 스크롤되며 위로 지나감. */
 .lead {
-  will-change: transform;
-}
-.sticky {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow: hidden;
   padding: clamp(4.5rem, 11vh, 8rem) var(--ln-gutter, clamp(1.4rem, 4vw, 3rem))
-    clamp(1.6rem, 4vh, 2.6rem);
+    clamp(1.5rem, 4vh, 2.6rem);
 }
-
 .eyebrow {
   display: block;
   font-family: var(--font-meta, monospace);
@@ -34,49 +19,46 @@
   text-transform: uppercase;
   color: #9a9a96;
 }
-
-/* 좌측 정렬 대형 인용문 */
 .quote {
   margin: clamp(1.2rem, 3.5vh, 2.2rem) 0 0;
-  max-width: 32ch; /* 각 문장이 한 줄로(총 2줄) — 하단 영상과 겹치지 않게 */
+  max-width: 32ch;
   font-family: var(--font-anton), "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
-  font-size: clamp(1.5rem, 3.9vw, 3.5rem); /* 넓은 초기 영상이 인용문을 덮지 않도록 상단에 컴팩트하게 */
+  font-size: clamp(1.5rem, 3.9vw, 3.5rem);
   line-height: 1.12;
   letter-spacing: 0.005em;
   text-transform: none;
   color: #0c0c0c;
 }
 
-/* 좌측 하단 — 작은 폰트 본문. [C] opacity 애니 없음. 큰 영상(위 z)에 가려졌다가 영상이 축소되며 물리적으로 드러남. */
-.body {
-  position: absolute;
-  left: var(--ln-gutter, clamp(1.4rem, 4vw, 3rem));
-  bottom: clamp(1.8rem, 5vh, 3rem);
-  z-index: 1; /* 영상보다 아래 → 큰 영상이 덮음 */
-  max-width: 40ch;
-  margin: 0;
-  font-size: clamp(0.86rem, 1.05vw, 1.02rem);
-  line-height: 1.75;
-  color: #454542;
+/* 영상 sticky 트랙 — 이 높이만큼 스크롤하는 동안 .videoStage 가 붙어(축소) 있음.
+   [세로] 460 → 800vh(약 1.8배). 스크롤 여정 길게, 흰 배경 충분히 노출. */
+.pin {
+  position: relative;
+  height: 800vh;
+}
+/* 영상만 화면에 붙는 sticky 무대(투명) — 트랙을 스크롤하는 동안 top:0 에 고정. */
+.videoStage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden; /* 큰 영상이 넘칠 때 클립 */
 }
 
-/* 영상 placeholder 박스 — 우측 하단 앵커 + 고정 aspect-ratio.
-   [A] 폭(width)만 스크롤 모션이 제어 → 세로는 aspect-ratio 로 자동 → 비율 항상 유지.
-   [C] z 가 .body 위 → 초기 큰 폭일 때 좌측 하단 본문을 덮고, 우하단으로 작아지며 비켜 줌. */
+/* 영상 박스 — 우측 앵커 + 고정 aspect-ratio 16:9. width/top/right 은 스크롤 모션이 제어.
+   z 가 .body 위 → 큰 영상일 때 좌하단 본문을 덮고, 우하단 미니플레이어로 작아지며 비켜 줌. */
 .video {
   position: absolute;
   right: var(--ln-gutter, clamp(1.4rem, 4vw, 3rem));
-  top: 50vh; /* [A] 초기 top 을 아래로 → 영상 위로 흰 배경 크게 노출. JS 가 우하단 미니플레이어로. */
-  /* [A] 초기 폭 = 화면 폭 - 좌우 gutter → 우측 gutter 와 동일한 좌측 마진(양옆 대칭). JS 가 400px 로 축소. */
-  width: calc(100vw - 2 * var(--ln-gutter, clamp(1.4rem, 4vw, 3rem)));
-  z-index: 2; /* .body 위 → 큰 영상이 좌하단 본문을 덮음 */
-  aspect-ratio: 16 / 9; /* 16:9 유지 */
+  top: 12vh; /* 초기: 위로 흰 배경 여백 + 큰 영상도 화면 안에. JS 가 우하단으로. */
+  width: calc(100vw - 2 * var(--ln-gutter, clamp(1.4rem, 4vw, 3rem))); /* 좌우 대칭 초기 마진 */
+  z-index: 2;
+  aspect-ratio: 16 / 9;
   transform-origin: bottom right;
   overflow: hidden;
   /* 직각 모서리 · 그림자 없음 */
   background: #e3e3e0;
-  will-change: width, top;
+  will-change: width, top, right;
 }
 .video img {
   width: 100%;
@@ -84,7 +66,6 @@
   object-fit: cover;
   display: block;
 }
-/* 재생 아이콘 + 라벨(플레이스홀더 표식) */
 .videoTag {
   position: absolute;
   left: 0.9rem;
@@ -113,24 +94,39 @@
   border-color: transparent transparent transparent #f4f4f2;
 }
 
-/* 모바일: pin 해제 → 일반 흐름(인용문 → 본문 → 영상 박스 순으로 쌓임) */
+/* 본문 — sticky 무대 좌측 하단(영상 아래 z). 영상이 축소되며 물리적으로 드러남(opacity 아님). */
+.body {
+  position: absolute;
+  left: var(--ln-gutter, clamp(1.4rem, 4vw, 3rem));
+  bottom: clamp(2rem, 6vh, 3.5rem);
+  z-index: 1;
+  max-width: 40ch;
+  margin: 0;
+  font-size: clamp(0.86rem, 1.05vw, 1.02rem);
+  line-height: 1.75;
+  color: #454542;
+}
+
+/* 모바일: sticky 해제 → 일반 흐름(리드 → 영상 → 본문 순 스택) */
 @media (max-width: 767px) {
-  .pin { height: auto; }
-  .sticky {
+  .pin {
+    height: auto;
+  }
+  .videoStage {
     position: static;
     height: auto;
     overflow: visible;
-    padding: clamp(4rem, 12vh, 6rem) var(--ln-gutter, 1.4rem) clamp(3rem, 8vh, 4rem);
-  }
-  .body {
-    position: static;
-    max-width: none;
-    margin-top: clamp(1.6rem, 5vh, 2.4rem);
+    padding: 0 var(--ln-gutter, 1.4rem) clamp(3rem, 8vh, 4rem);
   }
   .video {
     position: static;
     width: 100% !important;
-    aspect-ratio: 16 / 9; /* 모바일 스택: 일반 영상 비율(세로 자동) */
+    aspect-ratio: 16 / 9;
+    margin-top: clamp(1.6rem, 5vh, 2.4rem);
+  }
+  .body {
+    position: static;
+    max-width: none;
     margin-top: clamp(1.6rem, 5vh, 2.4rem);
   }
 }
