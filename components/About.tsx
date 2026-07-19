@@ -41,8 +41,8 @@ export default function About() {
   //   초기 100vw = 화면 폭 꽉 채움 → 16:9 세로가 뷰포트보다 커져 아래가 잘림(sticky overflow:hidden).
   //   인용문 바로 아래(top)에 앵커 → 진행하며 우측 하단 작은 16:9(30vw)로 축소·이동.
   const width = useTransform(p, [0, 0.82], ["100vw", "30vw"]);
-  // top 을 함께 내려 우측 하단으로 모이게(폭은 우측 앵커라 자연히 오른쪽으로). noth.in "step aside" 궤적.
-  const top = useTransform(p, [0, 0.82], ["34vh", "70vh"]);
+  // [A] 인용문과 영상 사이 여백 확보(초기 top 34vh → 42vh). 이후 우측 하단(70vh)으로 모임.
+  const top = useTransform(p, [0, 0.82], ["42vh", "70vh"]);
 
   // reduce / 모바일: 모션 없이 정적(모바일은 CSS 가 static·full-width·16:9 로 override).
   const vidStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { width, top };

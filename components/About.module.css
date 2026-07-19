@@ -62,14 +62,13 @@
 .video {
   position: absolute;
   right: var(--ln-gutter, clamp(1.4rem, 4vw, 3rem));
-  top: 34vh; /* 인용문 바로 아래(초기). JS(top)가 스크롤 진행에 따라 아래로 내려 우하단으로. */
+  top: 42vh; /* [A] 인용문과 여백 확보(초기). JS(top)가 스크롤에 따라 아래로 내려 우하단으로. */
   z-index: 2; /* .body 위 → 큰 영상이 좌하단 본문을 덮음 */
-  aspect-ratio: 16 / 9; /* [A] 16:9 — 초기 100vw 면 세로가 뷰포트보다 커져 아래가 잘림(의도) */
+  aspect-ratio: 16 / 9; /* [B] 16:9 — 초기 100vw(화면 폭 꽉) 라 세로가 큰 유튜브 플레이어 느낌, 아래는 잘림(의도) */
   transform-origin: bottom right;
   overflow: hidden;
-  border-radius: 6px;
+  /* [C] border-radius 제거(직각) · [D] box-shadow 제거 */
   background: #e3e3e0;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.16);
   will-change: width, top;
 }
 .video img {
