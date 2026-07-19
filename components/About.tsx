@@ -37,17 +37,14 @@ export default function About() {
   });
   const p = useSpring(scrollYProgress, { stiffness: 120, damping: 30, mass: 1 });
 
-  // k: 1(큰 영상) → 0(미니플레이어). [축소 타이밍] 중반 이후 늦게+짧게 [0.45,0.7] → 한동안 크게 있다 빠르게 축소.
+  // k: 1(큰 영상) → 0(미니플레이어). [C] 축소 타이밍 중반 이후 늦게+짧게 [0.45,0.7] → 한동안 크게 있다 빠르게 축소.
   const k = useTransform(p, [0.45, 0.7], [1, 0]);
-  // [C] 최종 폭 = 고정 400px(16:9 → 세로 225px). 시작 = calc(100vw - 2*gutter)[좌우 대칭].
+  // [B] 영상은 bottom 앵커로 하단 고정(CSS bottom:24px). 폭(width)만 축소 → 하단에 붙은 채 위로만 작아지며
+  //   우측 하단 미니플레이어(400×225)로 안착. (top 트윈 제거)
+  // 최종 폭 = 고정 400px(16:9 → 세로 225px). 시작 = calc(100vw - 2*gutter)[좌우 대칭].
   const width = useTransform(
     k,
     (v) => `calc(400px + ${v.toFixed(3)} * (100vw - 2 * var(--ln-gutter) - 400px))`
-  );
-  // top: 시작 12vh(위로 흰 배경, 큰 영상도 화면 안에) → 끝 calc(100vh - 249px)(하단 24px 여백 미니플레이어).
-  const top = useTransform(
-    k,
-    (v) => `calc(${(12 * v).toFixed(2)}vh + ${(1 - v).toFixed(3)} * (100vh - 249px))`
   );
   // 우측 여백: 시작 gutter → 끝 24px(미니플레이어 우측 모서리 근처).
   const right = useTransform(
@@ -57,7 +54,7 @@ export default function About() {
 
   // reduce / 모바일: 모션 없이 정적(모바일은 CSS 가 static·full-width·16:9 로 override).
   const vidStyle: MotionStyle | undefined =
-    reduce || isMobile ? undefined : { width, top, right };
+    reduce || isMobile ? undefined : { width, right };
 
   return (
     <section ref={ref} id="about" className={styles.about}>

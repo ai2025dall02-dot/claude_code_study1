@@ -32,10 +32,10 @@
 }
 
 /* 영상 sticky 트랙 — 이 높이만큼 스크롤하는 동안 .videoStage 가 붙어(축소) 있음.
-   [세로] 460 → 800vh(약 1.8배). 스크롤 여정 길게, 흰 배경 충분히 노출. */
+   [A] 800vh → 340vh 로 줄여 "얼어붙은" 대기 구간을 자연스럽게(축소 연동에 필요한 최소 sticky 만). */
 .pin {
   position: relative;
-  height: 800vh;
+  height: 340vh;
 }
 /* 영상만 화면에 붙는 sticky 무대(투명) — 트랙을 스크롤하는 동안 top:0 에 고정. */
 .videoStage {
@@ -50,7 +50,8 @@
 .video {
   position: absolute;
   right: var(--ln-gutter, clamp(1.4rem, 4vw, 3rem));
-  top: 12vh; /* 초기: 위로 흰 배경 여백 + 큰 영상도 화면 안에. JS 가 우하단으로. */
+  /* [B] bottom 앵커 고정 → 하단에 붙은 채 width 만 축소(세로는 aspect-ratio) → 위로만 작아지며 우하단 안착. */
+  bottom: 24px;
   width: calc(100vw - 2 * var(--ln-gutter, clamp(1.4rem, 4vw, 3rem))); /* 좌우 대칭 초기 마진 */
   z-index: 2;
   aspect-ratio: 16 / 9;
@@ -58,7 +59,7 @@
   overflow: hidden;
   /* 직각 모서리 · 그림자 없음 */
   background: #e3e3e0;
-  will-change: width, top, right;
+  will-change: width, right;
 }
 .video img {
   width: 100%;
