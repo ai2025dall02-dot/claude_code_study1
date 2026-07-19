@@ -62,14 +62,15 @@
 .video {
   position: absolute;
   right: var(--ln-gutter, clamp(1.4rem, 4vw, 3rem));
-  bottom: clamp(1.8rem, 5vh, 3rem);
-  z-index: 2; /* .body 위 */
-  aspect-ratio: 12 / 5; /* 폭 넓게 잡아도 세로가 화면을 넘지 않게 하는 넓은 비율(세로도 충분히 큼) */
+  top: 34vh; /* 인용문 바로 아래(초기). JS(top)가 스크롤 진행에 따라 아래로 내려 우하단으로. */
+  z-index: 2; /* .body 위 → 큰 영상이 좌하단 본문을 덮음 */
+  aspect-ratio: 16 / 9; /* [A] 16:9 — 초기 100vw 면 세로가 뷰포트보다 커져 아래가 잘림(의도) */
+  transform-origin: bottom right;
   overflow: hidden;
   border-radius: 6px;
   background: #e3e3e0;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.16);
-  will-change: width;
+  will-change: width, top;
 }
 .video img {
   width: 100%;

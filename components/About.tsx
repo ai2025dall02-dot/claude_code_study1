@@ -37,13 +37,15 @@ export default function About() {
     offset: ["start start", "end end"],
   });
   const p = useSpring(scrollYProgress, { stiffness: 90, damping: 30, mass: 1 });
-  // [A] 폭(width) '하나만' 축소 → 세로는 CSS aspect-ratio 로 자동 계산(비율 항상 유지).
-  //   [B] 초기 폭 넓게(94vw) → 세로도 그 비율만큼 큰 박스로 시작. 진행하면 우측 하단 작은 박스(30vw)로.
-  //   [C] 초기엔 이 큰 박스가 좌측 하단 .body 를 물리적으로 덮음 → 우하단으로 작아지며 그 자리를 비켜 줌.
+  // [A/B] 16:9 고정(aspect-ratio, CSS). 폭(width)만 트윈 → 세로는 자동 → 비율 항상 유지.
+  //   초기 100vw = 화면 폭 꽉 채움 → 16:9 세로가 뷰포트보다 커져 아래가 잘림(sticky overflow:hidden).
+  //   인용문 바로 아래(top)에 앵커 → 진행하며 우측 하단 작은 16:9(30vw)로 축소·이동.
   const width = useTransform(p, [0, 0.82], ["100vw", "30vw"]);
+  // top 을 함께 내려 우측 하단으로 모이게(폭은 우측 앵커라 자연히 오른쪽으로). noth.in "step aside" 궤적.
+  const top = useTransform(p, [0, 0.82], ["34vh", "70vh"]);
 
-  // reduce / 모바일: 모션 없이 정적 크기(모바일은 CSS 가 full-width 로 override).
-  const vidStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { width };
+  // reduce / 모바일: 모션 없이 정적(모바일은 CSS 가 static·full-width·16:9 로 override).
+  const vidStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { width, top };
 
   return (
     <section ref={ref} id="about" className={styles.about}>
