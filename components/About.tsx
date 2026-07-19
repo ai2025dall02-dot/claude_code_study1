@@ -41,13 +41,26 @@ export default function About() {
   // [B] 축소 시작 지연: 입력 [0,0.82] → [0.15,0.9]. 0~0.15 는 '큰 영상 유지'(체류) 후 축소, 섹션 끝(≈0.9)에 완료.
   // k: 1(큰 영상, 시작) → 0(작은 영상, 끝). width 를 calc 로 보간:
   //   k=1 → calc(100vw - 2*gutter) [A: 우측 gutter 와 동일한 좌측 마진 → 양옆 대칭], k=0 → 30vw.
-  const k = useTransform(p, [0.15, 0.9], [1, 0]);
+  // k: 1(큰 영상, 시작) → 0(작은 영상=유튜브 미니플레이어, 끝). [B] 긴 트랙에서 천천히.
+  //   0.85 에 축소 완료 → 이후(0.85~1) 400×225 미니플레이어로 잠깐 머묾.
+  const k = useTransform(p, [0.18, 0.85], [1, 0]);
+  // [C] 최종 폭 = 고정 400px(16:9 → 세로 225px). 시작 = calc(100vw - 2*gutter)[A: 좌우 대칭].
+  //   width = 400px + k*(대칭풀폭 - 400px) → k=1 대칭풀폭, k=0 400px.
   const width = useTransform(
     k,
-    (v) => `calc(${(30 + 70 * v).toFixed(2)}vw - ${(2 * v).toFixed(3)} * var(--ln-gutter))`
+    (v) => `calc(400px + ${v.toFixed(3)} * (100vw - 2 * var(--ln-gutter) - 400px))`
   );
-  // [C/D] top: 인용문 아래 여백은 유지(34vh, 인용문 안 겹침)하되 낮게 잡아 16:9 세로가 화면 안에 최대한 들어오게 → 끝에서 우측 하단(70vh).
-  const top = useTransform(p, [0.15, 0.9], ["34vh", "70vh"]);
+  // [A] 초기 top 을 아래로(50vh) → 영상 위로 흰 배경이 크게 노출. [C] 최종 = 하단에서 225px+24px 위(미니플레이어).
+  //   top = 50vh*k + (1-k)*(100vh - 249px) → k=1 50vh, k=0 calc(100vh-249px)(바닥 24px 여백).
+  const top = useTransform(
+    k,
+    (v) => `calc(${(50 * v).toFixed(2)}vh + ${(1 - v).toFixed(3)} * (100vh - 249px))`
+  );
+  // [C] 우측 여백: 시작 gutter → 끝 24px(미니플레이어 우측 모서리 근처).
+  const right = useTransform(
+    k,
+    (v) => `calc(24px + ${v.toFixed(3)} * (var(--ln-gutter) - 24px))`
+  );
 
   // [A] "화면 고정된 채 영상만 변형" 느낌 제거 — sticky 안 콘텐츠를 스크롤에 맞춰 위로 흘려 진행감을 준다.
   //   lead(눈썹+인용문): 위로 드리프트하며 흘러 지나감 / body: 아래에서 제자리로 흘러 들어옴(물리적 노출과 함께).
@@ -57,7 +70,8 @@ export default function About() {
   const bodyStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { y: bodyY };
 
   // reduce / 모바일: 모션 없이 정적(모바일은 CSS 가 static·full-width·16:9 로 override).
-  const vidStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { width, top };
+  const vidStyle: MotionStyle | undefined =
+    reduce || isMobile ? undefined : { width, top, right };
 
   return (
     <section ref={ref} id="about" className={styles.about}>
