@@ -7,10 +7,15 @@
   color: #0c0c0c;
 }
 
-/* 스크롤 트랙 — 이 높이만큼 스크롤하는 동안 sticky 가 고정되며 애니메이션 진행 */
+/* 스크롤 트랙 — 이 높이만큼 스크롤하는 동안 애니메이션 진행.
+   [B] 240 → 340vh 로 늘려 "큰 영상 유지 → 축소 → 텍스트 노출 → 우하단 안착" 흐름을 여유롭게(천천히). */
 .pin {
   position: relative;
-  height: 240vh;
+  height: 340vh;
+}
+/* [A] sticky 안에서 스크롤에 맞춰 위로 흘러가는 리드(눈썹+인용문) — 화면이 함께 내려가는 진행감 */
+.lead {
+  will-change: transform;
 }
 .sticky {
   position: sticky;

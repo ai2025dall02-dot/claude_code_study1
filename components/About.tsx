@@ -49,6 +49,13 @@ export default function About() {
   // [C/D] top: 인용문 아래 여백은 유지(34vh, 인용문 안 겹침)하되 낮게 잡아 16:9 세로가 화면 안에 최대한 들어오게 → 끝에서 우측 하단(70vh).
   const top = useTransform(p, [0.15, 0.9], ["34vh", "70vh"]);
 
+  // [A] "화면 고정된 채 영상만 변형" 느낌 제거 — sticky 안 콘텐츠를 스크롤에 맞춰 위로 흘려 진행감을 준다.
+  //   lead(눈썹+인용문): 위로 드리프트하며 흘러 지나감 / body: 아래에서 제자리로 흘러 들어옴(물리적 노출과 함께).
+  const leadY = useTransform(p, [0.12, 0.92], ["0vh", "-20vh"]);
+  const bodyY = useTransform(p, [0.4, 0.92], ["9vh", "0vh"]);
+  const leadStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { y: leadY };
+  const bodyStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { y: bodyY };
+
   // reduce / 모바일: 모션 없이 정적(모바일은 CSS 가 static·full-width·16:9 로 override).
   const vidStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { width, top };
 
@@ -56,19 +63,21 @@ export default function About() {
     <section ref={ref} id="about" className={styles.about}>
       <div className={styles.pin}>
         <div className={styles.sticky}>
-          <span className={styles.eyebrow}>About — 배급사 소개</span>
+          <motion.div className={styles.lead} style={leadStyle}>
+            <span className={styles.eyebrow}>About — 배급사 소개</span>
 
-          <h2 className={styles.quote}>
-            좋은 영화는 사라지지 않는다.
-            <br />
-            다만 옮겨질 곳을 기다릴 뿐이다.
-          </h2>
+            <h2 className={styles.quote}>
+              좋은 영화는 사라지지 않는다.
+              <br />
+              다만 옮겨질 곳을 기다릴 뿐이다.
+            </h2>
+          </motion.div>
 
-          <p className={styles.body}>
+          <motion.p className={styles.body} style={bodyStyle}>
             필름 누벨은 2014년부터 독립영화와 예술영화를 다시 스크린으로 선보여 왔습니다. 매년
             엄선한 소수의 작품을 극장 개봉, 특별전, 공동체 상영, 아카이브까지 이어지는 여정 속에서
             관객과 연결합니다.
-          </p>
+          </motion.p>
 
           <motion.div className={styles.video} style={vidStyle}>
             <img src={PLACEHOLDER} alt="필름 누벨 소개 영상 (placeholder)" />
