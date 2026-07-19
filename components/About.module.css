@@ -62,12 +62,14 @@
 .video {
   position: absolute;
   right: var(--ln-gutter, clamp(1.4rem, 4vw, 3rem));
-  top: 42vh; /* [A] 인용문과 여백 확보(초기). JS(top)가 스크롤에 따라 아래로 내려 우하단으로. */
+  top: 34vh; /* 인용문 아래 여백(초기, 안 겹침). JS(top)가 스크롤에 따라 내려 우하단으로. */
+  /* [A] 초기 폭 = 화면 폭 - 좌우 gutter → 우측 gutter 와 동일한 좌측 마진(양옆 대칭). JS 가 30vw 까지 축소. */
+  width: calc(100vw - 2 * var(--ln-gutter, clamp(1.4rem, 4vw, 3rem)));
   z-index: 2; /* .body 위 → 큰 영상이 좌하단 본문을 덮음 */
-  aspect-ratio: 16 / 9; /* [B] 16:9 — 초기 100vw(화면 폭 꽉) 라 세로가 큰 유튜브 플레이어 느낌, 아래는 잘림(의도) */
+  aspect-ratio: 16 / 9; /* 16:9 유지 */
   transform-origin: bottom right;
   overflow: hidden;
-  /* [C] border-radius 제거(직각) · [D] box-shadow 제거 */
+  /* 직각 모서리 · 그림자 없음 */
   background: #e3e3e0;
   will-change: width, top;
 }

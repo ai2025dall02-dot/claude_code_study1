@@ -37,12 +37,17 @@ export default function About() {
     offset: ["start start", "end end"],
   });
   const p = useSpring(scrollYProgress, { stiffness: 90, damping: 30, mass: 1 });
-  // [A/B] 16:9 고정(aspect-ratio, CSS). 폭(width)만 트윈 → 세로는 자동 → 비율 항상 유지.
-  //   초기 100vw = 화면 폭 꽉 채움 → 16:9 세로가 뷰포트보다 커져 아래가 잘림(sticky overflow:hidden).
-  //   인용문 바로 아래(top)에 앵커 → 진행하며 우측 하단 작은 16:9(30vw)로 축소·이동.
-  const width = useTransform(p, [0, 0.82], ["100vw", "30vw"]);
-  // [A] 인용문과 영상 사이 여백 확보(초기 top 34vh → 42vh). 이후 우측 하단(70vh)으로 모임.
-  const top = useTransform(p, [0, 0.82], ["42vh", "70vh"]);
+  // 16:9 고정(aspect-ratio, CSS). 폭(width)만 트윈 → 세로는 자동 → 비율 항상 유지. 우측 앵커(right:gutter).
+  // [B] 축소 시작 지연: 입력 [0,0.82] → [0.15,0.9]. 0~0.15 는 '큰 영상 유지'(체류) 후 축소, 섹션 끝(≈0.9)에 완료.
+  // k: 1(큰 영상, 시작) → 0(작은 영상, 끝). width 를 calc 로 보간:
+  //   k=1 → calc(100vw - 2*gutter) [A: 우측 gutter 와 동일한 좌측 마진 → 양옆 대칭], k=0 → 30vw.
+  const k = useTransform(p, [0.15, 0.9], [1, 0]);
+  const width = useTransform(
+    k,
+    (v) => `calc(${(30 + 70 * v).toFixed(2)}vw - ${(2 * v).toFixed(3)} * var(--ln-gutter))`
+  );
+  // [C/D] top: 인용문 아래 여백은 유지(34vh, 인용문 안 겹침)하되 낮게 잡아 16:9 세로가 화면 안에 최대한 들어오게 → 끝에서 우측 하단(70vh).
+  const top = useTransform(p, [0.15, 0.9], ["34vh", "70vh"]);
 
   // reduce / 모바일: 모션 없이 정적(모바일은 CSS 가 static·full-width·16:9 로 override).
   const vidStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { width, top };
