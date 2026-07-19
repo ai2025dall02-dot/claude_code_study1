@@ -61,17 +61,15 @@
    [C] z 가 .body 위 → 초기 큰 폭일 때 좌측 하단 본문을 덮고, 우하단으로 작아지며 비켜 줌. */
 .video {
   position: absolute;
-  /* [A] 우측 앵커(right) → left 기반. 초기 좌우 균등 마진(left/width 로 가운데 큰 박스), JS 가 left/top/width 로 우하단으로. */
-  left: 14vw;
-  top: 34vh;
-  width: 72vw; /* [C] 100vw→72vw 로 줄여 16:9 세로가 뷰포트 안에 다 들어오게(좌우 14vw 균등 마진) */
+  right: var(--ln-gutter, clamp(1.4rem, 4vw, 3rem));
+  top: 42vh; /* [A] 인용문과 여백 확보(초기). JS(top)가 스크롤에 따라 아래로 내려 우하단으로. */
   z-index: 2; /* .body 위 → 큰 영상이 좌하단 본문을 덮음 */
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16 / 9; /* [B] 16:9 — 초기 100vw(화면 폭 꽉) 라 세로가 큰 유튜브 플레이어 느낌, 아래는 잘림(의도) */
   transform-origin: bottom right;
   overflow: hidden;
-  /* 직각 모서리 · 그림자 없음 */
+  /* [C] border-radius 제거(직각) · [D] box-shadow 제거 */
   background: #e3e3e0;
-  will-change: width, left, top;
+  will-change: width, top;
 }
 .video img {
   width: 100%;

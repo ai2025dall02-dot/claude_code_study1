@@ -37,17 +37,15 @@ export default function About() {
     offset: ["start start", "end end"],
   });
   const p = useSpring(scrollYProgress, { stiffness: 90, damping: 30, mass: 1 });
-  // 16:9 고정(aspect-ratio, CSS). 폭(width)만 트윈 → 세로는 자동 → 비율 항상 유지.
-  // [B] 축소 시작을 뒤로 미룸: [0,0.82] → [0.2,0.9]. 0~0.2 는 '큰 영상 유지'(체류), 이후 축소.
-  // [A] 초기엔 좌우 균등 마진의 '가운데 큰 박스'(left/width) → 진행하며 우측 하단 작은 16:9 로.
-  // [C] 초기 폭을 줄여(76vw) 16:9 세로도 뷰포트 안에 (거의) 다 들어오게. 인용문과 여백 유지.
-  const width = useTransform(p, [0.2, 0.9], ["72vw", "30vw"]);
-  const left = useTransform(p, [0.2, 0.9], ["14vw", "66vw"]); // 시작: 좌우 14vw 균등 → 끝: 우측(우측 마진≈gutter)
-  const top = useTransform(p, [0.2, 0.9], ["34vh", "70vh"]);
+  // [A/B] 16:9 고정(aspect-ratio, CSS). 폭(width)만 트윈 → 세로는 자동 → 비율 항상 유지.
+  //   초기 100vw = 화면 폭 꽉 채움 → 16:9 세로가 뷰포트보다 커져 아래가 잘림(sticky overflow:hidden).
+  //   인용문 바로 아래(top)에 앵커 → 진행하며 우측 하단 작은 16:9(30vw)로 축소·이동.
+  const width = useTransform(p, [0, 0.82], ["100vw", "30vw"]);
+  // [A] 인용문과 영상 사이 여백 확보(초기 top 34vh → 42vh). 이후 우측 하단(70vh)으로 모임.
+  const top = useTransform(p, [0, 0.82], ["42vh", "70vh"]);
 
   // reduce / 모바일: 모션 없이 정적(모바일은 CSS 가 static·full-width·16:9 로 override).
-  const vidStyle: MotionStyle | undefined =
-    reduce || isMobile ? undefined : { width, left, top };
+  const vidStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { width, top };
 
   return (
     <section ref={ref} id="about" className={styles.about}>
