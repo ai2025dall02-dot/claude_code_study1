@@ -63,6 +63,16 @@
   -webkit-text-stroke: 0.25px #0b0b0c;
   color: transparent;
 }
+/* RiseTitle — 글자별 "아래→위" 등장(히어로 방식). .riseMask = 고정 창(clip-path): 하단은 닫고
+   상단은 열어(-45%) 잉크 안 잘림 → 안쪽(.riseInner)이 창 아래(y:115%)에서 0 으로 올라오며 드러남. */
+.riseMask {
+  display: inline-block;
+  clip-path: inset(-45% 0% 0% 0%);
+}
+.riseInner {
+  display: inline-block;
+  will-change: transform;
+}
 .index {
   font-family: var(--font-meta, monospace);
   font-size: 11px;

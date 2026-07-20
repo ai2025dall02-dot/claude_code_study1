@@ -12,7 +12,7 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { films } from "@/data/films";
-import TypeTitle from "./TypeTitle";
+import RiseTitle from "./RiseTitle";
 import styles from "./Landing.module.css";
 
 /* 감독 카드용 사진 매핑 (public/posters-photo) — 감독별 전용 이미지 filmmaker_1~6.
@@ -123,9 +123,9 @@ export default function Filmmakers() {
         {/* 배경에 고정된 큰 FILMMAKERS 텍스트 (카드가 그 앞을 지나감) */}
         <div className={styles.fmBg} aria-hidden="true">
           <span className={styles.eyebrow}>Directors &amp; Authors</span>
-          {/* 작업2: 즉시(0px) → "0px 0px -45% 0px" 로 늦춤. 제목이 뷰포트 하단에서 45% 위(대략 화면
-              중앙)까지 올라와 섹션이 자리잡은 뒤 타이핑 시작. trackGate(0.24~0.3)보다 먼저라 순서 유지. */}
-          <TypeTitle solid="FILM" outline="MAKERS" inViewMargin="0px 0px -45% 0px" />
+          {/* 히어로 FILM NOUVELLE 처럼 글자가 아래→위로 순차 등장. 제목이 뷰포트 하단에서 45% 위(대략
+              화면 중앙)까지 올라와 섹션이 자리잡은 뒤 발동. trackGate(0.24~0.3)보다 먼저라 순서 유지. */}
+          <RiseTitle solid="FILM" outline="MAKERS" inViewMargin="0px 0px -45% 0px" />
           <span className={styles.fmHeadSub}>우리가 동행하는 작가들</span>
         </div>
 
