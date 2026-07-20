@@ -60,7 +60,7 @@
   /* [1] 제목 전체(한글·숫자·영문)를 Pretendard 하나로 → 숫자·영문(48 등)만 Anton 으로 굵게 튀던 문제 해결. */
   font-family: var(--font-pretendard), "Apple SD Gothic Neo", sans-serif;
   font-weight: 800; /* [1] 제목다운 굵기(Pretendard ExtraBold) — 한글·숫자 동일 무게로 균일 */
-  font-size: clamp(2rem, 4.4vw, 3.6rem);
+  font-size: clamp(1.7rem, 3.6vw, 2.8rem); /* 살짝 축소(4.4vw/3.6rem → 3.6vw/2.8rem) */
   line-height: 1.02;
   letter-spacing: -0.01em; /* 한글 제목에 어울리는 약간 좁은 자간 */
   color: #0b0b0c; /* [D] 어두운 제목 */

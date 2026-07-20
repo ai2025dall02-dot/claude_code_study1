@@ -37,9 +37,10 @@ const FILM_PHOTO: Record<string, string> = {
 
 const ITEMS = films;
 
-// [B] 진입 시 텍스트 확대 배율(안착 크기 대비) — "살짝만" 크게. 데스크톱 1.6× / 모바일 1.35×.
-const BIG_SCALE_DESKTOP = 1.6;
-const BIG_SCALE_MOBILE = 1.35;
+// [B] 진입 시 텍스트 확대 배율(안착 크기 대비) — "살짝만" 크게. 안착 크기를 히어로급으로 키운
+//   만큼 배율은 낮춰(1.6→1.2) 진입 시 화면 밖으로 넘치지 않게 균형. 데스크톱 1.2× / 모바일 1.15×.
+const BIG_SCALE_DESKTOP = 1.2;
+const BIG_SCALE_MOBILE = 1.15;
 // [B] 텍스트가 좌상단(큰) → 좌하단(살짝 작게) 이동을 마치는 진행도. 이후 구간은 슬라이드 감상 체류.
 const MOVE_END = 0.42;
 // [B] 자동 슬라이드 속도(px/초). 느리게.
