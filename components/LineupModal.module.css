@@ -1,4 +1,5 @@
-/* LINEUP 영화 상세 모달 — PC: 하단 슬라이드 업(좌 포스터 + 우 다크 상세) / 모바일: 세로 풀스크린 */
+/* LINEUP 영화 상세 모달 — PC: 하단 슬라이드 업(좌 포스터 + 우 상세) / 모바일: 세로 풀스크린.
+   [D] 색 반전: 밝은 배경(#f7f7f5/#fff) + 어두운 텍스트. 레이아웃(좌 포스터 + 우 상세, 하단 슬라이드업)은 유지. */
 .overlay {
   position: fixed;
   inset: 0;
@@ -7,7 +8,7 @@
   align-items: flex-end; /* [3] 바텀시트: 패널을 뷰포트 바닥에 붙임(중앙 X) */
   justify-content: center;
   padding: 0; /* [3] 시트가 화면 하단·좌우에 꽉 차게(플러시) */
-  background: rgba(8, 8, 10, 0.34); /* [3] 딤 옅게 — 시트 위쪽 페이지가 비쳐 보이게 */
+  background: rgba(16, 16, 18, 0.34); /* [3] 딤 옅게 — 시트 위쪽 페이지가 비쳐 보이게 */
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
 }
@@ -18,10 +19,10 @@
   /* 바텀시트: 화면 가로 100% 꽉 채움 + 하단 ~62% 높이(위 ~38% 는 뒤 페이지 노출) */
   width: 100%; /* [1] 넓은 화면에서도 항상 전체 폭(1440 제한 제거) */
   height: min(62vh, 620px); /* 시트 높이 — 키우면 페이지 덜 보이고, 줄이면 더 보임 */
-  background: #0b0b0c;
+  background: #f7f7f5; /* [D] 밝은 배경 */
   border-radius: 0; /* [1] 각지게 — 바닥·좌우 완전 플러시 */
   overflow: hidden;
-  box-shadow: 0 -18px 70px rgba(0, 0, 0, 0.42); /* 시트 위쪽으로 그림자 */
+  box-shadow: 0 -18px 70px rgba(0, 0, 0, 0.28); /* 시트 위쪽으로 그림자 */
   will-change: transform;
 }
 
@@ -30,21 +31,21 @@
 .media {
   position: relative;
   flex: 0 0 21%; /* 좌 포스터 폭 비중 — 줄일수록 우측 텍스트가 길어짐(레퍼런스 20~22%) */
-  background: #141416; /* cover 라 보통 안 보이지만, 혹시 모를 여백 대비 배경 */
+  background: #e7e7e4; /* [D] cover 라 보통 안 보이지만, 혹시 모를 여백 대비 밝은 배경 */
 }
 .media :global(img) {
   object-fit: cover; /* 좁은 세로 칸을 여백 없이 꽉 채움(이전 contain 의 레터박스 제거) */
 }
 
-/* 우: 어두운 상세 패널(밝은 텍스트) */
+/* 우: 밝은 상세 패널(어두운 텍스트) */
 .body {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
   padding: clamp(1.6rem, 3.4vw, 3.2rem);
-  color: #f4f4f2;
-  background: #0b0b0c;
+  color: #1a1a18; /* [D] 어두운 본문 텍스트 */
+  background: #ffffff; /* [D] 밝은 배경 */
   overflow-y: auto;
 }
 .eyebrow {
@@ -52,18 +53,17 @@
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #9a9a96;
+  color: #7a7a76; /* [D] */
 }
 .title {
   margin: 0.7rem 0 0.2rem;
-  /* [1] 제목 전체(한글·숫자·영문)를 Pretendard 하나로 → 숫자·영문(48 등)만 Anton 으로 굵게 튀던 문제 해결.
-     (영화 제목은 한글 위주라 Anton=한글없음 → 한글 Pretendard/숫자 Anton 로 갈려 무게가 어긋났음) */
+  /* [1] 제목 전체(한글·숫자·영문)를 Pretendard 하나로 → 숫자·영문(48 등)만 Anton 으로 굵게 튀던 문제 해결. */
   font-family: var(--font-pretendard), "Apple SD Gothic Neo", sans-serif;
   font-weight: 800; /* [1] 제목다운 굵기(Pretendard ExtraBold) — 한글·숫자 동일 무게로 균일 */
   font-size: clamp(2rem, 4.4vw, 3.6rem);
   line-height: 1.02;
   letter-spacing: -0.01em; /* 한글 제목에 어울리는 약간 좁은 자간 */
-  color: #fafafa;
+  color: #0b0b0c; /* [D] 어두운 제목 */
 }
 .titleEn {
   /* [3] 영문 부제는 Anton 으로 통일(사이트 영문 타이틀 일관) */
@@ -71,19 +71,19 @@
   font-size: 13px;
   letter-spacing: 0.08em; /* [2] 영문 제목 자간 살짝 축소(0.14em → 0.08em, 레퍼런스 "THE SALT FLATS" 느낌) */
   text-transform: uppercase;
-  color: #8a8a86;
+  color: #6c6c68; /* [D] */
 }
 .logline {
   margin: clamp(1.1rem, 2.4vw, 1.7rem) 0 0;
   font-family: var(--font-sans);
   font-size: clamp(0.98rem, 1.3vw, 1.12rem);
   line-height: 1.75;
-  color: #d9d9d5;
+  color: #33332f; /* [D] 어두운 본문 */
 }
 .meta {
   margin: clamp(1.4rem, 3vw, 2.2rem) 0 0;
   padding-top: clamp(1.1rem, 2.4vw, 1.6rem);
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 1px solid rgba(0, 0, 0, 0.14); /* [D] 밝은 배경용 구분선 */
   display: grid;
   gap: 0.75rem;
 }
@@ -98,16 +98,16 @@
   font-size: 10.5px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #8a8a86;
+  color: #8a8a86; /* [D] */
 }
 .metaRow dd {
   margin: 0;
   font-family: var(--font-sans);
   font-size: 0.98rem;
-  color: #eaeae6;
+  color: #26261f; /* [D] 어두운 값 */
 }
 
-/* 닫기(X) — 우측 상단. [1] 어두운 반투명 원 + 흰 아이콘 + 그림자로 밝은 포스터 위에서도 또렷하게. */
+/* 닫기(X) — 우측 상단. [D] 밝은 반투명 원 + 어두운 아이콘 + 그림자로 밝은 시트 위에서도 또렷하게. */
 .close {
   position: absolute;
   top: 14px;
@@ -118,11 +118,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(0, 0, 0, 0.22); /* [D] */
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.6); /* [1] 대비 강화 */
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5); /* [1] 밝은 배경과 분리 */
-  color: #fff;
+  background: rgba(255, 255, 255, 0.82); /* [D] 밝은 반투명 */
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.22); /* [D] */
+  color: #0b0b0c; /* [D] 어두운 아이콘 */
   font-size: 16px;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
@@ -130,8 +130,8 @@
   appearance: none;
 }
 .close:hover {
-  background: rgba(0, 0, 0, 0.78);
-  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.95); /* [D] */
+  border-color: rgba(0, 0, 0, 0.4);
 }
 
 /* ── 모바일: 세로 풀스크린(상단 이미지 + 하단 상세) ── */
@@ -159,12 +159,12 @@
     flex: 1 1 auto;
     padding: clamp(1.4rem, 6vw, 2rem);
   }
-  /* [1] 모바일: 밝은 포스터 위라 대비 최대치로 */
+  /* [D] 모바일: 밝은 포스터 위 — 대비 유지(밝은 원 + 어두운 아이콘) */
   .close {
     top: 16px;
     right: 16px;
-    background: rgba(0, 0, 0, 0.66);
-    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.24);
     z-index: 6;
   }
 }

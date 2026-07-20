@@ -73,18 +73,192 @@
   white-space: nowrap;
 }
 
-/* ── LINEUP ─────────────────────────────────────────── */
+/* ── LINEUP — audition.smtown.com "ARTIST MESSAGE" 풍 가로 슬라이드 ──
+   [C] 섹션 배경 검정. 진입 시 "LINE UP" 텍스트가 중앙에 크게 떴다가 스크롤하면
+   좌측 하단 코너로 축소·이동(흰→회색)하고, 카드가 우→좌로 흐르는 가로 마퀴가 드러남. */
 .lineup {
-  background: #f8f8f8;
+  background: #0b0b0c;
+  color: #f4f4f2;
   position: relative;
-  z-index: 1; /* ABOUT 위로 — 원형 reveal 레이어가 ABOUT 을 덮도록 */
+  z-index: 1;
 }
-.lineup .inner {
+/* 세로로 긴 스크롤 트랙 — 이 높이만큼 스크롤하는 동안 무대가 붙어(sticky) 텍스트가 코너로 이동. */
+.lineupTrack {
   position: relative;
-  z-index: 2; /* 콘텐츠는 reveal 레이어 위 */
+  height: 220vh;
 }
-.lineup .head {
-  border-bottom: none; /* LINEUP 제목 아래 가로 라인 제거 (다른 섹션은 유지) */
+/* 화면에 붙는 무대(검정, 100vh) — 텍스트·슬라이드가 이 안에 절대배치. */
+.lineupStage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: #0b0b0c;
+}
+/* [A] LINE UP 텍스트 블록 — 좌측 하단 앵커 + origin: left bottom.
+   JS 가 scale/x/y 로 진입(중앙·크게) → 코너(작게) 이동, color 로 흰→회색 전환. */
+.lineupHeading {
+  position: absolute;
+  left: var(--ln-gutter);
+  bottom: clamp(2rem, 7vh, 4rem);
+  z-index: 3;
+  pointer-events: none; /* 슬라이드 드래그를 가리지 않게 */
+  will-change: transform;
+}
+.lineupEyebrow {
+  display: block;
+  font-family: var(--font-meta, monospace);
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #6f6f6b;
+  margin-bottom: 0.7rem;
+}
+.lineupBig {
+  margin: 0;
+  font-family: var(--font-anton), "Arial Black", Helvetica, sans-serif;
+  font-weight: 900;
+  /* 코너(안착) 기준 크기 — 진입 시 JS 가 여기에 bigScale(≈3×) 을 곱해 크게 띄움. */
+  font-size: clamp(2rem, 5.4vw, 3.6rem);
+  line-height: 0.9;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #8f8f8b; /* reduce/폴백 기본색(회색). 비-reduce 는 JS 가 흰→회색 override */
+  will-change: transform;
+}
+/* [B] 가로 슬라이드 뷰포트(마퀴 + 드래그) — 무대 세로 중앙, 하단은 코너 텍스트 공간 확보. */
+.railViewport {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  padding-bottom: 14vh;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: pan-y; /* 세로 페이지 스크롤은 통과, 가로 드래그만 처리 */
+  user-select: none;
+  -webkit-user-select: none;
+}
+.railViewport:active {
+  cursor: grabbing;
+}
+.railInner {
+  display: flex;
+  gap: clamp(1rem, 1.6vw, 1.6rem);
+  will-change: transform;
+}
+.railSet {
+  display: flex;
+  gap: clamp(1rem, 1.6vw, 1.6rem);
+  flex: 0 0 auto;
+}
+.railCard {
+  flex: 0 0 auto;
+  width: clamp(190px, 20vw, 280px);
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.railCard__media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: #1a1a1c;
+}
+.railCard__media :global(img) {
+  object-fit: cover;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.railCard:hover .railCard__media :global(img) {
+  transform: scale(1.05);
+}
+.railCard__status {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  background: #f4f4f2;
+  color: #0b0b0c;
+  font-family: var(--font-meta, monospace);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+}
+.railCard__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 0.8rem;
+}
+.railCard__title {
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: clamp(1rem, 1.3vw, 1.2rem);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: #f4f4f2;
+}
+.railCard__en {
+  font-family: var(--font-meta, monospace);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8a8a86;
+}
+/* 모바일: 트랙 소폭 단축 + 텍스트/카드 축소 */
+@media (max-width: 767px) {
+  .lineupTrack {
+    height: 200vh;
+  }
+  .lineupBig {
+    font-size: clamp(1.7rem, 8vw, 2.6rem);
+  }
+  .railViewport {
+    padding-bottom: 12vh;
+  }
+  .railCard {
+    width: clamp(150px, 52vw, 210px);
+  }
+}
+/* reduce: sticky/모션 해제 → 일반 흐름. 텍스트 상단·회색, 슬라이드는 가로 스크롤로 탐색. */
+@media (prefers-reduced-motion: reduce) {
+  .lineupTrack {
+    height: auto;
+  }
+  .lineupStage {
+    position: static;
+    height: auto;
+    overflow: visible;
+    padding-block: clamp(3rem, 8vh, 5rem);
+  }
+  .lineupHeading {
+    position: static;
+    transform: none !important;
+    pointer-events: auto;
+    margin-bottom: clamp(1.5rem, 4vh, 2.5rem);
+  }
+  .railViewport {
+    position: static;
+    inset: auto;
+    padding: 0 0 clamp(1rem, 3vh, 2rem);
+    overflow-x: auto;
+    cursor: default;
+  }
 }
 /* ABOUT 하단~LINEUP 진입에서 차오르는 밝은 원형 레이어 (뷰포트 고정) */
 /* 원형 reveal pin 구간 (TextReveal 과 동일한 wrap+sticky 패턴) */

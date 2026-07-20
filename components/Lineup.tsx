@@ -1,22 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+// LINEUP — audition.smtown.com "ARTIST MESSAGE" 무드로 전면 교체.
+//  A. 섹션 진입 시 "LINE UP" 텍스트가 화면 중앙에 크게 → 스크롤하면 좌측 하단 코너로 축소·이동(흰→회색).
+//  B. 카드 이미지가 우→좌로 느리게 자동으로 흐르는 가로 슬라이드(마퀴) + 마우스/터치 드래그로 좌우 이동.
+//     (기존 3열 세로 masonry / 세로 패럴랙스 구조는 제거)
+//  C. 섹션 배경 검정 / 텍스트 흰→회색. D. 카드 클릭 시 상세 모달(바텀시트)은 그대로 유지.
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   motion,
+  useAnimationFrame,
+  useMotionValue,
   useReducedMotion,
   useScroll,
-  useSpring,
   useTransform,
-  type MotionValue,
 } from "framer-motion";
 import { films, type Film } from "@/data/films";
-import TypeTitle from "./TypeTitle";
 import LineupModal from "./LineupModal";
 import styles from "./Landing.module.css";
 
-/* 라인업 작품에 사진 포스터 매핑 (public/posters-photo). 12편이 각각 고유 이미지 사용:
-   앞 6편 afterimage~reel = lineup_1~6, 뒤 6편 tide~ember = lineup_7~12. */
+/* 라인업 작품에 사진 포스터 매핑 (public/posters-photo). 12편이 각각 고유 이미지 사용. */
 const FILM_PHOTO: Record<string, string> = {
   afterimage: "/posters-photo/lineup_1.jpg",
   north: "/posters-photo/lineup_2.jpg",
@@ -32,46 +35,32 @@ const FILM_PHOTO: Record<string, string> = {
   ember: "/posters-photo/lineup_12.jpg",
 };
 
-/* 카드별 배치 설정 — mt: 카드별 추가 세로 여백(촘촘하게 0~60), ar: 높이(aspect)
-   (패럴랙스 속도는 더 이상 카드별이 아니라 '열 단위'로 묶임 → COL_SPEED) */
-const CONF = [
-  { mt: 0, ar: "3 / 4.2" },
-  { mt: 28, ar: "3 / 3.6" },
-  { mt: 14, ar: "3 / 4.6" },
-  { mt: 44, ar: "3 / 3.8" },
-  { mt: 8, ar: "3 / 4.4" },
-  { mt: 36, ar: "3 / 4.0" },
-  { mt: 20, ar: "3 / 3.9" },
-  { mt: 52, ar: "3 / 4.5" },
-  { mt: 6, ar: "3 / 3.7" },
-  { mt: 32, ar: "3 / 4.3" },
-  { mt: 48, ar: "3 / 4.1" },
-  { mt: 16, ar: "3 / 3.6" },
-];
-
-/* 12편 유니크 라인업 (중복 반복 제거 — films 자체가 12편). 전체를 한 흐름으로 노출(페이지네이션 없음). */
 const ITEMS = films;
 
-/* 세로 흐름 masonry: 3개 열로 라운드로빈 분배 (각 열이 세로로 이어짐) */
-const COLS = 3;
-const COL_CLASS = ["", "col1", "col2"] as const;
-/* 열별 속도 계수 (음수=위로 흐름, 절댓값 클수록 빠름) — 속도 격차를 크게 벌려 어긋남 강조
-   (가운데 열은 빠르게 -0.55, 마지막 열은 거의 정지 -0.05) */
-const COL_SPEED = [-0.25, -0.55, -0.05];
-/* 패럴랙스 기준 이동 폭(px). 계수 × 이 값 = 열의 (반)이동량.
-   낮추면 첫 진입 시 이미지가 덜 아래에서 시작해 상단 여백이 줄어듦 */
-const PARALLAX_DISTANCE = 1700;
+// [A] 진입 시 텍스트 확대 배율(코너 안착 크기 대비). 데스크톱 3.0× / 모바일 2.0×.
+const BIG_SCALE_DESKTOP = 3.0;
+const BIG_SCALE_MOBILE = 2.0;
+// [A] 텍스트가 중앙(큰) → 코너(작은)로 이동을 마치는 진행도. 이후 구간은 슬라이드 감상 체류.
+const MOVE_END = 0.42;
+// [B] 자동 슬라이드 속도(px/초). 느리게.
+const AUTO_SPEED = 24;
+
+// railX 를 한 세트 주기(period) 안으로 정규화 → (-period, 0]. 자동/드래그 모두 끊김 없이 순환.
+function norm(v: number, period: number) {
+  if (!period) return v;
+  let n = v % period;
+  if (n > 0) n -= period;
+  return n;
+}
 
 export default function Lineup() {
   const reduce = useReducedMotion();
-  const sectionRef = useRef<HTMLElement | null>(null);
-
-  // 카드 클릭 시 열리는 상세 모달 대상 영화 (null = 닫힘)
   const [selected, setSelected] = useState<Film | null>(null);
-
-  // 모바일(≤767)에서는 .grid 가 1열로 쌓여 열마다 속도가 다른 패럴랙스가 서로 어긋난다
-  // → 모바일에서는 패럴랙스 정지(y=0). 데스크톱/태블릿은 그대로 유지.
   const [isMobile, setIsMobile] = useState(false);
+
+  const trackRef = useRef<HTMLDivElement | null>(null); // 세로로 긴 스크롤 트랙(진행도 측정)
+  const titleRef = useRef<HTMLHeadingElement | null>(null); // 텍스트 크기/위치 측정용
+
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
     const sync = () => setIsMobile(mq.matches);
@@ -80,185 +69,210 @@ export default function Lineup() {
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  // 패럴랙스용 — 섹션이 화면을 지나는 전체 진행도 (0: 하단 진입 ~ 1: 상단 이탈)
-  // (원형 reveal 은 About 컴포넌트로 이동 — About 본문 기준으로 시작 시점을 잡기 위해)
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
+  // ── [A] 텍스트 진입/코너 이동 ─────────────────────────────────────
+  const { scrollYProgress: p } = useScroll({
+    target: trackRef,
+    offset: ["start start", "end end"],
   });
 
-  return (
-    <section ref={sectionRef} className={`${styles.section} ${styles.lineup}`} id="lineup">
+  const bigScale = isMobile ? BIG_SCALE_MOBILE : BIG_SCALE_DESKTOP;
 
-      <div className={styles.inner}>
-        <header className={styles.head}>
-          <div>
-            <span className={styles.eyebrow}>The Programme</span>
-            <TypeTitle solid="LINE" outline="UP" />
-          </div>
-          <span className={styles.index}>현재 배급 · 2024–2025 / 전 {ITEMS.length}편</span>
-        </header>
+  // 코너(안착) 위치와 중앙(진입) 위치의 차이를 실측 → 진입 시 translate 량(txBig/tyBig).
+  //  .lineupHeading 은 CSS 로 좌측 하단(left/bottom)에 앵커·transform-origin: left bottom.
+  //  scale=1 이면 코너에 안착(translate 0), scale=bigScale 이면 중앙으로 오도록 translate.
+  const [big, setBig] = useState({ x: 0, y: 0 });
+  useEffect(() => {
+    const measure = () => {
+      const el = titleRef.current; // <h2> 만 확대·이동(eyebrow 는 코너 고정)
+      const container = el?.offsetParent as HTMLElement | null; // .lineupHeading (absolute)
+      const stage = container?.offsetParent as HTMLElement | null; // .lineupStage (sticky)
+      if (!el || !container || !stage) return;
+      const w0 = el.offsetWidth; // 레이아웃 폭(transform 영향 없음, 미확대 기준)
+      const h0 = el.offsetHeight;
+      const stageW = stage.clientWidth;
+      const stageH = stage.clientHeight;
+      // 무대 기준 <h2> 좌상단 좌표(= 컨테이너 오프셋 + h2 오프셋)
+      const xInStage = el.offsetLeft + container.offsetLeft;
+      const yInStage = el.offsetTop + container.offsetTop;
+      // origin: left bottom → 확대 시 (좌하단 고정점) 기준 중심 좌표
+      const cx = xInStage + (w0 * bigScale) / 2;
+      const cy = yInStage + h0 - (h0 * bigScale) / 2;
+      setBig({ x: stageW / 2 - cx, y: stageH / 2 - cy });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    const raf = requestAnimationFrame(measure);
+    // 폰트(Anton) 로딩 후 폭이 바뀌면 재측정
+    if (typeof document !== "undefined" && document.fonts?.ready) {
+      document.fonts.ready.then(measure).catch(() => {});
+    }
+    return () => {
+      window.removeEventListener("resize", measure);
+      cancelAnimationFrame(raf);
+    };
+  }, [bigScale, isMobile]);
 
-        <div className={styles.grid}>
-          {Array.from({ length: COLS }, (_, c) => (
-            <ParallaxColumn
-              key={c}
-              className={`${styles.col} ${styles[COL_CLASS[c]] ?? ""}`}
-              progress={scrollYProgress}
-              speed={COL_SPEED[c]}
-              reduce={!!reduce}
-              noParallax={isMobile}
-              onOpen={setSelected}
-              // 전체 항목을 열에 분배(전역 인덱스로 라운드로빈) — 페이지네이션 없이 한 흐름.
-              items={ITEMS.map((f, i) => ({ f, i })).filter(({ i }) => i % COLS === c)}
+  const tx = useTransform(p, [0, MOVE_END], [big.x, 0]);
+  const ty = useTransform(p, [0, MOVE_END], [big.y, 0]);
+  const scale = useTransform(p, [0, MOVE_END], [bigScale, 1]);
+  // [C] 진입 흰색 → 코너 안착 시 회색으로 전환
+  const titleColor = useTransform(p, [0.12, 0.34], ["#f4f4f2", "#8f8f8b"]);
+  // eyebrow 는 코너에 텍스트가 거의 안착할 즈음 페이드 인(진입 시 대형 텍스트만 보이게)
+  const eyebrowOpacity = useTransform(p, [0.3, 0.44], [0, 1]);
+  const titleStyle = reduce
+    ? undefined
+    : { x: tx, y: ty, scale, color: titleColor, transformOrigin: "left bottom" as const };
+
+  // ── [B] 슬라이드가 텍스트 이동과 함께 서서히 등장 ─────────────────
+  const railOpacity = useTransform(p, [0.16, MOVE_END], [0, 1]);
+  const railShift = useTransform(p, [0.16, MOVE_END], [50, 0]);
+
+  // ── [B] 가로 자동 슬라이드(마퀴) + 드래그 ─────────────────────────
+  const railX = useMotionValue(0);
+  const setRef = useRef<HTMLDivElement | null>(null); // 카드 한 세트(폭 측정)
+  const innerRef = useRef<HTMLDivElement | null>(null); // 세트 사이 gap 측정
+  const periodRef = useRef(0); // 한 세트 폭 + gap = 순환 주기
+  const draggingRef = useRef(false);
+  const movedRef = useRef(false); // 드래그로 움직였으면 클릭(모달) 무시
+  const startRef = useRef({ x: 0, val: 0 });
+
+  useEffect(() => {
+    const measure = () => {
+      const set = setRef.current;
+      const inner = innerRef.current;
+      if (!set || !inner) return;
+      const cs = getComputedStyle(inner);
+      const gap = parseFloat(cs.columnGap || cs.gap || "0") || 0;
+      periodRef.current = set.offsetWidth + gap;
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    const raf = requestAnimationFrame(measure);
+    return () => {
+      window.removeEventListener("resize", measure);
+      cancelAnimationFrame(raf);
+    };
+  }, [isMobile]);
+
+  // 매 프레임: 드래그 중이 아니면 우→좌로 느리게 이동(순환).
+  useAnimationFrame((_, delta) => {
+    if (reduce || draggingRef.current) return;
+    const period = periodRef.current;
+    if (!period) return;
+    railX.set(norm(railX.get() - AUTO_SPEED * (delta / 1000), period));
+  });
+
+  const onPointerMove = useCallback(
+    (e: PointerEvent) => {
+      if (!draggingRef.current) return;
+      const dx = e.clientX - startRef.current.x;
+      if (Math.abs(dx) > 4) movedRef.current = true;
+      railX.set(norm(startRef.current.val + dx, periodRef.current));
+    },
+    [railX]
+  );
+  const onPointerUp = useCallback(() => {
+    draggingRef.current = false;
+    window.removeEventListener("pointermove", onPointerMove);
+    window.removeEventListener("pointerup", onPointerUp);
+  }, [onPointerMove]);
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (reduce) return;
+      draggingRef.current = true;
+      movedRef.current = false;
+      startRef.current = { x: e.clientX, val: railX.get() };
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp);
+    },
+    [reduce, railX, onPointerMove, onPointerUp]
+  );
+  useEffect(
+    () => () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    },
+    [onPointerMove, onPointerUp]
+  );
+
+  const openCard = (f: Film) => {
+    if (movedRef.current) return; // 방금 드래그였으면 모달 열지 않음
+    setSelected(f);
+  };
+
+  const cards = (keyPrefix: string, ariaHidden: boolean) => (
+    <div ref={ariaHidden ? undefined : setRef} className={styles.railSet} aria-hidden={ariaHidden}>
+      {ITEMS.map((f) => (
+        <button
+          key={`${keyPrefix}-${f.id}`}
+          type="button"
+          className={styles.railCard}
+          onClick={() => openCard(f)}
+          tabIndex={ariaHidden ? -1 : 0}
+          aria-label={`${f.title} 상세 보기`}
+          draggable={false}
+        >
+          <div className={styles.railCard__media}>
+            <Image
+              src={FILM_PHOTO[f.id] ?? "/posters-photo/lineup_1.jpg"}
+              alt={`${f.title} 스틸`}
+              fill
+              sizes="(max-width: 767px) 52vw, 20vw"
+              draggable={false}
             />
-          ))}
+            <span className={styles.railCard__status}>{f.status}</span>
+          </div>
+          <div className={styles.railCard__body}>
+            <span className={styles.railCard__title}>{f.title}</span>
+            <span className={styles.railCard__en}>{f.titleEn}</span>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <section className={styles.lineup} id="lineup">
+      <div ref={trackRef} className={styles.lineupTrack}>
+        <div className={styles.lineupStage}>
+          {/* [B] 가로 슬라이드 뷰포트 — 자동 마퀴 + 드래그 */}
+          <motion.div
+            className={styles.railViewport}
+            style={reduce ? undefined : { opacity: railOpacity, y: railShift }}
+            onPointerDown={onPointerDown}
+          >
+            <motion.div
+              ref={innerRef}
+              className={styles.railInner}
+              style={reduce ? undefined : { x: railX }}
+            >
+              {cards("a", false)}
+              {cards("b", true)}
+            </motion.div>
+          </motion.div>
+
+          {/* [A][C] LINE UP 텍스트 — 진입 시 중앙 크게(흰) → 코너로 축소(회색).
+              컨테이너는 코너 고정, <h2> 만 확대·이동. eyebrow 는 안착 즈음 페이드 인. */}
+          <div className={styles.lineupHeading}>
+            <motion.span
+              className={styles.lineupEyebrow}
+              style={reduce ? undefined : { opacity: eyebrowOpacity }}
+            >
+              The Programme · 2024–2025
+            </motion.span>
+            <motion.h2 ref={titleRef} className={styles.lineupBig} style={titleStyle}>
+              LINE UP
+            </motion.h2>
+          </div>
         </div>
       </div>
 
-      {/* 카드 클릭 → 영화 상세 모달 */}
+      {/* [D] 카드 클릭 → 영화 상세 모달(바텀시트) — 동작 유지 */}
       <LineupModal
         film={selected}
         image={selected ? (FILM_PHOTO[selected.id] ?? "/posters-photo/lineup_1.jpg") : undefined}
         onClose={() => setSelected(null)}
       />
     </section>
-  );
-}
-
-/* 한 열 전체를 묶어 섹션 진행도 × 열 계수로 선형(scrub) 이동 — 스프링/딜레이 없이 즉각 반응.
-   각 카드에는 이 열의 패럴랙스 y(MotionValue)를 그대로 내려, 카드가 opacity 를
-   '실제 화면 위치(레이아웃+패럴랙스)' 기준으로 계산하게 한다. */
-function ParallaxColumn({
-  progress,
-  speed,
-  reduce,
-  noParallax,
-  className,
-  items,
-  onOpen,
-}: {
-  progress: MotionValue<number>;
-  speed: number;
-  reduce: boolean;
-  noParallax: boolean; // 모바일 1열 — 열 이동 정지
-  className: string;
-  items: { f: Film; i: number }[];
-  onOpen: (f: Film) => void; // 카드 클릭 → 상세 모달 열기
-}) {
-  // 진입 밀림을 '완전 제거'가 아니라 '조금만 축소' — 기존 대칭 [-D, D] 에서
-  // 시작값만 60%(-D*0.6)로 낮춰 진입 밀림이 약 40% 감소. 상단 여백은 적당히 줄되
-  // LINEUP 제목을 침범하진 않음. '슉슉' 세기(총 이동폭)는 거의 유지.
-  const yRaw = useTransform(
-    progress,
-    [0, 1],
-    [-speed * PARALLAX_DISTANCE * 0.6, speed * PARALLAX_DISTANCE]
-  );
-  // 열 이동 스프링 — 관성은 줄이고 부드러움만: stiffness↑(스크롤에 더 붙음) + mass 1.0(가벼움) + damping 유지.
-  //   조절점: stiffness 높을수록 스크롤 밀착(관성↓) / damping 높을수록 덜 출렁 / mass 낮을수록 가벼움.
-  const ySmooth = useSpring(yRaw, { stiffness: 185, damping: 28, mass: 1.0 });
-  // reduce 또는 모바일(noParallax)이면 열 이동 정지(y=0). 페이드(opacity)는 그대로 유지.
-  const still = reduce || noParallax;
-  const y = still ? 0 : ySmooth;
-  return (
-    <motion.div className={className} style={{ y, willChange: "transform" }}>
-      {items.map(({ f, i }, colIdx) => (
-        <LineupCard
-          key={`${f.id}-${i}`}
-          film={f}
-          conf={CONF[i % CONF.length]}
-          topCard={colIdx === 0}
-          reduce={reduce}
-          onOpen={onOpen}
-          // 작업2(중요): opacity 위치 보정도 트랙과 "같은" 스무딩 값(ySmooth)을 구독 → 이미지 위치와
-          // 페이드가 어긋나지 않음. (정지 시엔 undefined → 레이아웃 위치 기준으로 페이드)
-          parallaxY={still ? undefined : ySmooth}
-        />
-      ))}
-    </motion.div>
-  );
-}
-
-function LineupCard({
-  film: f,
-  conf,
-  topCard,
-  reduce,
-  parallaxY,
-  onOpen,
-}: {
-  film: Film;
-  conf: { mt: number; ar: string };
-  topCard: boolean;
-  reduce: boolean;
-  parallaxY?: MotionValue<number>;
-  onOpen: (f: Film) => void;
-}) {
-  // 각 열 '맨 위' 카드만 상단 여백 약간(75%) 축소 — [1] 패럴랙스로 이미 여백이 줄었으므로
-  // 여기선 최소로만 걸어 제목 침범을 피함 (기존 절반 → 0.75 로 완화)
-  const marginTop = topCard ? conf.mt * 0.75 : conf.mt;
-  const ref = useRef<HTMLButtonElement | null>(null);
-
-  // opacity 를 '카드의 실제 화면 위치(= 레이아웃 위치 + 패럴랙스 이동)' 기준으로 계산.
-  //  - framer-motion 11 의 useScroll(target) 측정(calcInset)은 offsetTop 누적이라
-  //    조상(열)의 패럴랙스 translateY 를 무시 → '레이아웃 위치' 진행도만 준다.
-  //  - 여기에 패럴랙스 y 를 보정해 '실제 보이는 위치' 진행도로 바꾼다:
-  //      layoutTop = vh - progress_layout·(vh+cardH),  visualTop = layoutTop + pY
-  //      → progress_visual = progress_layout - pY/(vh+cardH)
-  //  - progress_layout·pY 는 모두 같은 스크롤에서 파생된 MotionValue 라, 이를 합친 파생값은
-  //    패럴랙스와 '같은 프레임'에 원자적으로 갱신됨 → 정지 시에도 어긋남/지연 없음,
-  //    getBoundingClientRect 재측정(reflow)·rAF 경쟁 없음, 스크롤 방향과 무관하게 일관.
-  const { scrollYProgress: progressLayout } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"],
-  });
-  const [span, setSpan] = useState(1500); // vh + 카드 높이 (진행도 → 위치 환산 분모)
-  useEffect(() => {
-    const measure = () => {
-      const el = ref.current;
-      if (el) setSpan(window.innerHeight + el.offsetHeight);
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, []);
-
-  const progressVisual = useTransform(
-    () => progressLayout.get() - (parallaxY?.get() ?? 0) / span
-  );
-  // 또렷(opacity 1) 구간 0.25~0.75, 페이드아웃 0.92 (기존 곡선 유지)
-  const opRaw = useTransform(
-    progressVisual,
-    [0.08, 0.25, 0.75, 0.92],
-    [0, 1, 1, 0]
-  );
-  const opacity = reduce ? 1 : opRaw;
-
-  return (
-    <motion.button
-      ref={ref}
-      type="button"
-      className={styles.card}
-      onClick={() => onOpen(f)}
-      aria-label={`${f.title} 상세 보기`}
-      style={{ marginTop, opacity }}
-    >
-      <div className={styles.card__media} style={{ aspectRatio: conf.ar }}>
-        <Image
-          src={FILM_PHOTO[f.id] ?? "/posters-photo/lineup_1.jpg"}
-          alt={`${f.title} 스틸`}
-          fill
-          sizes="(max-width: 600px) 50vw, (max-width: 980px) 50vw, 33vw"
-        />
-        <span className={styles.card__status}>{f.status}</span>
-      </div>
-      <div className={styles.card__body}>
-        <span className={styles.card__title}>{f.title}</span>
-        <span className={styles.card__en}>{f.titleEn}</span>
-        <span className={styles.card__meta}>
-          {f.director} · {f.country} {f.year} · {f.format} · {f.genre}
-        </span>
-      </div>
-    </motion.button>
   );
 }
