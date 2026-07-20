@@ -17,7 +17,7 @@ import styles from "./About.module.css";
 
 // 영상 자리 placeholder — 실제 영상은 나중에 교체. 지금은 로컬 이미지로 대체.
 const PLACEHOLDER = "/posters-photo/m4.jpg";
-const MINI_W = 400; // [C] 최종 미니플레이어 폭(px). 세로는 16:9 → 225px.
+const MINI_W = 520; // [C] 최종 미니플레이어 폭(px). 세로는 16:9 → 약 293px.
 
 export default function About() {
   const ref = useRef<HTMLElement | null>(null);
