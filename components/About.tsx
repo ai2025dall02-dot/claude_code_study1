@@ -41,9 +41,8 @@ export default function About() {
   // [A] 스프링 유지(살짝 더 부드럽게 60/22) → "슉~" 부드러운 감속.
   const p = useSpring(scrollYProgress, { stiffness: 60, damping: 22, mass: 1 });
 
-  // k: 1(큰 영상) → 0(미니플레이어). [A] 축소 구간을 앞당기고 넓힘 [0.45,0.7] → [0.1,0.6]:
-  //   스크롤 초반부터 완만하게 줄기 시작해 여유롭게 축소 완료(픽스됐다 슉 → 서서히).
-  const k = useTransform(p, [0.1, 0.6], [1, 0]);
+  // k: 1(큰 영상) → 0(미니플레이어). 축소 시작을 아주 살짝 더 앞당김(0.1 → 0.05), 끝(0.6)·부드러움은 유지.
+  const k = useTransform(p, [0.05, 0.6], [1, 0]);
 
   // [A] transform: scale 기반(레이아웃 재계산 없음, GPU). [B] 영상은 CSS 로 좌/우 24px 대칭 배치(left/right 동일)
   //   → 컨테이너 기준 완전 중앙(뷰포트 vw/스크롤바 계산 불필요) → 좌우 여백 동일. translateX 보정 제거.
