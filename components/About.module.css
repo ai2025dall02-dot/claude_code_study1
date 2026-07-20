@@ -6,10 +6,13 @@
   color: #0c0c0c;
 }
 
-/* 리드(눈썹+인용문) — 일반 흐름 블록(고정 없음). 자연스럽게 스크롤되며 위로 지나감. */
+/* 리드(눈썹+인용문) — sticky 무대 좌측 상단에 고정 노출. 영상이 축소되는 동안 계속 보인다. */
 .lead {
-  padding: clamp(4.5rem, 11vh, 8rem) var(--ln-gutter, clamp(1.4rem, 4vw, 3rem))
-    clamp(1.5rem, 4vh, 2.6rem);
+  position: absolute;
+  top: clamp(4rem, 10vh, 7rem);
+  left: var(--ln-gutter, clamp(1.4rem, 4vw, 3rem));
+  right: var(--ln-gutter, clamp(1.4rem, 4vw, 3rem));
+  z-index: 3; /* 영상 위 — 항상 보이게 */
 }
 .eyebrow {
   display: block;
@@ -31,35 +34,35 @@
   color: #0c0c0c;
 }
 
-/* 영상 sticky 트랙 — 이 높이만큼 스크롤하는 동안 .videoStage 가 붙어(축소) 있음.
-   [A] 800vh → 340vh 로 줄여 "얼어붙은" 대기 구간을 자연스럽게(축소 연동에 필요한 최소 sticky 만). */
+/* sticky 트랙 — 이 높이만큼 스크롤하는 동안 무대가 붙어(축소) 있음. 자연스러운 300vh. */
 .pin {
   position: relative;
-  height: 340vh;
+  height: 300vh;
 }
-/* 영상만 화면에 붙는 sticky 무대(투명) — 트랙을 스크롤하는 동안 top:0 에 고정. */
-.videoStage {
+/* 무대 — 리드+영상+본문이 함께 화면에 붙음. 상단 텍스트가 보이는 채로 영상이 축소된다. */
+.stage {
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow: hidden; /* 큰 영상이 넘칠 때 클립 */
+  overflow: hidden; /* 넘치는 영상 클립 */
 }
 
-/* 영상 박스 — 우측 앵커 + 고정 aspect-ratio 16:9. width/top/right 은 스크롤 모션이 제어.
-   z 가 .body 위 → 큰 영상일 때 좌하단 본문을 덮고, 우하단 미니플레이어로 작아지며 비켜 줌. */
+/* 영상 박스 — [핵심] 뷰포트를 다 덮지 않는 크기로 '가운데 정렬'(좌우 대칭) + 하단 앵커.
+   상단에 리드 텍스트 공간을 남긴다. JS 가 scale+translateX 로 우측 하단 코너 미니플레이어로 축소. */
 .video {
   position: absolute;
-  /* [B] 좌/우 24px 동일 → 컨테이너 기준 완전 좌우 대칭(뷰포트/스크롤바 계산 불필요). 폭은 자동(컨테이너-48). */
-  left: 24px;
-  right: 24px;
+  left: 0;
+  right: 0;
+  margin-inline: auto; /* 좌우 대칭 가운데 정렬(컨테이너 기준) */
   bottom: 24px;
+  width: min(72vw, calc(100vw - 2 * var(--ln-gutter, clamp(1.4rem, 4vw, 3rem)))); /* 상단 텍스트 공간 확보 */
   z-index: 2;
-  aspect-ratio: 16 / 9; /* 폭(left/right로 결정) → 세로 자동 */
-  transform-origin: bottom right; /* [A/B] scale 축소가 우측 하단(right:24,bottom:24) 코너로 모이게 */
+  aspect-ratio: 16 / 9;
+  transform-origin: bottom right; /* scale 축소가 우측 하단 코너로 모이게 */
   overflow: hidden;
   /* 직각 모서리 · 그림자 없음 */
   background: #e3e3e0;
-  will-change: transform; /* [A] GPU 합성 */
+  will-change: transform; /* GPU 합성 */
 }
 .video img {
   width: 100%;
@@ -113,15 +116,22 @@
   .pin {
     height: auto;
   }
-  .videoStage {
+  .stage {
     position: static;
     height: auto;
     overflow: visible;
-    padding: 0 var(--ln-gutter, 1.4rem) clamp(3rem, 8vh, 4rem);
+    padding: clamp(4rem, 12vh, 6rem) var(--ln-gutter, 1.4rem) clamp(3rem, 8vh, 4rem);
+  }
+  .lead {
+    position: static;
+    left: auto;
+    right: auto;
+    top: auto;
   }
   .video {
     position: static;
     width: 100% !important;
+    margin-inline: 0;
     aspect-ratio: 16 / 9;
     transform: none !important; /* 모바일: scale 축소 없음 */
     margin-top: clamp(1.6rem, 5vh, 2.4rem);

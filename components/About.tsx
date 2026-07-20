@@ -1,8 +1,8 @@
 "use client";
 
-// ABOUT — noth.in "Most brands produce~" 무드: 텍스트(리드/본문)는 일반 흐름으로 스크롤되고,
-//   영상 박스만 별도 sticky 컨테이너로 화면에 잠깐 붙어 우측 하단 미니플레이어로 축소된다.
-//   (전체 100vh sticky 로 화면을 통째 고정하던 구조 제거 → 영상만 sticky)
+// ABOUT — noth.in "Most brands produce~" 무드: 상단 리드 텍스트가 보이는 상태에서 영상 축소가 시작.
+//   리드/영상/본문이 같은 sticky 무대에 있고, 영상은 뷰포트를 다 덮지 않는 크기(상단에 텍스트 공간)로
+//   시작 → 스크롤에 따라 scale 로 서서히 축소되어 우측 하단 미니플레이어로 안착(그 사이 본문 노출).
 import { useEffect, useRef, useState } from "react";
 import {
   motion,
@@ -17,7 +17,8 @@ import styles from "./About.module.css";
 
 // 영상 자리 placeholder — 실제 영상은 나중에 교체. 지금은 로컬 이미지로 대체.
 const PLACEHOLDER = "/posters-photo/m4.jpg";
-const MINI_W = 400; // [C] 최종 미니플레이어 폭(px). 세로는 16:9 → 225px.
+const MINI_W = 400; // 최종 미니플레이어 폭(px). 세로는 16:9 → 225px.
+const MARGIN = 24; // 우/하 코너 여백(px)
 
 export default function About() {
   const ref = useRef<HTMLElement | null>(null);
@@ -38,58 +39,63 @@ export default function About() {
     target: ref,
     offset: ["start start", "end end"],
   });
-  // [A] 스프링 유지(살짝 더 부드럽게 60/22) → "슉~" 부드러운 감속.
   const p = useSpring(scrollYProgress, { stiffness: 60, damping: 22, mass: 1 });
 
-  // k: 1(큰 영상) → 0(미니플레이어). [A] 축소 구간을 앞당기고 넓힘 [0.45,0.7] → [0.1,0.6]:
-  //   스크롤 초반부터 완만하게 줄기 시작해 여유롭게 축소 완료(픽스됐다 슉 → 서서히).
-  const k = useTransform(p, [0.1, 0.6], [1, 0]);
+  // k: 1(큰 영상) → 0(미니플레이어). 리드가 보이는 초반부터 서서히 축소.
+  const k = useTransform(p, [0.08, 0.6], [1, 0]);
 
-  // [A] transform: scale 기반(레이아웃 재계산 없음, GPU). [B] 영상은 CSS 로 좌/우 24px 대칭 배치(left/right 동일)
-  //   → 컨테이너 기준 완전 중앙(뷰포트 vw/스크롤바 계산 불필요) → 좌우 여백 동일. translateX 보정 제거.
-  //   scale 만 트윈, transform-origin: bottom right → 하단에 붙은 채 우측 하단 코너로 축소.
-  //   targetScale = 400 / baseWidth(측정) → 최종 정확히 400×225.
-  const targetScaleMV = useMotionValue(0.34);
+  // transform: scale + translateX 기반(레이아웃 재계산 없음, GPU).
+  //   영상은 CSS 로 '가운데 정렬(상단 텍스트 공간을 남긴 크기)'. 측정으로 최종 미니플레이어 크기/위치 계산:
+  //   targetScale = 400 / baseW, cornerX = offsetLeft - MARGIN (가운데 → 우측 코너로 이동할 거리).
+  const targetScaleMV = useMotionValue(0.4);
+  const cornerXMV = useMotionValue(0);
   useEffect(() => {
     const measure = () => {
-      const w = vidRef.current?.offsetWidth || 0; // 레이아웃 폭(transform 영향 없음) = 컨테이너 - 48
-      if (w) targetScaleMV.set(MINI_W / w);
+      const el = vidRef.current;
+      if (!el || !el.offsetWidth) return;
+      targetScaleMV.set(MINI_W / el.offsetWidth);
+      // 가운데 정렬이라 offsetLeft = 좌측 여백. 우측 코너(right:MARGIN)로 옮기는 거리 = 좌측여백 - MARGIN.
+      cornerXMV.set(el.offsetLeft - MARGIN);
     };
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
-  }, [targetScaleMV]);
+  }, [targetScaleMV, cornerXMV]);
 
-  // scale: k=1 → 1(큰 영상, 좌우 대칭), k=0 → targetScale(우하단 400×225 미니플레이어).
+  // scale: k=1 → 1(가운데 큰 영상), k=0 → targetScale(미니플레이어). transform-origin: bottom right(CSS).
   const scale = useTransform(
     [k, targetScaleMV],
     ([kv, sv]) => (sv as number) + (kv as number) * (1 - (sv as number))
   );
+  // x(translateX): k=1 → 0(가운데), k=0 → cornerX(우측 코너). 가운데→우하단 이동을 scale 과 함께.
+  const x = useTransform(
+    [k, cornerXMV],
+    ([kv, cx]) => (1 - (kv as number)) * (cx as number)
+  );
 
   // reduce / 모바일: 모션 없이 정적(모바일은 CSS 가 static·full-width·16:9 로 override).
-  const vidStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { scale };
+  const vidStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { scale, x };
 
   return (
     <section ref={ref} id="about" className={styles.about}>
-      {/* 리드(눈썹+인용문) — 일반 흐름. 그냥 자연스럽게 스크롤되며 위로 지나감(고정 없음). */}
-      <div className={styles.lead}>
-        <span className={styles.eyebrow}>About — 배급사 소개</span>
-        <h2 className={styles.quote}>
-          좋은 영화는 사라지지 않는다.
-          <br />
-          다만 옮겨질 곳을 기다릴 뿐이다.
-        </h2>
-      </div>
-
-      {/* 영상 전용 sticky 트랙 — 이 트랙(.pin)을 스크롤하는 동안 .videoStage 만 화면에 붙어 영상이 축소된다. */}
       <div className={styles.pin}>
-        <div className={styles.videoStage}>
+        {/* 리드 + 영상 + 본문이 같은 sticky 무대 → 상단 텍스트가 보이는 채로 영상이 축소된다. */}
+        <div className={styles.stage}>
+          <div className={styles.lead}>
+            <span className={styles.eyebrow}>About — 배급사 소개</span>
+            <h2 className={styles.quote}>
+              좋은 영화는 사라지지 않는다.
+              <br />
+              다만 옮겨질 곳을 기다릴 뿐이다.
+            </h2>
+          </div>
+
           <motion.div ref={vidRef} className={styles.video} style={vidStyle}>
             <img src={PLACEHOLDER} alt="필름 누벨 소개 영상 (placeholder)" />
             <span className={styles.videoTag}>Showreel</span>
           </motion.div>
 
-          {/* 본문 — 큰 영상(위 z)에 가려졌다가 영상이 우하단으로 축소되며 물리적으로 드러남. */}
+          {/* 본문 — 영상이 우하단으로 축소되며 좌측 하단에 드러남. */}
           <p className={styles.body}>
             필름 누벨은 2014년부터 독립영화와 예술영화를 다시 스크린으로 선보여 왔습니다. 매년
             엄선한 소수의 작품을 극장 개봉, 특별전, 공동체 상영, 아카이브까지 이어지는 여정 속에서
