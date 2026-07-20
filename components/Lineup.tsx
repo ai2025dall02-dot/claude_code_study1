@@ -61,10 +61,6 @@ export default function Lineup() {
 
   const trackRef = useRef<HTMLDivElement | null>(null); // 세로로 긴 스크롤 트랙(진행도 측정)
   const titleRef = useRef<HTMLHeadingElement | null>(null); // 텍스트 크기/위치 측정용
-  // [SVG] LINE UP 을 SVG <text> 로 렌더 → 솔리드/라인 정렬을 SVG 가 처리, UP 은 non-scaling-stroke.
-  const textRef = useRef<SVGTextElement | null>(null); // 텍스트 bbox 측정용
-  // 측정된 텍스트 bbox → svg width/height/viewBox 로 사용(레이아웃 박스가 글자에 딱 맞게)
-  const [box, setBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
@@ -81,41 +77,6 @@ export default function Lineup() {
   });
 
   const bigScale = isMobile ? BIG_SCALE_MOBILE : BIG_SCALE_DESKTOP;
-
-  // [SVG] 텍스트 bbox 측정 → svg 박스를 글자에 맞춤(폰트 로드/리사이즈 시 재측정).
-  useEffect(() => {
-    const measure = () => {
-      const t = textRef.current;
-      if (!t) return;
-      let bb: DOMRect;
-      try {
-        bb = t.getBBox();
-      } catch {
-        return;
-      }
-      if (bb.width > 0) {
-        setBox((prev) =>
-          prev &&
-          Math.abs(prev.w - bb.width) < 0.5 &&
-          Math.abs(prev.h - bb.height) < 0.5 &&
-          Math.abs(prev.x - bb.x) < 0.5 &&
-          Math.abs(prev.y - bb.y) < 0.5
-            ? prev
-            : { x: bb.x, y: bb.y, w: bb.width, h: bb.height }
-        );
-      }
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    const raf = requestAnimationFrame(measure);
-    if (typeof document !== "undefined" && document.fonts?.ready) {
-      document.fonts.ready.then(measure).catch(() => {});
-    }
-    return () => {
-      window.removeEventListener("resize", measure);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
 
   // [B] 좌하단(안착) 대비 좌상단(진입)까지의 translate 량 실측.
   //  .lineupHeading 은 CSS 로 좌측 하단(left/bottom)에 앵커, <h2> 는 transform-origin: left bottom.
@@ -150,7 +111,7 @@ export default function Lineup() {
       window.removeEventListener("resize", measure);
       cancelAnimationFrame(raf);
     };
-  }, [bigScale, isMobile, box]); // box(svg 크기) 확정 후 재측정
+  }, [bigScale, isMobile]);
 
   const tx = useTransform(p, [0, MOVE_END], [big.x, 0]);
   const ty = useTransform(p, [0, MOVE_END], [big.y, 0]);
@@ -296,28 +257,17 @@ export default function Lineup() {
               [A] "LINE"=솔리드 채움 / "UP"=아웃라인(라인). 채움색·아웃라인 stroke 색 모두 흰→회색 전환.
               컨테이너는 좌하단 고정, <h2> 만 확대·이동. eyebrow 는 안착 즈음 페이드 인. */}
           <div className={styles.lineupHeading}>
-            {/* [SVG] LINE(솔리드)+UP(라인)을 하나의 SVG <text> 로 → 정렬은 SVG 가, UP 은
-                non-scaling-stroke 로 히어로 NOUVELLE 같은 선명한 라인. 색(흰→회색)은 h2 의 color(currentColor)로 전환. */}
             <motion.h2 ref={titleRef} className={styles.lineupBig} style={titleStyle} aria-label="LINE UP">
-              <svg
-                className={styles.luSvg}
+              <span className={styles.luSolid} aria-hidden="true">
+                LINE
+              </span>{" "}
+              <motion.span
+                className={styles.luLine}
                 aria-hidden="true"
-                width={box ? box.w : undefined}
-                height={box ? box.h : undefined}
-                viewBox={box ? `${box.x} ${box.y} ${box.w} ${box.h}` : undefined}
+                style={reduce ? undefined : { WebkitTextStrokeColor: titleColor }}
               >
-                <text
-                  ref={textRef}
-                  className={styles.luText}
-                  x="0"
-                  y="0"
-                  dominantBaseline="text-before-edge"
-                  xmlSpace="preserve"
-                >
-                  <tspan className={styles.luSolidT}>LINE </tspan>
-                  <tspan className={styles.luLineT}>UP</tspan>
-                </text>
-              </svg>
+                UP
+              </motion.span>
             </motion.h2>
             {/* eyebrow 를 제목 아래에 배치 */}
             <motion.span
