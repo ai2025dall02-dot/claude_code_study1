@@ -118,14 +118,23 @@
   margin: 0;
   font-family: var(--font-anton), "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
-  /* 코너(안착) 기준 크기 — 진입 시 JS 가 여기에 bigScale(≈3×) 을 곱해 크게 띄움. */
-  font-size: clamp(2rem, 5.4vw, 3.6rem);
+  /* 좌하단(안착) 기준 크기 — 진입 시 JS 가 여기에 bigScale(≈1.6×) 을 곱해 좌상단에 살짝 크게. */
+  font-size: clamp(2.2rem, 6vw, 4.2rem);
   line-height: 0.9;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
   color: #8f8f8b; /* reduce/폴백 기본색(회색). 비-reduce 는 JS 가 흰→회색 override */
   will-change: transform;
+}
+/* [A] "LINE" = 솔리드 채움(h2 color 상속: 흰→회색) */
+.luSolid {
+  color: inherit;
+}
+/* [A] "UP" = 아웃라인(라인) — 속 비고 외곽선만. stroke 색은 JS 가 흰→회색으로 전환(reduce 는 아래 기본색). */
+.luLine {
+  color: transparent;
+  -webkit-text-stroke: 3px #8f8f8b;
 }
 /* [B] 가로 슬라이드 뷰포트(마퀴 + 드래그) — 무대 세로 중앙, 하단은 코너 텍스트 공간 확보. */
 .railViewport {
@@ -156,7 +165,8 @@
 }
 .railCard {
   flex: 0 0 auto;
-  width: clamp(190px, 20vw, 280px);
+  /* [C] 이미지 카드 확대 — 폭을 키워 3/4 미디어 영역이 더 시원하게 */
+  width: clamp(240px, 26vw, 380px);
   display: flex;
   flex-direction: column;
   margin: 0;
@@ -226,13 +236,17 @@
     height: 200vh;
   }
   .lineupBig {
-    font-size: clamp(1.7rem, 8vw, 2.6rem);
+    font-size: clamp(1.9rem, 8.6vw, 2.9rem);
+  }
+  .luLine {
+    -webkit-text-stroke-width: 2px;
   }
   .railViewport {
     padding-bottom: 12vh;
   }
   .railCard {
-    width: clamp(150px, 52vw, 210px);
+    /* [C] 모바일도 카드 확대 */
+    width: clamp(200px, 66vw, 280px);
   }
 }
 /* reduce: sticky/모션 해제 → 일반 흐름. 텍스트 상단·회색, 슬라이드는 가로 스크롤로 탐색. */

@@ -37,10 +37,10 @@ const FILM_PHOTO: Record<string, string> = {
 
 const ITEMS = films;
 
-// [A] 진입 시 텍스트 확대 배율(코너 안착 크기 대비). 데스크톱 3.0× / 모바일 2.0×.
-const BIG_SCALE_DESKTOP = 3.0;
-const BIG_SCALE_MOBILE = 2.0;
-// [A] 텍스트가 중앙(큰) → 코너(작은)로 이동을 마치는 진행도. 이후 구간은 슬라이드 감상 체류.
+// [B] 진입 시 텍스트 확대 배율(안착 크기 대비) — "살짝만" 크게. 데스크톱 1.6× / 모바일 1.35×.
+const BIG_SCALE_DESKTOP = 1.6;
+const BIG_SCALE_MOBILE = 1.35;
+// [B] 텍스트가 좌상단(큰) → 좌하단(살짝 작게) 이동을 마치는 진행도. 이후 구간은 슬라이드 감상 체류.
 const MOVE_END = 0.42;
 // [B] 자동 슬라이드 속도(px/초). 느리게.
 const AUTO_SPEED = 24;
@@ -77,27 +77,27 @@ export default function Lineup() {
 
   const bigScale = isMobile ? BIG_SCALE_MOBILE : BIG_SCALE_DESKTOP;
 
-  // 코너(안착) 위치와 중앙(진입) 위치의 차이를 실측 → 진입 시 translate 량(txBig/tyBig).
-  //  .lineupHeading 은 CSS 로 좌측 하단(left/bottom)에 앵커·transform-origin: left bottom.
-  //  scale=1 이면 코너에 안착(translate 0), scale=bigScale 이면 중앙으로 오도록 translate.
+  // [B] 좌하단(안착) 대비 좌상단(진입)까지의 translate 량 실측.
+  //  .lineupHeading 은 CSS 로 좌측 하단(left/bottom)에 앵커, <h2> 는 transform-origin: left bottom.
+  //  scale=1·translate 0 → 좌하단 안착. scale=bigScale·translateY(위로) → 좌상단에 살짝 크게.
+  //  좌우는 항상 좌측 정렬(txBig=0)이라 세로로만 top↔bottom 이동한다.
   const [big, setBig] = useState({ x: 0, y: 0 });
   useEffect(() => {
     const measure = () => {
-      const el = titleRef.current; // <h2> 만 확대·이동(eyebrow 는 코너 고정)
+      const el = titleRef.current; // <h2> 만 확대·이동(eyebrow 는 좌하단 고정)
       const container = el?.offsetParent as HTMLElement | null; // .lineupHeading (absolute)
       const stage = container?.offsetParent as HTMLElement | null; // .lineupStage (sticky)
       if (!el || !container || !stage) return;
-      const w0 = el.offsetWidth; // 레이아웃 폭(transform 영향 없음, 미확대 기준)
-      const h0 = el.offsetHeight;
-      const stageW = stage.clientWidth;
+      const h0 = el.offsetHeight; // 레이아웃 높이(transform 영향 없음, 미확대 기준)
       const stageH = stage.clientHeight;
-      // 무대 기준 <h2> 좌상단 좌표(= 컨테이너 오프셋 + h2 오프셋)
-      const xInStage = el.offsetLeft + container.offsetLeft;
+      // 무대 기준 <h2> 좌상단 y(= 컨테이너 오프셋 + h2 오프셋) → 안착 시 하단(restBottom)
       const yInStage = el.offsetTop + container.offsetTop;
-      // origin: left bottom → 확대 시 (좌하단 고정점) 기준 중심 좌표
-      const cx = xInStage + (w0 * bigScale) / 2;
-      const cy = yInStage + h0 - (h0 * bigScale) / 2;
-      setBig({ x: stageW / 2 - cx, y: stageH / 2 - cy });
+      const restBottom = yInStage + h0;
+      // 진입 시 상단 여백(무대 높이 비례, 상한/하한). 여기에 확대된 텍스트 상단을 맞춤.
+      const topPad = Math.max(72, Math.round(stageH * 0.13));
+      // origin: left bottom → 확대 텍스트 하단 = restBottom + tyBig, 상단 = topPad 가 되도록:
+      //   topPad + h0*bigScale = restBottom + tyBig  →  tyBig = topPad + h0*bigScale - restBottom (음수=위로)
+      setBig({ x: 0, y: topPad + h0 * bigScale - restBottom });
     };
     measure();
     window.addEventListener("resize", measure);
@@ -251,8 +251,9 @@ export default function Lineup() {
             </motion.div>
           </motion.div>
 
-          {/* [A][C] LINE UP 텍스트 — 진입 시 중앙 크게(흰) → 코너로 축소(회색).
-              컨테이너는 코너 고정, <h2> 만 확대·이동. eyebrow 는 안착 즈음 페이드 인. */}
+          {/* [A][B][C] LINE UP 텍스트 — 진입 시 좌상단 크게(흰) → 좌하단으로 살짝 축소(회색).
+              [A] "LINE"=솔리드 채움 / "UP"=아웃라인(라인). 채움색·아웃라인 stroke 색 모두 흰→회색 전환.
+              컨테이너는 좌하단 고정, <h2> 만 확대·이동. eyebrow 는 안착 즈음 페이드 인. */}
           <div className={styles.lineupHeading}>
             <motion.span
               className={styles.lineupEyebrow}
@@ -260,8 +261,17 @@ export default function Lineup() {
             >
               The Programme · 2024–2025
             </motion.span>
-            <motion.h2 ref={titleRef} className={styles.lineupBig} style={titleStyle}>
-              LINE UP
+            <motion.h2 ref={titleRef} className={styles.lineupBig} style={titleStyle} aria-label="LINE UP">
+              <span className={styles.luSolid} aria-hidden="true">
+                LINE
+              </span>{" "}
+              <motion.span
+                className={styles.luLine}
+                aria-hidden="true"
+                style={reduce ? undefined : { WebkitTextStrokeColor: titleColor }}
+              >
+                UP
+              </motion.span>
             </motion.h2>
           </div>
         </div>
