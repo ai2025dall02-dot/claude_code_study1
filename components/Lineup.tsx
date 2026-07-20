@@ -257,12 +257,6 @@ export default function Lineup() {
               [A] "LINE"=솔리드 채움 / "UP"=아웃라인(라인). 채움색·아웃라인 stroke 색 모두 흰→회색 전환.
               컨테이너는 좌하단 고정, <h2> 만 확대·이동. eyebrow 는 안착 즈음 페이드 인. */}
           <div className={styles.lineupHeading}>
-            <motion.span
-              className={styles.lineupEyebrow}
-              style={reduce ? undefined : { opacity: eyebrowOpacity }}
-            >
-              The Programme · 2024–2025
-            </motion.span>
             <motion.h2 ref={titleRef} className={styles.lineupBig} style={titleStyle} aria-label="LINE UP">
               <span className={styles.luSolid} aria-hidden="true">
                 LINE
@@ -275,6 +269,13 @@ export default function Lineup() {
                 UP
               </motion.span>
             </motion.h2>
+            {/* eyebrow 를 제목 아래에 배치 */}
+            <motion.span
+              className={styles.lineupEyebrow}
+              style={reduce ? undefined : { opacity: eyebrowOpacity }}
+            >
+              The Programme · 2024–2025
+            </motion.span>
           </div>
         </div>
       </div>

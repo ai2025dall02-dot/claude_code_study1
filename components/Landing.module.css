@@ -81,6 +81,8 @@
   color: #f4f4f2;
   position: relative;
   z-index: 1;
+  /* 위·아래 검은 배경 여백 — 섹션 앞뒤로 검정 밴드를 늘려 길게 보이게 */
+  padding-block: clamp(4rem, 11vh, 9rem);
 }
 /* 세로로 긴 스크롤 트랙 — 이 높이만큼 스크롤하는 동안 무대가 붙어(sticky) 텍스트가 코너로 이동. */
 .lineupTrack {
@@ -112,7 +114,7 @@
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: #6f6f6b;
-  margin-bottom: 0.7rem;
+  margin-top: 0.8rem; /* LINE UP 제목 아래에 배치 */
 }
 .lineupBig {
   margin: 0;
@@ -139,7 +141,7 @@
    stroke 색은 JS 가 흰→회색으로 전환(reduce 는 아래 기본 회색). */
 .luLine {
   color: transparent;
-  -webkit-text-stroke-width: 1.5px;
+  -webkit-text-stroke-width: 1px;
   -webkit-text-stroke-color: #5a5a57; /* [B] reduce 기본 stroke 색도 더 어둡게 */
 }
 /* [B] 가로 슬라이드 뷰포트(마퀴 + 드래그) — 무대 세로 중앙, 하단은 코너 텍스트 공간 확보. */
@@ -210,10 +212,10 @@
   background: #f4f4f2;
   color: #0b0b0c;
   font-family: var(--font-meta, monospace);
-  font-size: 9.5px;
+  font-size: 11px; /* 카드 텍스트 확대(9.5→11px) */
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  padding: 6px 10px;
+  padding: 7px 12px;
 }
 .railCard__body {
   display: flex;
@@ -224,14 +226,14 @@
 .railCard__title {
   font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
-  font-size: clamp(1rem, 1.3vw, 1.2rem);
+  font-size: clamp(1.25rem, 1.7vw, 1.6rem); /* 카드 제목 확대 */
   letter-spacing: -0.02em;
   line-height: 1.1;
   color: #f4f4f2;
 }
 .railCard__en {
   font-family: var(--font-meta, monospace);
-  font-size: 10px;
+  font-size: 12px; /* 카드 영문 확대(10→12px) */
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #8a8a86;
@@ -246,7 +248,7 @@
     font-size: clamp(2.6rem, 15vw, 5rem);
   }
   .luLine {
-    -webkit-text-stroke-width: 1.1px; /* 모바일도 얇게 비례 조정(2.4→1.5 축소에 맞춤) */
+    -webkit-text-stroke-width: 0.7px; /* 모바일도 얇게(데스크톱 1px 에 맞춘 비례) */
   }
   .railViewport {
     padding-bottom: 14vh; /* [A] 모바일도 겹침 위해 카드 열을 조금 내림 */
@@ -577,9 +579,8 @@
 }
 .fmBg .title em {
   -webkit-text-stroke-color: #0b0b0c;
-  /* FILMMAKERS outline 을 정확히 절반으로: 0.14px → 0.07px. 글자가 커서(≈166px) 이 하한에도 선이 표현됨.
-     (다른 섹션은 0.25px 유지. 저해상도(1x)에선 0.07px 가 아주 희미할 수 있음) */
-  -webkit-text-stroke-width: 0.07px;
+  /* MAKERS 아웃라인을 또렷한 1px 라인으로(LINE UP 의 UP 과 동일 두께). 다른 섹션 제목은 0.25px 유지. */
+  -webkit-text-stroke-width: 1px;
 }
 .fmHeadSub {
   display: block;
