@@ -31,8 +31,10 @@ const SEG_W = 28; // 카드 가로 세그먼트(곡면 매끄럽게)
 
 // ── 기울기 ──
 // dayonedream: 원통을 꽤 눕혀 "안쪽 상단" 판들이 위로 길게 펼쳐지게(rotateX 양수 키움) + 살짝 대각선(rotateZ).
-const TILT_Z = THREE.MathUtils.degToRad(8); // [3] 대각선 기울기 — DayOneDream 처럼 살짝만(10→8)
+const TILT_Z = THREE.MathUtils.degToRad(14); // [B] 대각선 강화 — 좌측이 더 아래로 기운 대각선(8→14)
 const TILT_X = THREE.MathUtils.degToRad(24); // [3] 뒤로 더 눕혀 위쪽 빈 판이 펼쳐지고 좌우 카드가 곡면 따라 휘게(20→24)
+// [C] 덱 실루엣을 세로로 살짝 눌러 "가로로 길고 세로로 짧은" 원통으로(그룹 세로 스케일 < 1). 카드 개수/간격/동작은 유지.
+const FLAT_Y = 0.85;
 
 // ── 카메라/스케일 ──
 const CAM_Z = 15; // [3] 카메라 거리 — 8개·큰 카드에 맞춰(정면 카드 크되 안 잘리게)
@@ -286,7 +288,9 @@ export default function CylinderDeck({ images, active, reduce, onIntroDone }: Cy
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      tiltZ.scale.setScalar(scaleForWidth(window.innerWidth));
+      // [C] 세로만 살짝 눌러(FLAT_Y) 가로로 긴 납작한 원통 실루엣. 폭 스케일은 기존 반응형 값 유지.
+      const s = scaleForWidth(window.innerWidth);
+      tiltZ.scale.set(s, s * FLAT_Y, s);
       tiltZ.position.y = centerYForWidth(window.innerWidth); // [B] 폭별 세로 위치(모바일 확대분 보정)
     };
     applySize();

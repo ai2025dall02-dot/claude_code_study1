@@ -61,8 +61,8 @@
   margin: 0;
   display: inline-block;
   white-space: nowrap; /* 단어는 한 줄 유지 */
-  /* [A] 코너 라벨을 시원하게 크게 — 화면을 채우되 NOUVELLE(8자)가 폭에 들어가는 선. */
-  font-size: clamp(3rem, 18vw, 15rem);
+  /* [A] 코너 라벨 1.5배 크게 — 화면을 채우되 NOUVELLE(8자)가 폭에 들어가는 선(vw 계수는 넘침 방지로 미세조정). */
+  font-size: clamp(4.5rem, 26vw, 22rem);
   letter-spacing: 0.005em;
   line-height: 0.86;
   text-transform: uppercase;
@@ -76,7 +76,7 @@
 /* [E] NOUVELLE — 아웃라인(라인) 스타일: 속 비고 외곽선만. [A] 커진 폰트에 맞게 두께 살짝 굵게. */
 .wordNouvelle {
   color: transparent;
-  -webkit-text-stroke: 2.5px #0c0c0c;
+  -webkit-text-stroke: 3.5px #0c0c0c; /* [A] 커진 폰트에 맞춰 아웃라인 굵게(2.5→3.5) */
 }
 /* 각 글자 = 바깥 span(.letter) + 안쪽 span(.letterInner).
    .letter = 고정 마스크 창: clip-path(inset) 로 글자 원래 영역만 남기고(가로=글자 폭, 세로는 넉넉히 열어 잉크 안 잘림),
@@ -104,9 +104,9 @@
   /* 모바일: NOUVELLE(8자)가 좁은 폭에서 우하단에 들어가도록 폰트 축소(커진 데스크탑 기준을 그대로 두면 넘침).
      FILM=좌상단 / NOUVELLE=우하단 배치는 JS(코너 좌표)가 담당 — 두 단어가 겹치거나 화면 밖으로 안 나감. */
   .word {
-    font-size: clamp(2rem, 15vw, 6rem);
+    font-size: clamp(3rem, 22vw, 9rem); /* [A] 모바일도 1.5배 */
   }
   .wordNouvelle {
-    -webkit-text-stroke-width: 1.6px; /* 아웃라인도 폭에 맞춰 얇게 */
+    -webkit-text-stroke-width: 2.4px; /* 아웃라인도 폭에 맞춰(1.6→2.4) */
   }
 }
