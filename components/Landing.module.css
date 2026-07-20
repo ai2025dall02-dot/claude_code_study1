@@ -139,7 +139,7 @@
    stroke 색은 JS 가 흰→회색으로 전환(reduce 는 아래 기본 회색). */
 .luLine {
   color: transparent;
-  -webkit-text-stroke-width: 2.4px;
+  -webkit-text-stroke-width: 1.5px;
   -webkit-text-stroke-color: #8f8f8b;
 }
 /* [B] 가로 슬라이드 뷰포트(마퀴 + 드래그) — 무대 세로 중앙, 하단은 코너 텍스트 공간 확보. */
@@ -246,7 +246,7 @@
     font-size: clamp(2.6rem, 15vw, 5rem);
   }
   .luLine {
-    -webkit-text-stroke-width: 1.8px; /* 모바일도 작아진 폰트에 맞춰 얇게(히어로 비례) */
+    -webkit-text-stroke-width: 1.1px; /* 모바일도 얇게 비례 조정(2.4→1.5 축소에 맞춤) */
   }
   .railViewport {
     padding-bottom: 20vh;
