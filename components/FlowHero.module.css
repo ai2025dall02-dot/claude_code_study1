@@ -62,7 +62,7 @@
   display: inline-block;
   white-space: nowrap; /* 단어는 한 줄 유지 */
   /* [A] 코너 라벨 1.5배 크게 — 화면을 채우되 NOUVELLE(8자)가 폭에 들어가는 선(vw 계수는 넘침 방지로 미세조정). */
-  font-size: clamp(4.5rem, 26vw, 22rem);
+  font-size: clamp(4rem, 22vw, 19rem);
   letter-spacing: 0.005em;
   line-height: 0.86;
   text-transform: uppercase;
@@ -104,7 +104,7 @@
   /* 모바일: NOUVELLE(8자)가 좁은 폭에서 우하단에 들어가도록 폰트 축소(커진 데스크탑 기준을 그대로 두면 넘침).
      FILM=좌상단 / NOUVELLE=우하단 배치는 JS(코너 좌표)가 담당 — 두 단어가 겹치거나 화면 밖으로 안 나감. */
   .word {
-    font-size: clamp(3rem, 22vw, 9rem); /* [A] 모바일도 1.5배 */
+    font-size: clamp(2.6rem, 19vw, 7.6rem); /* [A] 모바일도 같은 비율로 살짝 축소 */
   }
   .wordNouvelle {
     -webkit-text-stroke-width: 2.4px; /* 아웃라인도 폭에 맞춰(1.6→2.4) */
