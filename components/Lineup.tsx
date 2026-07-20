@@ -95,7 +95,8 @@ export default function Lineup() {
       const yInStage = el.offsetTop + container.offsetTop;
       const restBottom = yInStage + h0;
       // 진입 시 상단 여백(무대 높이 비례, 상한/하한). 여기에 확대된 텍스트 상단을 맞춤.
-      const topPad = Math.max(72, Math.round(stageH * 0.13));
+      // [A] 진입 시 상단 여백을 줄여 LINE UP 을 살짝 위로(0.13→0.09, 하한 72→50).
+      const topPad = Math.max(50, Math.round(stageH * 0.09));
       // origin: left bottom → 확대 텍스트 하단 = restBottom + tyBig, 상단 = topPad 가 되도록:
       //   topPad + h0*bigScale = restBottom + tyBig  →  tyBig = topPad + h0*bigScale - restBottom (음수=위로)
       setBig({ x: 0, y: topPad + h0 * bigScale - restBottom });
