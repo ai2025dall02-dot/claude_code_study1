@@ -49,14 +49,13 @@
    z 가 .body 위 → 큰 영상일 때 좌하단 본문을 덮고, 우하단 미니플레이어로 작아지며 비켜 줌. */
 .video {
   position: absolute;
-  /* [B] 우/하 24px 앵커(=최종 미니플레이어 위치). 초기엔 JS 의 translateX 로 좌우 중앙정렬, scale 로 크게. */
+  /* [B] 좌/우 24px 동일 → 컨테이너 기준 완전 좌우 대칭(뷰포트/스크롤바 계산 불필요). 폭은 자동(컨테이너-48). */
+  left: 24px;
   right: 24px;
   bottom: 24px;
-  /* 초기 큰 16:9 크기를 CSS 로 고정(측정 기준). scale/translate 만 트윈 → 레이아웃 재계산 없음. */
-  width: calc(100vw - 2 * var(--ln-gutter, clamp(1.4rem, 4vw, 3rem)));
   z-index: 2;
-  aspect-ratio: 16 / 9;
-  transform-origin: bottom right; /* [A/B] 축소가 우측 하단으로 모이게 */
+  aspect-ratio: 16 / 9; /* 폭(left/right로 결정) → 세로 자동 */
+  transform-origin: bottom right; /* [A/B] scale 축소가 우측 하단(right:24,bottom:24) 코너로 모이게 */
   overflow: hidden;
   /* 직각 모서리 · 그림자 없음 */
   background: #e3e3e0;

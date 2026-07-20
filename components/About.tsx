@@ -18,7 +18,6 @@ import styles from "./About.module.css";
 // 영상 자리 placeholder — 실제 영상은 나중에 교체. 지금은 로컬 이미지로 대체.
 const PLACEHOLDER = "/posters-photo/m4.jpg";
 const MINI_W = 400; // [C] 최종 미니플레이어 폭(px). 세로는 16:9 → 225px.
-const MARGIN = 24; // 우/하 여백(px)
 
 export default function About() {
   const ref = useRef<HTMLElement | null>(null);
@@ -39,38 +38,36 @@ export default function About() {
     target: ref,
     offset: ["start start", "end end"],
   });
-  // [A] 스프링 완화(120→70) → "슉~" 부드러운 감속.
-  const p = useSpring(scrollYProgress, { stiffness: 70, damping: 24, mass: 1 });
+  // [A] 스프링 유지(살짝 더 부드럽게 60/22) → "슉~" 부드러운 감속.
+  const p = useSpring(scrollYProgress, { stiffness: 60, damping: 22, mass: 1 });
 
-  // k: 1(큰 영상) → 0(미니플레이어). [C] 축소 타이밍 중반 이후 늦게+짧게 [0.45,0.7].
-  const k = useTransform(p, [0.45, 0.7], [1, 0]);
+  // k: 1(큰 영상) → 0(미니플레이어). [A] 축소 구간을 앞당기고 넓힘 [0.45,0.7] → [0.1,0.6]:
+  //   스크롤 초반부터 완만하게 줄기 시작해 여유롭게 축소 완료(픽스됐다 슉 → 서서히).
+  const k = useTransform(p, [0.1, 0.6], [1, 0]);
 
-  // [A] width/calc 트윈 대신 transform: scale — 레이아웃 재계산 없이 GPU 합성으로 부드럽게.
-  //   영상 박스는 CSS 로 초기 큰 16:9 크기 고정(우/하 24px 앵커). 아래 값은 측정 기반으로 반응형 대응.
-  //   targetScale = 400 / baseWidth (최종 미니플레이어), txCenter = 초기 중앙정렬용 translateX(px).
+  // [A] transform: scale 기반(레이아웃 재계산 없음, GPU). [B] 영상은 CSS 로 좌/우 24px 대칭 배치(left/right 동일)
+  //   → 컨테이너 기준 완전 중앙(뷰포트 vw/스크롤바 계산 불필요) → 좌우 여백 동일. translateX 보정 제거.
+  //   scale 만 트윈, transform-origin: bottom right → 하단에 붙은 채 우측 하단 코너로 축소.
+  //   targetScale = 400 / baseWidth(측정) → 최종 정확히 400×225.
   const targetScaleMV = useMotionValue(0.34);
-  const txCenterMV = useMotionValue(0);
   useEffect(() => {
     const measure = () => {
-      const w = vidRef.current?.offsetWidth || 0; // 레이아웃 폭(transform 영향 없음)
-      if (!w) return;
-      targetScaleMV.set(MINI_W / w);
-      // [B] 초기(큰 영상)를 좌우 중앙정렬: 우측 앵커(right:MARGIN) 상태에서 왼쪽으로 이만큼 이동하면 중앙.
-      txCenterMV.set(MARGIN + w / 2 - window.innerWidth / 2);
+      const w = vidRef.current?.offsetWidth || 0; // 레이아웃 폭(transform 영향 없음) = 컨테이너 - 48
+      if (w) targetScaleMV.set(MINI_W / w);
     };
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
-  }, [targetScaleMV, txCenterMV]);
+  }, [targetScaleMV]);
 
-  // scale: k=1 → 1(큰 영상), k=0 → targetScale(미니플레이어). transform-origin: bottom right(CSS) → 우하단으로 모임.
-  const scale = useTransform([k, targetScaleMV], ([kv, sv]) => (sv as number) + (kv as number) * (1 - (sv as number)));
-  // x(translateX): k=1 → txCenter(중앙정렬), k=0 → 0(우측 앵커=우하단). 중앙정렬 translate 와 우하단 이동을 하나로.
-  const x = useTransform([k, txCenterMV], ([kv, txv]) => (kv as number) * (txv as number));
+  // scale: k=1 → 1(큰 영상, 좌우 대칭), k=0 → targetScale(우하단 400×225 미니플레이어).
+  const scale = useTransform(
+    [k, targetScaleMV],
+    ([kv, sv]) => (sv as number) + (kv as number) * (1 - (sv as number))
+  );
 
   // reduce / 모바일: 모션 없이 정적(모바일은 CSS 가 static·full-width·16:9 로 override).
-  const vidStyle: MotionStyle | undefined =
-    reduce || isMobile ? undefined : { scale, x };
+  const vidStyle: MotionStyle | undefined = reduce || isMobile ? undefined : { scale };
 
   return (
     <section ref={ref} id="about" className={styles.about}>
