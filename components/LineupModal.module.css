@@ -3,14 +3,15 @@
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 200; /* 네비(z:100) 위 */
+  z-index: 300; /* [B] 네비(z:100) 등 모든 레이어 위 — 포털로 body 직속이라 확실히 최상단 */
   display: flex;
   align-items: flex-end; /* [3] 바텀시트: 패널을 뷰포트 바닥에 붙임(중앙 X) */
   justify-content: center;
   padding: 0; /* [3] 시트가 화면 하단·좌우에 꽉 차게(플러시) */
-  background: rgba(16, 16, 18, 0.34); /* [3] 딤 옅게 — 시트 위쪽 페이지가 비쳐 보이게 */
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  /* [B] 딤 + 블러 — 시트 뒤 현재 화면이 흐릿하게 비쳐 보이도록(SM 레퍼런스처럼). */
+  background: rgba(10, 10, 12, 0.42);
+  backdrop-filter: blur(8px) saturate(0.9);
+  -webkit-backdrop-filter: blur(8px) saturate(0.9);
 }
 
 .panel {
@@ -47,6 +48,7 @@
   color: #1a1a18; /* [D] 어두운 본문 텍스트 */
   background: #ffffff; /* [D] 밝은 배경 */
   overflow-y: auto;
+  overscroll-behavior: contain; /* [B] 모달 내부 스크롤이 배경으로 체이닝되지 않게 */
 }
 .eyebrow {
   font-family: var(--font-meta, monospace);

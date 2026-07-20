@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { type Film } from "@/data/films";
@@ -21,26 +22,40 @@ export default function LineupModal({
   const reduce = useReducedMotion();
   const panelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  // 포털 마운트 가드(SSR/하이드레이션 안전) — createPortal 은 클라이언트에서만.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  // 열렸을 때: 배경 스크롤 잠금 + ESC 닫기 + 포커스 트랩(+ 닫기 버튼으로 초기 포커스, 닫으면 이전 포커스 복귀)
+  // 열렸을 때: 배경 스크롤 잠금 + ESC 닫기 + 포커스 트랩(+ 닫기 버튼 초기 포커스, 닫으면 이전 포커스 복귀)
   useEffect(() => {
     if (!film) return;
-    const html = document.documentElement;
     const body = document.body;
-    const prevHtml = html.style.overflow;
-    const prevBody = body.style.overflow;
-    html.style.overflow = "hidden";
-    body.style.overflow = "hidden";
     // 모달 열림 표시 — SiteNav 가 이 속성으로 모바일에서 네비를 잠시 숨김(닫기 X 와 겹침 방지)
     body.setAttribute("data-modal-open", "true");
     const prevFocus = document.activeElement as HTMLElement | null;
     closeRef.current?.focus();
+
+    // 배경 스크롤 잠금 — body/html 의 overflow 를 건드리지 않는다.
+    //   (overflow:hidden 을 주면 LINEUP 의 position:sticky 가 깨져 무대가 튀고, 뒤 화면이 사라진다.)
+    //   대신 스크롤 '입력'만 막아 현재 화면(sticky 고정 프레임)을 그대로 얼려 둔다 → 딤/블러가 실제 화면 위로.
+    const SCROLL_KEYS = [" ", "Spacebar", "PageUp", "PageDown", "ArrowUp", "ArrowDown", "Home", "End"];
+    const blockScroll = (e: Event) => {
+      if (panelRef.current?.contains(e.target as Node)) return; // 모달 내부 스크롤은 허용
+      e.preventDefault();
+    };
+    window.addEventListener("wheel", blockScroll, { passive: false });
+    window.addEventListener("touchmove", blockScroll, { passive: false });
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
         onClose();
         return;
+      }
+      const t = e.target as HTMLElement | null;
+      const inField = !!t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+      if (!inField && SCROLL_KEYS.includes(e.key) && !panelRef.current?.contains(t)) {
+        e.preventDefault(); // 스페이스/화살표/PageUp·Down 등으로 배경 스크롤 방지
       }
       if (e.key === "Tab") {
         const panel = panelRef.current;
@@ -64,15 +79,19 @@ export default function LineupModal({
     };
     document.addEventListener("keydown", onKey);
     return () => {
+      window.removeEventListener("wheel", blockScroll);
+      window.removeEventListener("touchmove", blockScroll);
       document.removeEventListener("keydown", onKey);
-      html.style.overflow = prevHtml;
-      body.style.overflow = prevBody;
       body.removeAttribute("data-modal-open"); // 닫히면 네비 복구
       prevFocus?.focus?.();
     };
   }, [film, onClose]);
 
-  return (
+  if (!mounted) return null;
+
+  // [B] 포털로 document.body 에 렌더 → LINEUP sticky 트랙/overflow:hidden/z-index 컨텍스트 밖에서
+  //   position:fixed 오버레이가 뷰포트 전체를 덮고, SiteNav(z:100) 위(z:300)로 뜬다.
+  return createPortal(
     <AnimatePresence>
       {film && (
         <motion.div
@@ -138,6 +157,7 @@ export default function LineupModal({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
