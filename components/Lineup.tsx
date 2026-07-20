@@ -116,8 +116,9 @@ export default function Lineup() {
   const tx = useTransform(p, [0, MOVE_END], [big.x, 0]);
   const ty = useTransform(p, [0, MOVE_END], [big.y, 0]);
   const scale = useTransform(p, [0, MOVE_END], [bigScale, 1]);
-  // [C] 진입 흰색 → 코너 안착 시 회색으로 전환
-  const titleColor = useTransform(p, [0.12, 0.34], ["#f4f4f2", "#8f8f8b"]);
+  // [C] 진입 흰색 → 코너 안착 시 회색으로 전환. [B] 안착 회색을 더 어둡게(#8f8f8b → #5a5a57)
+  //   → 위에 겹치는 카드/영화 제목 텍스트가 LINE UP 위에서도 잘 읽히게.
+  const titleColor = useTransform(p, [0.12, 0.34], ["#f4f4f2", "#5a5a57"]);
   // eyebrow 는 코너에 텍스트가 거의 안착할 즈음 페이드 인(진입 시 대형 텍스트만 보이게)
   const eyebrowOpacity = useTransform(p, [0.3, 0.44], [0, 1]);
   const titleStyle = reduce

@@ -101,7 +101,7 @@
   position: absolute;
   left: var(--ln-gutter);
   bottom: clamp(2rem, 7vh, 4rem);
-  z-index: 3;
+  z-index: 2; /* [A] 카드(z:3) 아래 — 커진 카드가 좌하단 LINE UP 텍스트를 살짝 덮도록 */
   pointer-events: none; /* 슬라이드 드래그를 가리지 않게 */
   will-change: transform;
 }
@@ -125,7 +125,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
-  color: #8f8f8b; /* reduce/폴백 기본색(회색). 비-reduce 는 JS 가 흰→회색 override */
+  color: #5a5a57; /* [B] reduce/폴백 기본색(더 어두운 회색). 비-reduce 는 JS 가 흰→회색 override */
   will-change: transform;
 }
 /* [A] "LINE" = 순수 솔리드 채움(h2 color 상속: 흰→회색). stroke 0 — 채움만(테두리 섞임 방지). */
@@ -140,16 +140,16 @@
 .luLine {
   color: transparent;
   -webkit-text-stroke-width: 1.5px;
-  -webkit-text-stroke-color: #8f8f8b;
+  -webkit-text-stroke-color: #5a5a57; /* [B] reduce 기본 stroke 색도 더 어둡게 */
 }
 /* [B] 가로 슬라이드 뷰포트(마퀴 + 드래그) — 무대 세로 중앙, 하단은 코너 텍스트 공간 확보. */
 .railViewport {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 3; /* [A] 헤딩(z:2) 위 — 커진 카드가 LINE UP 텍스트 위로 살짝 겹쳐 덮음 */
   display: flex;
   align-items: center;
-  padding-bottom: 28vh; /* [A] 커진 LINE UP(좌하단)이 카드와 겹치지 않게 카드 열을 위로 올림 */
+  padding-bottom: 17vh; /* [A] 카드 열을 조금 내려 좌하단 LINE UP 상단을 살짝 가리게(겹침) */
   overflow: hidden;
   cursor: grab;
   touch-action: pan-y; /* 세로 페이지 스크롤은 통과, 가로 드래그만 처리 */
@@ -171,8 +171,8 @@
 }
 .railCard {
   flex: 0 0 auto;
-  /* [C] 이미지 카드 확대 — 폭을 키워 3/4 미디어 영역이 더 시원하게 */
-  width: clamp(240px, 26vw, 380px);
+  /* [A] 이미지 카드 확대 — 폭·높이(3/4)를 더 키워 좌하단 텍스트를 살짝 덮는 큰 카드 */
+  width: clamp(290px, 31vw, 460px);
   display: flex;
   flex-direction: column;
   margin: 0;
@@ -249,11 +249,11 @@
     -webkit-text-stroke-width: 1.1px; /* 모바일도 얇게 비례 조정(2.4→1.5 축소에 맞춤) */
   }
   .railViewport {
-    padding-bottom: 20vh;
+    padding-bottom: 14vh; /* [A] 모바일도 겹침 위해 카드 열을 조금 내림 */
   }
   .railCard {
-    /* [C] 모바일도 카드 확대 */
-    width: clamp(200px, 66vw, 280px);
+    /* [A] 모바일도 카드 확대 */
+    width: clamp(240px, 74vw, 340px);
   }
 }
 /* reduce: sticky/모션 해제 → 일반 흐름. 텍스트 상단·회색, 슬라이드는 가로 스크롤로 탐색. */
