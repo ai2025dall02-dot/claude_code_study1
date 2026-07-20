@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   motion,
+  useMotionValue,
   useReducedMotion,
   useScroll,
   useSpring,
@@ -16,9 +17,12 @@ import styles from "./About.module.css";
 
 // 영상 자리 placeholder — 실제 영상은 나중에 교체. 지금은 로컬 이미지로 대체.
 const PLACEHOLDER = "/posters-photo/m4.jpg";
+const MINI_W = 400; // [C] 최종 미니플레이어 폭(px). 세로는 16:9 → 225px.
+const MARGIN = 24; // 우/하 여백(px)
 
 export default function About() {
   const ref = useRef<HTMLElement | null>(null);
+  const vidRef = useRef<HTMLDivElement | null>(null);
   const reduce = useReducedMotion();
   const [isMobile, setIsMobile] = useState(false);
 
@@ -30,31 +34,43 @@ export default function About() {
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  // 섹션 스크롤 진행도(0=진입, 1=이탈). 영상 sticky 가 붙어 있는 동안 이 값으로 영상만 축소한다.
+  // 섹션 스크롤 진행도(0=진입, 1=이탈).
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end end"],
   });
-  const p = useSpring(scrollYProgress, { stiffness: 120, damping: 30, mass: 1 });
+  // [A] 스프링 완화(120→70) → "슉~" 부드러운 감속.
+  const p = useSpring(scrollYProgress, { stiffness: 70, damping: 24, mass: 1 });
 
-  // k: 1(큰 영상) → 0(미니플레이어). [C] 축소 타이밍 중반 이후 늦게+짧게 [0.45,0.7] → 한동안 크게 있다 빠르게 축소.
+  // k: 1(큰 영상) → 0(미니플레이어). [C] 축소 타이밍 중반 이후 늦게+짧게 [0.45,0.7].
   const k = useTransform(p, [0.45, 0.7], [1, 0]);
-  // [B] 영상은 bottom 앵커로 하단 고정(CSS bottom:24px). 폭(width)만 축소 → 하단에 붙은 채 위로만 작아지며
-  //   우측 하단 미니플레이어(400×225)로 안착. (top 트윈 제거)
-  // 최종 폭 = 고정 400px(16:9 → 세로 225px). 시작 = calc(100vw - 2*gutter)[좌우 대칭].
-  const width = useTransform(
-    k,
-    (v) => `calc(400px + ${v.toFixed(3)} * (100vw - 2 * var(--ln-gutter) - 400px))`
-  );
-  // 우측 여백: 시작 gutter → 끝 24px(미니플레이어 우측 모서리 근처).
-  const right = useTransform(
-    k,
-    (v) => `calc(24px + ${v.toFixed(3)} * (var(--ln-gutter) - 24px))`
-  );
+
+  // [A] width/calc 트윈 대신 transform: scale — 레이아웃 재계산 없이 GPU 합성으로 부드럽게.
+  //   영상 박스는 CSS 로 초기 큰 16:9 크기 고정(우/하 24px 앵커). 아래 값은 측정 기반으로 반응형 대응.
+  //   targetScale = 400 / baseWidth (최종 미니플레이어), txCenter = 초기 중앙정렬용 translateX(px).
+  const targetScaleMV = useMotionValue(0.34);
+  const txCenterMV = useMotionValue(0);
+  useEffect(() => {
+    const measure = () => {
+      const w = vidRef.current?.offsetWidth || 0; // 레이아웃 폭(transform 영향 없음)
+      if (!w) return;
+      targetScaleMV.set(MINI_W / w);
+      // [B] 초기(큰 영상)를 좌우 중앙정렬: 우측 앵커(right:MARGIN) 상태에서 왼쪽으로 이만큼 이동하면 중앙.
+      txCenterMV.set(MARGIN + w / 2 - window.innerWidth / 2);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [targetScaleMV, txCenterMV]);
+
+  // scale: k=1 → 1(큰 영상), k=0 → targetScale(미니플레이어). transform-origin: bottom right(CSS) → 우하단으로 모임.
+  const scale = useTransform([k, targetScaleMV], ([kv, sv]) => (sv as number) + (kv as number) * (1 - (sv as number)));
+  // x(translateX): k=1 → txCenter(중앙정렬), k=0 → 0(우측 앵커=우하단). 중앙정렬 translate 와 우하단 이동을 하나로.
+  const x = useTransform([k, txCenterMV], ([kv, txv]) => (kv as number) * (txv as number));
 
   // reduce / 모바일: 모션 없이 정적(모바일은 CSS 가 static·full-width·16:9 로 override).
   const vidStyle: MotionStyle | undefined =
-    reduce || isMobile ? undefined : { width, right };
+    reduce || isMobile ? undefined : { scale, x };
 
   return (
     <section ref={ref} id="about" className={styles.about}>
@@ -71,7 +87,7 @@ export default function About() {
       {/* 영상 전용 sticky 트랙 — 이 트랙(.pin)을 스크롤하는 동안 .videoStage 만 화면에 붙어 영상이 축소된다. */}
       <div className={styles.pin}>
         <div className={styles.videoStage}>
-          <motion.div className={styles.video} style={vidStyle}>
+          <motion.div ref={vidRef} className={styles.video} style={vidStyle}>
             <img src={PLACEHOLDER} alt="필름 누벨 소개 영상 (placeholder)" />
             <span className={styles.videoTag}>Showreel</span>
           </motion.div>
