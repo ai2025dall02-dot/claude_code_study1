@@ -130,19 +130,30 @@
   color: #5a5a57; /* [B] reduce/폴백 기본색(더 어두운 회색). 비-reduce 는 JS 가 흰→회색 override */
   will-change: transform;
 }
-/* [A] "LINE" = 순수 솔리드 채움(h2 color 상속: 흰→회색). stroke 0 — 채움만(테두리 섞임 방지). */
-.luSolid {
-  color: inherit;
-  -webkit-text-stroke: 0;
+/* [SVG] LINE UP 을 SVG <text> 로 렌더 — 정렬은 SVG 가 처리, 색은 h2 의 color(currentColor)로 전환.
+   svg 박스는 JS 가 텍스트 bbox 로 맞춤(width/height/viewBox). overflow visible 로 진입 확대 시 안 잘림. */
+.luSvg {
+  display: block;
+  overflow: visible;
 }
-/* [A] "UP" = 아웃라인(라인) — 히어로 .wordNouvelle 과 동일한 스타일(속 비고 외곽선만).
-   히어로는 ~281px 폰트에 3.5px stroke(비율 ≈1.25%). LINE UP 은 폰트가 더 작으므로(≈192px)
-   같은 얇은 '보임'을 위해 동일 비율로 환산한 2.4px 사용(= 히어로 모바일 값과 동일).
-   stroke 색은 JS 가 흰→회색으로 전환(reduce 는 아래 기본 회색). */
-.luLine {
-  color: transparent;
-  -webkit-text-stroke-width: 1px;
-  -webkit-text-stroke-color: #5a5a57; /* [B] reduce 기본 stroke 색도 더 어둡게 */
+.luText {
+  font-family: inherit; /* .lineupBig 의 Anton */
+  font-size: inherit; /* .lineupBig 의 clamp px */
+  letter-spacing: inherit;
+}
+/* "LINE" = 솔리드 채움(currentColor: 흰→회색) */
+.luSolidT {
+  fill: currentColor;
+  stroke: none;
+}
+/* "UP" = 라인 — 벡터 stroke + non-scaling-stroke 로 scale 과 무관하게 선명·일정한 가는 선(NOUVELLE 무드).
+   stroke 색도 currentColor 라 같이 흰→회색 전환. 굵기는 stroke-width 로 미세조정. */
+.luLineT {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4px;
+  vector-effect: non-scaling-stroke;
+  paint-order: stroke;
 }
 /* [B] 가로 슬라이드 뷰포트(마퀴 + 드래그) — 무대 세로 중앙, 하단은 코너 텍스트 공간 확보. */
 .railViewport {
@@ -247,8 +258,8 @@
     /* [A] 모바일도 폭에 맞게 비례 확대(넘치지 않는 선). */
     font-size: clamp(2.6rem, 15vw, 5rem);
   }
-  .luLine {
-    -webkit-text-stroke-width: 0.7px; /* 모바일도 얇게(데스크톱 1px 에 맞춘 비례) */
+  .luLineT {
+    stroke-width: 1.2px; /* 모바일도 얇은 선(비례 조정) */
   }
   .railViewport {
     padding-bottom: 14vh; /* [A] 모바일도 겹침 위해 카드 열을 조금 내림 */
