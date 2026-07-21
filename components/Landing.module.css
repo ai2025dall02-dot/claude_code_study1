@@ -581,9 +581,10 @@
 .fmBg .title {
   /* [2] FILM MAKERS 는 다른 섹션보다 눈에 띄게 크게 강조(9.5rem→12rem 상한, 11vw→13vw).
      노트북에서 넘치지 않는 선(측정 확인) 유지. */
-  font-size: clamp(4rem, 13vw, 12rem);
+  font-size: clamp(4.5rem, 14vw, 13rem); /* PC 조금 더 크게 */
   line-height: 0.9;
   justify-content: center;
+  white-space: nowrap; /* 글자별 span 이 2줄로 나뉘지 않게 — 항상 1줄(넘치면 뷰포트가 클립) */
   color: #f4f4f2; /* 검은 배경 위 흰 텍스트 */
 }
 .fmBg .title em {
@@ -1259,7 +1260,7 @@
   .index { text-align: left; font-size: 10px; letter-spacing: 0.12em; } /* 복구 + 축소 */
 
   /* 큰 타이포·카드·이미지 상한 축소 (콘텐츠는 유지, 폰트/폭만 조정) */
-  .fmBg .title { font-size: clamp(3.4rem, 21vw, 7rem); } /* 모바일에서 크게 강조(배경 대형 타이틀) */
+  .fmBg .title { font-size: clamp(3rem, 17vw, 6rem); } /* 모바일: 크되 1줄 유지되게 조금 축소 */
   .fmHeadSub { font-size: 10.5px; margin-top: 0.8rem; letter-spacing: 0.14em; } /* 복구 + 축소 */
   .fmCard__name { font-size: clamp(1.35rem, 6vw, 1.8rem); }
   .fmCard__meta { font-size: 10px; margin-top: 0.6rem; }
