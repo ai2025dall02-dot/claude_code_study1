@@ -550,7 +550,8 @@
 .fm {
   position: relative;
   height: 450vh; /* 세로 스크롤 길이 — pitch 가 커진 만큼 스크롤 여유 확보 */
-  background: #f8f8f8; /* #fff → #f8f8f8 (FESTIVALS 와 동일한 옅은 회색) */
+  background: #0b0b0c; /* 검은 배경 (LINEUP 과 동일 톤) */
+  color: #f4f4f2;
   /* [1] 섹션 사이 가로 구분선 제거(전 브레이크포인트) */
 }
 .fmViewport {
@@ -583,10 +584,10 @@
   font-size: clamp(4rem, 13vw, 12rem);
   line-height: 0.9;
   justify-content: center;
-  color: #0b0b0c; /* LINEUP 제목과 동일 톤 */
+  color: #f4f4f2; /* 검은 배경 위 흰 텍스트 */
 }
 .fmBg .title em {
-  -webkit-text-stroke-color: #0b0b0c;
+  -webkit-text-stroke-color: #f4f4f2; /* MAKERS 아웃라인도 흰색 */
   /* MAKERS 아웃라인을 또렷한 1px 라인으로(LINE UP 의 UP 과 동일 두께). 다른 섹션 제목은 0.25px 유지. */
   -webkit-text-stroke-width: 1px;
 }
@@ -621,7 +622,7 @@
   position: relative;
   aspect-ratio: 3 / 4; /* 원본 이미지(1728x2304=3:4)와 동일 → 잘림·왜곡 없이 딱 맞음 */
   overflow: hidden;
-  background: #e7e7e4;
+  background: #1a1a1c; /* 검은 배경용 어두운 플레이스홀더 */
 }
 .fmCard__photo :global(img) {
   object-fit: cover;
@@ -637,7 +638,7 @@
   font-size: clamp(1.5rem, 2.4vw, 2.1rem);
   letter-spacing: -0.02em;
   line-height: 1.04;
-  color: #0c0c0c;
+  color: #f4f4f2; /* 흰 텍스트 */
 }
 .fmCard__name span {
   display: block;
@@ -646,7 +647,7 @@
   font-size: 10.5px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #9a9a96;
+  color: #9a9a96; /* 검은 배경 위 뮤트 회색 유지 */
   margin-top: 0.5rem;
 }
 .fmCard__meta {
@@ -654,17 +655,17 @@
   font-family: var(--font-meta, monospace);
   font-size: 11px;
   letter-spacing: 0.06em;
-  color: #6a6a68;
+  color: #a0a09c; /* 검은 배경용 밝은 회색 */
 }
 .fmCard__film {
   margin: 0.35rem 0 0;
   font-size: 13px;
   line-height: 1.5;
-  color: #4a4a48;
+  color: #c9c9c5; /* 검은 배경용 밝은 회색 본문 */
 }
 .fmCard__film b {
   font-weight: 600;
-  color: #0c0c0c;
+  color: #f4f4f2; /* 강조는 흰색 */
 }
 
 /* ── FESTIVALS ──────────────────────────────────────── */
