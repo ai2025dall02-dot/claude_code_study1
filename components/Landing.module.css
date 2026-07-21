@@ -1259,7 +1259,7 @@
   .index { text-align: left; font-size: 10px; letter-spacing: 0.12em; } /* 복구 + 축소 */
 
   /* 큰 타이포·카드·이미지 상한 축소 (콘텐츠는 유지, 폰트/폭만 조정) */
-  .fmBg .title { font-size: clamp(2.4rem, 13vw, 3.2rem); }
+  .fmBg .title { font-size: clamp(3.4rem, 21vw, 7rem); } /* 모바일에서 크게 강조(배경 대형 타이틀) */
   .fmHeadSub { font-size: 10.5px; margin-top: 0.8rem; letter-spacing: 0.14em; } /* 복구 + 축소 */
   .fmCard__name { font-size: clamp(1.35rem, 6vw, 1.8rem); }
   .fmCard__meta { font-size: 10px; margin-top: 0.6rem; }
