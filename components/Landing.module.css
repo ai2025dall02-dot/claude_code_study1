@@ -678,10 +678,11 @@
   z-index: 1;
   margin-top: -100vh;
 }
-/* 긴 스크롤 래퍼 + 내부 sticky 무대. 타이틀(뒤)·카드 스택(앞)이 겹치고 카드만 스크롤 연동해 쌓임. */
+/* 긴 스크롤 래퍼 + 내부 sticky 무대. 타이틀(뒤)·카드 스택(앞)이 겹치고 카드만 스크롤 연동해 쌓임.
+   340vh → 440vh: A(카드 등장 지연) + F(순차 exit) 구간을 넉넉히 확보. */
 .festsScroller {
   position: relative;
-  height: 340vh;
+  height: 440vh;
 }
 .festsSticky {
   position: sticky;
@@ -713,19 +714,30 @@
   font-size: clamp(4.5rem, 14vw, 13rem);
   line-height: 0.9;
 }
+/* B. 타이틀 하단 작은 설명(레퍼런스 "We step in on high-stakes..." 위치) */
+.festHeadSub {
+  max-width: 42ch;
+  margin: clamp(1rem, 2.4vh, 1.7rem) auto 0;
+  font-family: var(--font-sans);
+  font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+  line-height: 1.7;
+  color: #55554f;
+}
 
-/* C·D. 세로 카드 스택(앞 레이어) — 절대 중앙 겹침. 각 카드는 JS 로 아래→위 이동/축소. */
+/* C·D. 세로 카드 스택(앞 레이어) — 절대 중앙 겹침. 각 카드는 JS 로 눕힘→정면 + 아래→위 이동/축소.
+   perspective: C 의 rotateX(눕힘→정면) 입체감을 위해 컨테이너에 원근 부여. */
 .festStack {
   position: absolute;
   inset: 0;
   z-index: 2;
+  perspective: 1400px;
 }
 .festCard {
   position: absolute;
   inset: 0;
   margin: auto; /* 중앙 정렬(inset:0 + margin:auto) → 모든 카드 같은 자리에 스택 */
   width: clamp(290px, 30vw, 380px);
-  height: min(66vh, 560px);
+  height: min(62vh, 500px);
   display: flex;
   flex-direction: column;
   background: #ffffff;
@@ -733,16 +745,25 @@
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.14);
+  transform-style: preserve-3d; /* C: rotateX 입체 유지 */
   will-change: transform;
 }
+/* D. 이미지 영역 — 흰 패딩(여백) + 내부 프레임 4:3 비율. */
 .festCard__img {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
-  background: #e7e7e4;
-  border-bottom: 1px solid #0b0b0c;
+  flex: 0 0 auto;
+  padding: clamp(12px, 1.5vw, 18px);
+  background: #ffffff;
 }
-.festCard__img :global(img) {
+.festCard__imgFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #e7e7e4;
+  border: 1px solid #ececec;
+}
+.festCard__imgFrame :global(img) {
   object-fit: cover;
 }
 .festCard__body {
@@ -783,7 +804,7 @@
 @media (max-width: 767px) {
   .festCard {
     width: 86vw;
-    height: min(68vh, 520px);
+    height: min(66vh, 480px);
   }
   .festHead .title {
     white-space: normal;
@@ -824,10 +845,6 @@
     height: auto;
     max-width: 380px;
     width: 100%;
-  }
-  .festCard__img {
-    aspect-ratio: 4 / 3;
-    flex: 0 0 auto;
   }
   .festCard__scrim {
     display: none;
