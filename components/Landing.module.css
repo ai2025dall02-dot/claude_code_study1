@@ -669,133 +669,178 @@
   color: #f4f4f2; /* 강조는 흰색 */
 }
 
-/* ── FESTIVALS ──────────────────────────────────────── */
-.fests { background: #f8f8f8; }
-
-/* [5] 제목·설명 — sticky 밖 일반 흐름 (스크롤하면 위로 흘러감) */
-.festsIntro {
-  /* 작업5: 하단 padding 을 더 축소 → 설명을 지나면 곧바로 리스트 무대로 */
-  padding-block: clamp(4.5rem, 11vh, 9rem) clamp(0px, 0.5vh, 0.5rem);
+/* ── FESTIVALS — incredibles.dev 풍: 중앙 커튼 타이틀/본문 + 아래→위로 흐르는 카드 ── */
+.fests {
+  background: #f8f8f8;
+  position: relative;
 }
-.festsIntro .head { border-bottom: none; margin-bottom: 0; } /* head 아래 라인 제거 */
-/* 섹션 간략 설명(약 2줄) — 제목 아래, 리스트 위. 제목과 리스트 사이 간격 메움 */
-.festsDesc {
-  max-width: 48rem; /* 약 2줄로 떨어지게 (52ch 는 3줄) */
-  margin: clamp(1rem, 2.5vh, 1.6rem) 0 0;
-  font-family: var(--font-sans);
-  font-weight: 400;
-  font-size: clamp(0.95rem, 1.5vw, 1.15rem);
-  line-height: 1.65;
-  letter-spacing: 0;
-  color: #6a6a68;
-}
-
-/* pin 무대 — 긴 래퍼 + 내부 sticky(100vh). 중앙선은 고정, 축제명 트랙만 이동 */
+/* 긴 스크롤 래퍼 + 내부 sticky 무대. 헤딩(뒤)·카드 트랙(앞)이 겹치고 카드만 스크롤 연동해 위로 흐름. */
 .festsScroller {
   position: relative;
-  height: 540vh; /* 작업6: 항목 9개(≈60vh/개) → 360vh 에서 540vh 로 늘려 진행 속도 완화 */
+  height: 460vh;
 }
 .festsSticky {
   position: sticky;
   top: 0;
   height: 100vh;
-  box-sizing: border-box;
-  /* 작업2: 무대 상단이 고정 내비게이션 아래에서 시작하도록(상단 정리) padding-top 확보 */
-  padding-top: clamp(3rem, 7vh, 4.5rem);
-  display: flex;
-  align-items: flex-start;
+  overflow: hidden;
 }
-.festsSticky .inner { width: 100%; }
-
-/* 무대: 활성선(40%)에 [축제명 트랙] → [이미지] → [영화명] 가로 정렬. 트랙만 위아래로 흐름 */
 .festStage {
   position: relative;
-  /* 작업2: 무대 높이를 뷰포트보다 크게(패딩 포함 100vh 초과) 잡아 '하단 잘림 지점'을 화면 밖으로
-     내림 → 아래쪽 항목은 화면 끝까지 잘리지 않고 계속 이어져 보임. */
-  height: 96vh;
-  overflow: hidden; /* 넘치는 부분은 화면 밖(위/아래)에서만 잘림 */
-  /* 작업2: 상단만 배경색으로 페이드(마스크) → 위로 올라가는 항목이 제목/내비와 겹치지 않게 정리.
-     하단은 불투명 유지(자연스럽게 화면 끝까지 이어짐). */
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 6%, #000 100%);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 6%, #000 100%);
+  height: 100%;
 }
 
-/* 중앙선 고정 그룹 — [이미지] ... [연도/영화명]. 작업4: 이미지를 축제명(좌) 쪽으로 당겨
-   가로 여백 축소. left 지정 + space-between 으로 이미지는 왼쪽, 연도/영화명은 우측 끝(.inner
-   우측 = 헤더 .index 우측)에 유지. */
-.festCenter {
+/* A. 중앙 헤딩(뒤 레이어) — 커튼 리빌: eyebrow/본문은 마스크 창에서 아래→위로, 타이틀은 RiseTitle. */
+.festHead {
   position: absolute;
-  top: 40%; /* 작업2: 활성 항목과 같은 높이(무대 40% 지점, JS ACTIVE_FRAC 과 일치)에 이미지 정렬 */
-  left: 48%; /* 축제명 오른쪽 가까이로 이미지를 당김 (가장 긴 축제명과 겹치지 않는 선) */
-  right: 0;
-  transform: translateY(-50%);
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 var(--ln-gutter);
+  pointer-events: none;
+}
+.festHeadMask {
+  display: block;
+  overflow: hidden; /* 커튼 창 — 아래에서 올라오는 텍스트의 시작(창 밖)을 가림 */
+}
+.festHead .eyebrow {
+  margin: 0 0 0.9rem;
+  will-change: transform;
+}
+.festHead .title {
+  color: #0b0b0c;
+  white-space: nowrap; /* 글자별 span 이 줄바꿈되지 않게(1줄) */
+}
+.festHeadBody {
+  max-width: 46ch;
+  margin: clamp(1.2rem, 3vh, 2rem) auto 0;
+  font-family: var(--font-sans);
+  font-size: clamp(0.98rem, 1.4vw, 1.18rem);
+  line-height: 1.7;
+  color: #4a4a48;
+  will-change: transform;
+}
+
+/* B. 카드 컬럼(앞 레이어) — 위/아래 가장자리 페이드 마스크 안에서 컬럼이 위로 흐름. */
+.festCardViewport {
+  position: absolute;
+  inset: 0;
   z-index: 2;
   display: flex;
-  align-items: center;
-  justify-content: space-between; /* 이미지=왼쪽, 연도/영화명=오른쪽 끝 */
-  gap: clamp(1.2rem, 2.5vw, 2.5rem);
-}
-/* 이미지 (scale/rotate 는 motion 이 제어: -15°, hover 시 0°) */
-.festCenterImg {
-  flex: none;
-  width: clamp(200px, 22vw, 300px);
-  aspect-ratio: 4 / 3;
+  justify-content: center;
   overflow: hidden;
-  border-radius: 3px;
-  transform-origin: center;
-  will-change: transform;
+  pointer-events: none; /* 흐르는 장식 카드 — 클릭 불필요 */
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
 }
-.festCenterImg :global(img) { object-fit: cover; }
-.festCenterMeta {
+.festCardTrack {
+  position: absolute;
+  top: 0;
+  width: min(540px, 88vw);
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-}
-.festCenterYr {
-  font-family: var(--font-meta, monospace);
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  color: #9a9a96;
-}
-.festCenterFilm {
-  font-family: var(--font-sans); /* 볼드 아님 */
-  font-weight: 450;
-  font-size: clamp(1.1rem, 1.8vw, 1.5rem);
-  color: #0c0c0c;
+  gap: clamp(1rem, 2.2vh, 1.7rem);
+  will-change: transform;
 }
 
-/* 축제명 트랙 — 좌측 영역(오른쪽 정렬), translateY 로 이동. 각 행은 고정 높이(균일 stride) */
-.festTrack {
-  position: absolute;
-  left: 0;
-  width: 46%; /* 좌측 영역 — 오른쪽 끝이 중앙(이미지) 왼쪽에 옴 */
-  top: 0;
-  z-index: 1;
-  will-change: transform;
+/* C. 카드 — 흰 배경 + 1px 검정 라인 + 어두운 텍스트. */
+.festCard {
+  display: flex;
+  gap: clamp(0.9rem, 1.6vw, 1.3rem);
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #0b0b0c;
+  border-radius: 4px;
+  padding: clamp(1rem, 1.8vw, 1.4rem);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
-.festRow {
-  height: clamp(150px, 18vh, 200px); /* 작업1: 항목 간 간격 확대 (stride 자동 재측정) */
+.festCard__thumb {
+  position: relative;
+  flex: 0 0 auto;
+  width: clamp(66px, 9vw, 96px);
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #f0f0ee;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+.festCard__thumb :global(img) {
+  object-fit: cover;
+}
+.festCard__body {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: flex-start; /* 좌측 정렬 (제목 라인과 맞춤) */
+  min-width: 0;
   text-align: left;
 }
-.fest__name {
-  display: block;
+.festCard__yr {
+  font-family: var(--font-meta, monospace);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: #9a9a96;
+}
+.festCard__name {
+  margin: 0.2rem 0 0;
   font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
-  font-size: clamp(2rem, 4.5vw, 3.6rem); /* [4] 대형화 */
-  letter-spacing: -0.02em;
-  line-height: 1.05;
+  font-size: clamp(1.05rem, 1.6vw, 1.4rem);
+  letter-spacing: -0.01em;
+  line-height: 1.14;
+  color: #0b0b0c;
 }
-.fest__name span {
-  display: block;
+.festCard__section {
+  margin-top: 0.3rem;
   font-family: var(--font-meta, monospace);
-  font-weight: 400;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  margin-top: 12px; /* 영화제명 ↔ 섹션명 간격 */
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: #6a6a68;
+}
+.festCard__film {
+  margin-top: 0.55rem;
+  font-size: 12.5px;
+  color: #4a4a48;
+}
+
+@media (max-width: 767px) {
+  .festCardTrack {
+    width: 90vw;
+  }
+}
+
+/* reduce: pin/flow 해제 → 헤딩 + 카드 세로 스택(정적). */
+@media (prefers-reduced-motion: reduce) {
+  .festsScroller {
+    height: auto;
+  }
+  .festsSticky {
+    position: static;
+    height: auto;
+    overflow: visible;
+  }
+  .festStage {
+    height: auto;
+    padding-block: clamp(3rem, 8vh, 5rem);
+  }
+  .festHead {
+    position: static;
+    padding: 0 var(--ln-gutter) clamp(2rem, 5vh, 3rem);
+  }
+  .festCardViewport {
+    position: static;
+    overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+    pointer-events: auto;
+  }
+  .festCardTrack {
+    position: static;
+    transform: none !important;
+    margin: 0 auto;
+  }
 }
 
 /* ── JOURNAL ────────────────────────────────────────── */
