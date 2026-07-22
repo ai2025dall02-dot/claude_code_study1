@@ -740,12 +740,10 @@
   height: min(62vh, 500px);
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  border: 1px solid #0b0b0c;
+  background: #ffffff; /* A: 흰 배경 유지 — 테두리/그림자는 제거(깔끔한 형태, 뒤 카드는 회색 DIM 으로 구분) */
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.14);
-  transform-style: preserve-3d; /* C: rotateX 입체 유지 */
+  transform-style: preserve-3d; /* B: rotateX 입체 유지 */
   will-change: transform;
 }
 /* D. 이미지 영역 — 흰 패딩(여백) + 내부 프레임 4:3 비율. */

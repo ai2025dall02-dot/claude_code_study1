@@ -25,10 +25,11 @@ const GAP = 0.1; // 카드 간 등장 간격
 const RISE = 0.09; // 한 장이 올라와 정면으로 안착하는 구간
 const ENTER = 620; // 진입 시작 y(중앙 아래 px)
 const PEEK = 20; // 뒤로 밀릴 때 한 장당 위로 삐져나오는 양(px)
-const TILT = 20; // C: 진입 시 rotateX(deg) — 눕혀진 상태에서 0 으로 펴짐
-// F: exit — 앞 카드(i 큰)부터 위로 하나씩 빠짐.
-const EXIT_BASE = 0.78; // exit 시작 진행도
-const EXIT_STAGGER = 0.045; // 카드별 exit 시차
+const TILT = 20; // B: 진입 시 rotateX(deg) — 눕혀진 상태에서 0 으로 펴짐
+const ENTER_SCALE = 1.16; // B: 진입 시 확대 배율(→ 1 로 축소되며 안착)
+// D: exit — 최하단(가장 뒤, i=0) 카드부터 먼저 위로 빠지고 위 카드가 순차로 따라 올라감.
+const EXIT_BASE = 0.74; // exit 시작 진행도
+const EXIT_STAGGER = 0.04; // 카드별 exit 시차
 const EXIT_SPAN = 0.09; // 한 장 exit 지속
 const EXIT_Y = -820; // exit 시 위로 빠지는 y
 
@@ -88,9 +89,9 @@ function StackCard({
   const inEnd = inStart + RISE;
   const backTotal = depth * PEEK; // 이 카드 위에 쌓일 카드 수만큼 위로 밀림
   const settleScale = 1 - 0.05 * depth; // 뒤로 밀릴수록 살짝 축소(딥스)
-  const scrimMax = Math.min(0.6, depth * 0.18); // E: 깊이별 회색 단계(엘리베이션) — 뒤일수록 진함
-  // F: 앞 카드(i 큰)부터 먼저 exit
-  const exitStart = EXIT_BASE + (N - 1 - i) * EXIT_STAGGER;
+  const scrimMax = Math.min(0.62, depth * 0.2); // C: 깊이별 회색 DIM — 최하단(뒤) 진하게 → 앞으로 갈수록 연하게
+  // D: 최하단(i=0)부터 먼저 exit → 위 카드(i 큰)가 순차로 따라 올라감(최하단→최상단 stagger)
+  const exitStart = EXIT_BASE + i * EXIT_STAGGER;
   const exitEnd = exitStart + EXIT_SPAN;
 
   // y: 아래(ENTER) → 중앙(0) → 뒤로 밀리며 위로(-backTotal) → exit 로 위로 빠짐(EXIT_Y). reduce 면 0 고정.
@@ -100,7 +101,7 @@ function StackCard({
     reduce ? [0, 0, 0, 0] : [ENTER, 0, -backTotal, EXIT_Y],
     { clamp: true }
   );
-  // C: 진입 시 rotateX(TILT)로 눕혀졌다가 안착(0)하며 정면으로 펴짐.
+  // B: 진입 시 rotateX(TILT)로 눕혀졌다가 안착(0)하며 정면으로 펴짐.
   const rotateX = useTransform(p, [inStart, inEnd], reduce ? [0, 0] : [TILT, 0], { clamp: true });
   // opacity: 올라오며 페이드 인 → exit 에서 페이드 아웃.
   const opacity = useTransform(
@@ -109,11 +110,11 @@ function StackCard({
     reduce ? [1, 1, 1, 1] : [0, 1, 1, 0],
     { clamp: true }
   );
-  // scale: 진입 0.95→1, 뒤로 밀리며 settleScale.
-  const scale = useTransform(p, [inStart, inEnd, exitStart], reduce ? [1, 1, 1] : [0.95, 1, settleScale], {
+  // B: scale — 진입 시 확대(ENTER_SCALE)된 상태 → 1 로 안착, 뒤로 밀리며 settleScale.
+  const scale = useTransform(p, [inStart, inEnd, exitStart], reduce ? [1, 1, 1] : [ENTER_SCALE, 1, settleScale], {
     clamp: true,
   });
-  // E: 회색 스크림 — 뒤로 밀리면 등장(깊이별 강도), 자기 exit 시 페이드 아웃.
+  // C: 회색 DIM — 뒤로 밀리면 등장(깊이별 강도), 자기 exit 시 페이드 아웃.
   const scrim = useTransform(
     p,
     [inEnd, inEnd + GAP, exitStart, exitEnd],
