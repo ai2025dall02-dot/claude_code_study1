@@ -10,6 +10,7 @@ import Image from "next/image";
 import {
   cubicBezier,
   motion,
+  useMotionTemplate,
   useReducedMotion,
   useScroll,
   useSpring,
@@ -65,7 +66,11 @@ export default function Festivals() {
             {/* D. FESTIVALS 타이틀 제거 → 2줄 텍스트. 1줄: 살짝 굵게 큰 글씨 / 2줄: 본문 크기. (애니메이션 없음) */}
             <div className={styles.festHead}>
               <span className={styles.eyebrow}>Selections &amp; Awards</span>
-              <h2 className={styles.festLead}>세계 유수 영화제가 먼저 알아본 이름들</h2>
+              <h2 className={styles.festLead}>
+                세계 유수 영화제가
+                <br />
+                먼저 알아본 이름들
+              </h2>
               <p className={styles.festHeadSub}>초청과 수상으로 이어진 배급작의 궤적</p>
             </div>
 
@@ -100,7 +105,10 @@ function StackCard({
   const inEnd = inStart + RISE;
   const backTotal = depth * PEEK; // 이 카드 위에 쌓일 카드 수만큼 위로 밀림
   const settleScale = 1 - 0.05 * depth; // 뒤로 밀릴수록 살짝 축소(딥스)
-  const scrimMax = Math.min(0.62, depth * 0.2); // 깊이별 회색 DIM — 최하단(뒤) 진하게 → 앞으로 갈수록 연하게
+  // B: 깊이별 회색 DIM 단계 — 최하단(뒤) 진하게 → 앞으로 갈수록 옅게(단계 확대).
+  const scrimMax = Math.min(0.72, depth * 0.24);
+  // C: DIM 카드의 검은 라인도 깊이별로 옅게 — 앞(활성) 진한 검정 → 뒤로 갈수록 투명도↑.
+  const borderMin = Math.max(0.16, 1 - depth * 0.3);
 
   // y: 아래(ENTER) → 중앙(0, 스냅) → 뒤로 밀리며 위로(-backTotal), SETTLE 까지 안착 후 유지. (exit 은 섹션 레벨)
   const y = useTransform(
@@ -120,9 +128,12 @@ function StackCard({
   });
   // 회색 DIM — 뒤로 밀리면 등장(깊이별 강도) 후 유지.
   const scrim = useTransform(p, [inEnd, inEnd + GAP], reduce ? [0, 0] : [0, scrimMax], { clamp: true });
+  // C: 검은 라인 투명도 — 뒤로 밀리면 borderMin 까지 옅어짐(앞 카드는 1=진한 검정 유지).
+  const borderAlpha = useTransform(p, [inEnd, inEnd + GAP], reduce ? [1, 1] : [1, borderMin], { clamp: true });
+  const borderColor = useMotionTemplate`rgba(11, 11, 12, ${borderAlpha})`;
 
   return (
-    <motion.article className={styles.festCard} style={{ y, rotateX, opacity, scale, zIndex: i }}>
+    <motion.article className={styles.festCard} style={{ y, rotateX, opacity, scale, borderColor, zIndex: i }}>
       <div className={styles.festCard__img}>
         <div className={styles.festCard__imgFrame}>
           <Image src={fe.image} alt="" fill sizes="(max-width:767px) 78vw, 340px" />

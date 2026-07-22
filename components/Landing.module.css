@@ -6,7 +6,9 @@
 .land {
   position: relative;
   z-index: 1;
-  background: #f8f8f8;
+  /* D: 공통 흰색 베이스 — FESTIVALS/JOURNAL 패널을 투명으로 두고 이 흰색이 이어지게 해
+     JOURNAL 이 불투명 블록으로 FESTIVALS 를 덮지 않고 콘텐츠만 교차하도록. 어두운 섹션들은 자체 불투명 배경 보유. */
+  background: #ffffff;
   color: #0c0c0c;
   font-family: var(--font-sans);
 }
@@ -673,7 +675,7 @@
 /* ── FESTIVALS — 큰 타이틀(뒤) + 세로 카드 제자리 스택(앞) ── */
 /* [A] FILMMAKERS(.fm, z:2) 아래로 깔리고 마지막 100vh 를 겹쳐, FILMMAKERS 가 위로 걷히면 드러남. */
 .fests {
-  background: #ffffff; /* A: 섹션 배경 흰색으로(카드와 스왑) */
+  background: transparent; /* D: 공통 .land 흰색 베이스를 사용(불투명 블록 없음 → 콘텐츠만 교차) */
   position: relative;
   z-index: 1;
   margin-top: -100vh;
@@ -689,7 +691,7 @@
   top: 0;
   height: 100vh;
   overflow: hidden;
-  background: #ffffff; /* A: 섹션 배경 흰색 */
+  background: transparent; /* D: .land 흰색 베이스 사용 */
 }
 /* C: 섹션 콘텐츠 래퍼 — 전환 때 이 래퍼에 opacity/y 를 걸어 FESTIVALS 전체가 천천히 페이드+상승. */
 .festInner {
@@ -720,15 +722,15 @@
   font-size: clamp(4.5rem, 14vw, 13rem);
   line-height: 0.9;
 }
-/* D. 1줄 — 조금 큰 텍스트 + 살짝만 굵게(볼드 아님, 550). */
+/* A. 1줄(2행) — 조금 더 크고 살짝 더 굵게(볼드는 아님). */
 .festLead {
   margin: 0;
   max-width: 30ch;
   font-family: var(--font-sans);
-  font-size: clamp(1.4rem, 2.8vw, 2.2rem);
-  font-weight: 550;
-  line-height: 1.28;
-  letter-spacing: -0.01em;
+  font-size: clamp(1.6rem, 3.2vw, 2.6rem);
+  font-weight: 620;
+  line-height: 1.22;
+  letter-spacing: -0.015em;
   color: #0b0b0c;
 }
 /* D. 2줄 — 기존 본문 크기 그대로. (1줄 바로 아래 자연스럽게 배치) */
@@ -894,7 +896,7 @@
 .journal {
   position: relative;
   height: 100%;
-  background: #ffffff; /* A: FESTIVALS 와 동일한 흰색으로 통일 */
+  background: transparent; /* D: 불투명 배경 제거 — .land 흰색 위에서 콘텐츠만 올라오게(FESTIVALS 를 가리지 않음) */
   /* [1] 섹션 사이 가로 구분선 제거(전 브레이크포인트) */
   display: flex;
   align-items: center;
