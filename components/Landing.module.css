@@ -720,10 +720,21 @@
   font-size: clamp(4.5rem, 14vw, 13rem);
   line-height: 0.9;
 }
-/* B. 타이틀 하단 작은 설명(레퍼런스 "We step in on high-stakes..." 위치) */
+/* D. 1줄 — 조금 큰 텍스트 + 살짝만 굵게(볼드 아님, 550). */
+.festLead {
+  margin: 0;
+  max-width: 30ch;
+  font-family: var(--font-sans);
+  font-size: clamp(1.4rem, 2.8vw, 2.2rem);
+  font-weight: 550;
+  line-height: 1.28;
+  letter-spacing: -0.01em;
+  color: #0b0b0c;
+}
+/* D. 2줄 — 기존 본문 크기 그대로. (1줄 바로 아래 자연스럽게 배치) */
 .festHeadSub {
   max-width: 42ch;
-  margin: clamp(1rem, 2.4vh, 1.7rem) auto 0;
+  margin: clamp(0.6rem, 1.4vh, 0.9rem) auto 0;
   font-family: var(--font-sans);
   font-size: clamp(0.9rem, 1.2vw, 1.05rem);
   line-height: 1.7;
@@ -746,7 +757,8 @@
   height: min(62vh, 500px);
   display: flex;
   flex-direction: column;
-  background: #f2f1ef; /* A: 카드 배경을 오프화이트로(섹션 흰색과 스왑). 테두리/그림자는 제거 */
+  background: #ffffff; /* B: 카드 배경 흰색 */
+  border: 1px solid #0b0b0c; /* B: 검은 얇은 1px 라인 복구 */
   border-radius: 16px;
   overflow: hidden;
   transform-style: preserve-3d; /* B: rotateX 입체 유지 */
@@ -882,7 +894,7 @@
 .journal {
   position: relative;
   height: 100%;
-  background: #f8f8f8; /* #fff → #f8f8f8 (옅은 회색) */
+  background: #ffffff; /* A: FESTIVALS 와 동일한 흰색으로 통일 */
   /* [1] 섹션 사이 가로 구분선 제거(전 브레이크포인트) */
   display: flex;
   align-items: center;
@@ -902,8 +914,8 @@
   right: 0;
   bottom: 0;
   height: 42%;
-  /* 투명 → #f8f8f8(JOURNAL 배경) 그라데이션으로 아래 리스트를 가림 */
-  background: linear-gradient(to bottom, rgba(248, 248, 248, 0) 0%, #f8f8f8 72%);
+  /* 투명 → #ffffff(JOURNAL 배경) 그라데이션으로 아래 리스트를 가림 */
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, #ffffff 72%);
   pointer-events: none;
   z-index: 2;
   display: none; /* 데스크탑: 마스크 없음 — 모바일에서만 표시 */

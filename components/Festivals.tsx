@@ -62,16 +62,11 @@ export default function Festivals() {
       <div ref={scrollerRef} className={styles.festsScroller}>
         <div className={styles.festsSticky}>
           <motion.div className={styles.festInner} style={{ opacity: secOpacity, y: secY }}>
-            {/* A. 타이틀(정적 — 애니메이션 없음) + 하단 작은 설명. FILMMAKERS 가 걷히면 아래에서 드러남 */}
+            {/* D. FESTIVALS 타이틀 제거 → 2줄 텍스트. 1줄: 살짝 굵게 큰 글씨 / 2줄: 본문 크기. (애니메이션 없음) */}
             <div className={styles.festHead}>
               <span className={styles.eyebrow}>Selections &amp; Awards</span>
-              <h2 className={styles.title} aria-label="FESTIVALS">
-                <span aria-hidden="true">FESTI</span>
-                <em aria-hidden="true">VALS</em>
-              </h2>
-              <p className={styles.festHeadSub}>
-                세계 유수 영화제가 먼저 알아본 이름들 — 초청과 수상으로 이어진 배급작의 궤적.
-              </p>
+              <h2 className={styles.festLead}>세계 유수 영화제가 먼저 알아본 이름들</h2>
+              <p className={styles.festHeadSub}>초청과 수상으로 이어진 배급작의 궤적</p>
             </div>
 
             {/* 세로 카드 스택(앞 레이어) — 제자리에서 확대+눕힘→정면으로 펴지며 쌓임 */}
