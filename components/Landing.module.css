@@ -549,6 +549,7 @@
 /* 2단계: 섹션을 길게 만들고 내부 뷰포트를 sticky 로 고정 → 세로 스크롤이 가로 이동으로 */
 .fm {
   position: relative;
+  z-index: 2; /* [A] FESTIVALS(z:1) 위에 얹혀, 끝에서 위로 걷히며 FESTIVALS 를 드러냄 */
   height: 450vh; /* 세로 스크롤 길이 — pitch 가 커진 만큼 스크롤 여유 확보 */
   background: #0b0b0c; /* 검은 배경 (LINEUP 과 동일 톤) */
   color: #f4f4f2;
@@ -669,28 +670,28 @@
   color: #f4f4f2; /* 강조는 흰색 */
 }
 
-/* ── FESTIVALS — incredibles.dev 풍: 중앙 커튼 타이틀/본문 + 아래→위로 흐르는 카드 ── */
+/* ── FESTIVALS — 큰 타이틀(뒤) + 세로 카드 제자리 스택(앞) ── */
+/* [A] FILMMAKERS(.fm, z:2) 아래로 깔리고 마지막 100vh 를 겹쳐, FILMMAKERS 가 위로 걷히면 드러남. */
 .fests {
   background: #f8f8f8;
   position: relative;
+  z-index: 1;
+  margin-top: -100vh;
 }
-/* 긴 스크롤 래퍼 + 내부 sticky 무대. 헤딩(뒤)·카드 트랙(앞)이 겹치고 카드만 스크롤 연동해 위로 흐름. */
+/* 긴 스크롤 래퍼 + 내부 sticky 무대. 타이틀(뒤)·카드 스택(앞)이 겹치고 카드만 스크롤 연동해 쌓임. */
 .festsScroller {
   position: relative;
-  height: 460vh;
+  height: 340vh;
 }
 .festsSticky {
   position: sticky;
   top: 0;
   height: 100vh;
   overflow: hidden;
-}
-.festStage {
-  position: relative;
-  height: 100%;
+  background: #f8f8f8;
 }
 
-/* A. 중앙 헤딩(뒤 레이어) — 커튼 리빌: eyebrow/본문은 마스크 창에서 아래→위로, 타이틀은 RiseTitle. */
+/* B. 큰 타이틀(뒤 레이어) — FILMMAKERS 급. */
 .festHead {
   position: absolute;
   inset: 0;
@@ -703,143 +704,133 @@
   padding: 0 var(--ln-gutter);
   pointer-events: none;
 }
-.festHeadMask {
-  display: block;
-  overflow: hidden; /* 커튼 창 — 아래에서 올라오는 텍스트의 시작(창 밖)을 가림 */
-}
 .festHead .eyebrow {
-  margin: 0 0 0.9rem;
-  will-change: transform;
+  margin: 0 0 1rem;
 }
 .festHead .title {
   color: #0b0b0c;
   white-space: nowrap; /* 글자별 span 이 줄바꿈되지 않게(1줄) */
-}
-.festHeadBody {
-  max-width: 46ch;
-  margin: clamp(1.2rem, 3vh, 2rem) auto 0;
-  font-family: var(--font-sans);
-  font-size: clamp(0.98rem, 1.4vw, 1.18rem);
-  line-height: 1.7;
-  color: #4a4a48;
-  will-change: transform;
+  font-size: clamp(4.5rem, 14vw, 13rem);
+  line-height: 0.9;
 }
 
-/* B. 카드 컬럼(앞 레이어) — 위/아래 가장자리 페이드 마스크 안에서 컬럼이 위로 흐름. */
-.festCardViewport {
+/* C·D. 세로 카드 스택(앞 레이어) — 절대 중앙 겹침. 각 카드는 JS 로 아래→위 이동/축소. */
+.festStack {
   position: absolute;
   inset: 0;
   z-index: 2;
-  display: flex;
-  justify-content: center;
-  overflow: hidden;
-  pointer-events: none; /* 흐르는 장식 카드 — 클릭 불필요 */
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
-  mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
 }
-.festCardTrack {
+.festCard {
   position: absolute;
-  top: 0;
-  width: min(540px, 88vw);
+  inset: 0;
+  margin: auto; /* 중앙 정렬(inset:0 + margin:auto) → 모든 카드 같은 자리에 스택 */
+  width: clamp(290px, 30vw, 380px);
+  height: min(66vh, 560px);
   display: flex;
   flex-direction: column;
-  gap: clamp(1rem, 2.2vh, 1.7rem);
-  will-change: transform;
-}
-
-/* C. 카드 — 흰 배경 + 1px 검정 라인 + 어두운 텍스트. */
-.festCard {
-  display: flex;
-  gap: clamp(0.9rem, 1.6vw, 1.3rem);
-  align-items: center;
   background: #ffffff;
   border: 1px solid #0b0b0c;
-  border-radius: 4px;
-  padding: clamp(1rem, 1.8vw, 1.4rem);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-}
-.festCard__thumb {
-  position: relative;
-  flex: 0 0 auto;
-  width: clamp(66px, 9vw, 96px);
-  aspect-ratio: 1 / 1;
+  border-radius: 16px;
   overflow: hidden;
-  border-radius: 2px;
-  background: #f0f0ee;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.14);
+  will-change: transform;
 }
-.festCard__thumb :global(img) {
+.festCard__img {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: #e7e7e4;
+  border-bottom: 1px solid #0b0b0c;
+}
+.festCard__img :global(img) {
   object-fit: cover;
 }
 .festCard__body {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+  flex: 0 0 auto;
+  padding: clamp(1.1rem, 1.8vw, 1.6rem) clamp(1.2rem, 2vw, 1.7rem) clamp(1.3rem, 2.2vw, 1.9rem);
   text-align: left;
 }
 .festCard__yr {
+  display: block;
   font-family: var(--font-meta, monospace);
   font-size: 11px;
   letter-spacing: 0.16em;
   color: #9a9a96;
 }
 .festCard__name {
-  margin: 0.2rem 0 0;
+  margin: 0.35rem 0 0;
   font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
   font-weight: 900;
-  font-size: clamp(1.05rem, 1.6vw, 1.4rem);
+  font-size: clamp(1.25rem, 1.9vw, 1.7rem);
   letter-spacing: -0.01em;
-  line-height: 1.14;
+  line-height: 1.12;
   color: #0b0b0c;
 }
-.festCard__section {
-  margin-top: 0.3rem;
-  font-family: var(--font-meta, monospace);
-  font-size: 11.5px;
-  letter-spacing: 0.04em;
-  color: #6a6a68;
+.festCard__desc {
+  margin: 0.55rem 0 0;
+  font-size: clamp(0.82rem, 1.05vw, 0.95rem);
+  line-height: 1.55;
+  color: #55554f;
 }
-.festCard__film {
-  margin-top: 0.55rem;
-  font-size: 12.5px;
-  color: #4a4a48;
+/* 뒤로 밀린 카드의 삐져나온 상단을 회색으로(딥스) — opacity 를 JS 로 0→0.42 */
+.festCard__scrim {
+  position: absolute;
+  inset: 0;
+  background: #c9c9c4;
+  pointer-events: none;
 }
 
 @media (max-width: 767px) {
-  .festCardTrack {
-    width: 90vw;
+  .festCard {
+    width: 86vw;
+    height: min(68vh, 520px);
+  }
+  .festHead .title {
+    white-space: normal;
   }
 }
 
-/* reduce: pin/flow 해제 → 헤딩 + 카드 세로 스택(정적). */
+/* reduce: pin/스택 해제 → 타이틀 + 카드 세로 스택(정적). */
 @media (prefers-reduced-motion: reduce) {
   .festsScroller {
     height: auto;
+  }
+  .fests {
+    margin-top: 0;
   }
   .festsSticky {
     position: static;
     height: auto;
     overflow: visible;
-  }
-  .festStage {
-    height: auto;
     padding-block: clamp(3rem, 8vh, 5rem);
   }
   .festHead {
     position: static;
     padding: 0 var(--ln-gutter) clamp(2rem, 5vh, 3rem);
   }
-  .festCardViewport {
+  .festStack {
     position: static;
-    overflow: visible;
-    -webkit-mask-image: none;
-    mask-image: none;
-    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(1.4rem, 4vh, 2.4rem);
   }
-  .festCardTrack {
+  .festCard {
     position: static;
+    inset: auto;
+    margin: 0;
     transform: none !important;
-    margin: 0 auto;
+    opacity: 1 !important;
+    height: auto;
+    max-width: 380px;
+    width: 100%;
+  }
+  .festCard__img {
+    aspect-ratio: 4 / 3;
+    flex: 0 0 auto;
+  }
+  .festCard__scrim {
+    display: none;
   }
 }
 

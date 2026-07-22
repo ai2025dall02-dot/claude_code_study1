@@ -1,133 +1,98 @@
 "use client";
 
-// FESTIVALS — incredibles.dev "Incredible devs you can count on." 풍 재구성.
-//  A. 중앙에 타이틀/본문이 "커튼(마스크)에 가려져 있다가" 아래→위로 드러남(타이틀→본문 순).
-//  B. 리스트 항목 → 흰 카드로. sticky 무대에서 카드 컬럼이 스크롤에 연동해 아래→위로 흐르며
-//     중앙 텍스트 위를 지나 하나씩 등장(위/아래 페이드 마스크).
-//  C. 카드: 흰 배경 + 1px 검정 라인 + 어두운 텍스트.
+// FESTIVALS — incredibles.dev "Incredible devs you can count on." 풍.
+//  B. 큰 타이틀(FILMMAKERS 급) 중앙 배치(뒤 레이어).  C. 세로 카드(이미지 위 / 텍스트 아래, 흰 배경+검정 라인).
+//  D. 카드가 같은 중앙 위치에서 아래→위로 올라와 이전 카드 위에 "스택"으로 쌓임(뒤 카드는 상단만 삐져나와 회색).
+//  E. 항목 4개.  (A: FILMMAKERS 가 걷히며 리빌되는 전환은 Landing.module.css 의 z-index/overlap 으로 처리)
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion, useScroll, useSpring, useTransform, type Variants } from "framer-motion";
+import { useReducedMotion, useScroll, useSpring, useTransform, motion, type MotionValue } from "framer-motion";
+import { useRef } from "react";
 import RiseTitle from "./RiseTitle";
 import styles from "./Landing.module.css";
 
-/* 영화제 초청·수상 (데모용 가상 정보). image: 카드 썸네일(/festival_*.png). */
+/* 영화제 초청·수상 (데모 · 4개). image: 카드 상단 이미지(/festival_*.png). */
 const FESTIVALS = [
   { yr: "2024", name: "부산국제영화제", section: "한국영화의 오늘 — 비전", film: "조용한 망명", image: "/festival_1.png" },
-  { yr: "2024", name: "전주국제영화제", section: "국제경쟁", film: "여름의 잔상", image: "/festival_2.png" },
   { yr: "2023", name: "로테르담 국제영화제", section: "Tiger Competition", film: "북위 48도", image: "/festival_3.png" },
-  { yr: "2023", name: "야마가타 다큐멘터리", section: "International Competition", film: "필름의 끝", image: "/festival_4.png" },
   { yr: "2022", name: "산세바스티안 영화제", section: "New Directors", film: "소금사막", image: "/festival_5.png" },
-  { yr: "2022", name: "로카르노 영화제", section: "Concorso Cineasti del presente", film: "재의 계절", image: "/festival_6.png" },
-  { yr: "2022", name: "낭트 3대륙 영화제", section: "Compétition", film: "붉은 방", image: "/festival_7.png" },
-  { yr: "2021", name: "카를로비바리 영화제", section: "Proxima Competition", film: "겨울 우체국", image: "/festival_8.png" },
   { yr: "2021", name: "타이베이 금마장", section: "International New Talent", film: "빛의 문", image: "/festival_9.png" },
 ];
+
+// [D] 스택 타이밍 — 카드 i 는 진행도 START + i*GAP 에서 올라오기 시작해 +RISE 에 중앙 안착.
+const START = 0.12;
+const GAP = 0.2;
+const RISE = 0.14;
+const ENTER = 680; // 진입 시 카드 시작 위치(중앙 아래 px)
+const PEEK = 22; // 뒤로 밀릴 때 카드 한 장당 위로 삐져나오는 양(px)
 
 export default function Festivals() {
   const reduce = useReducedMotion();
   const scrollerRef = useRef<HTMLDivElement | null>(null);
-  const stageRef = useRef<HTMLDivElement | null>(null);
-  const trackRef = useRef<HTMLDivElement | null>(null);
-  const N = FESTIVALS.length;
-
   const { scrollYProgress } = useScroll({ target: scrollerRef, offset: ["start start", "end end"] });
-  const p = useSpring(scrollYProgress, { stiffness: 120, damping: 30, mass: 0.6 });
-
-  // 카드 컬럼 이동량 계산용 측정치(카드 간 stride·첫 카드 중심·무대 높이).
-  const [mtr, setMtr] = useState({ stride: 160, firstCenter: 80, stageH: 760 });
-  useEffect(() => {
-    const measure = () => {
-      const track = trackRef.current;
-      const stage = stageRef.current;
-      if (!track || !stage || track.children.length < 2) return;
-      const r0 = track.children[0] as HTMLElement;
-      const r1 = track.children[1] as HTMLElement;
-      setMtr({
-        stride: r1.offsetTop - r0.offsetTop,
-        firstCenter: r0.offsetTop + r0.offsetHeight / 2,
-        stageH: stage.clientHeight,
-      });
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    const raf = requestAnimationFrame(measure);
-    return () => {
-      window.removeEventListener("resize", measure);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  // [B] 카드 컬럼 translateY: p=0 → 첫 카드가 화면 하단(88%)에서 진입, p=1 → 마지막 카드가 중앙(50%).
-  //   → 스크롤에 따라 카드가 아래→위로 흐르며 위/아래 마스크로 페이드 인·아웃, 하나씩 등장.
-  const trackY = useTransform(p, (v) => {
-    if (reduce) return 0;
-    const y0 = mtr.stageH * 0.88 - mtr.firstCenter;
-    const y1 = mtr.stageH * 0.5 - (mtr.firstCenter + (N - 1) * mtr.stride);
-    return y0 + v * (y1 - y0);
-  });
-
-  // 커튼 리빌 — 하나의 컨테이너 whileInView(once) 로 eyebrow→본문을 stagger 로 올림(개별 delay 대신
-  //   staggerChildren 사용 → 트리거 신뢰성↑). 타이틀(RiseTitle)은 자체 whileInView 로 그 사이에 등장.
-  const curtainGroup: Variants = {
-    hidden: {},
-    show: { transition: { staggerChildren: reduce ? 0 : 0.18, delayChildren: reduce ? 0 : 0.05 } },
-  };
-  const curtainItem: Variants = {
-    hidden: { y: reduce ? "0%" : "120%" },
-    show: { y: "0%", transition: { duration: reduce ? 0 : 0.7, ease: [0.16, 1, 0.3, 1] } },
-  };
+  const p = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.6 });
+  const N = FESTIVALS.length;
 
   return (
     <section className={styles.fests} id="festivals">
       <div ref={scrollerRef} className={styles.festsScroller}>
         <div className={styles.festsSticky}>
-          <div ref={stageRef} className={styles.festStage}>
-            {/* A. 중앙 커튼 리빌 타이틀/본문 (뒤 레이어) */}
-            <motion.div
-              className={styles.festHead}
-              variants={curtainGroup}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-10% 0px" }}
-            >
-              <span className={styles.festHeadMask}>
-                <motion.span className={styles.eyebrow} variants={curtainItem}>
-                  Selections &amp; Awards
-                </motion.span>
-              </span>
+          {/* B. 큰 타이틀(뒤 레이어) — FILMMAKERS 가 걷히면 아래에서 드러남 */}
+          <div className={styles.festHead}>
+            <span className={styles.eyebrow}>Selections &amp; Awards</span>
+            <RiseTitle solid="FESTI" outline="VALS" inViewMargin="-10% 0px" />
+          </div>
 
-              <RiseTitle solid="FESTI" outline="VALS" inViewMargin="-10% 0px" />
-
-              <span className={styles.festHeadMask}>
-                <motion.p className={styles.festHeadBody} variants={curtainItem}>
-                  우리가 배급한 작품들이 국내외 영화제에서 받은 초청과 수상의 기록입니다. 부산에서
-                  로테르담까지, 작가의 첫 영화가 세계의 스크린을 먼저 통과한 순간들.
-                </motion.p>
-              </span>
-            </motion.div>
-
-            {/* B. 카드 컬럼 (앞 레이어) — 스크롤 연동으로 아래→위 흐름 */}
-            <div className={styles.festCardViewport}>
-              <motion.div ref={trackRef} className={styles.festCardTrack} style={{ y: trackY }}>
-                {FESTIVALS.map((fe) => (
-                  <article key={fe.name} className={styles.festCard}>
-                    <div className={styles.festCard__thumb}>
-                      <Image src={fe.image} alt="" fill sizes="96px" />
-                    </div>
-                    <div className={styles.festCard__body}>
-                      <span className={styles.festCard__yr}>{fe.yr}</span>
-                      <h3 className={styles.festCard__name}>{fe.name}</h3>
-                      <span className={styles.festCard__section}>{fe.section}</span>
-                      <span className={styles.festCard__film}>배급작 · {fe.film}</span>
-                    </div>
-                  </article>
-                ))}
-              </motion.div>
-            </div>
+          {/* C·D. 세로 카드 스택(앞 레이어) — 제자리에서 아래→위로 쌓임 */}
+          <div className={styles.festStack}>
+            {FESTIVALS.map((fe, i) => (
+              <StackCard key={fe.name} fe={fe} i={i} N={N} p={p} reduce={!!reduce} />
+            ))}
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function StackCard({
+  fe,
+  i,
+  N,
+  p,
+  reduce,
+}: {
+  fe: (typeof FESTIVALS)[number];
+  i: number;
+  N: number;
+  p: MotionValue<number>;
+  reduce: boolean;
+}) {
+  const inStart = START + i * GAP;
+  const inEnd = inStart + RISE;
+  const backTotal = (N - 1 - i) * PEEK; // 이 카드보다 뒤에 올라올 카드 수만큼 위로 밀림
+
+  // y: 아래(ENTER) → 중앙(0) → 뒤로 밀리며 위로(-backTotal). reduce 면 0 고정(정적).
+  const y = useTransform(p, [inStart, inEnd, 1], reduce ? [0, 0, 0] : [ENTER, 0, -backTotal], { clamp: true });
+  // opacity: 올라오며 페이드 인.
+  const opacity = useTransform(p, [inStart - 0.04, inStart + RISE * 0.5], reduce ? [1, 1] : [0, 1], { clamp: true });
+  // 뒤로 밀리면 살짝 축소(딥스감) + 회색 스크림 등장 → 삐져나온 상단이 회색으로.
+  const scale = useTransform(p, [inEnd, 1], reduce ? [1, 1] : [1, 1 - 0.05 * (N - 1 - i)], { clamp: true });
+  const scrim = useTransform(p, [inEnd, inEnd + GAP], reduce ? [0, 0] : [0, 0.42], { clamp: true });
+
+  return (
+    <motion.article className={styles.festCard} style={{ y, opacity, scale, zIndex: i }}>
+      <div className={styles.festCard__img}>
+        <Image src={fe.image} alt="" fill sizes="(max-width:767px) 86vw, 360px" />
+      </div>
+      <div className={styles.festCard__body}>
+        <span className={styles.festCard__yr}>{fe.yr}</span>
+        <h3 className={styles.festCard__name}>{fe.name}</h3>
+        <p className={styles.festCard__desc}>
+          {fe.section} · 배급작 «{fe.film}»
+        </p>
+      </div>
+      {/* 뒤로 밀린 카드의 삐져나온 상단을 회색으로(딥스) */}
+      <motion.span className={styles.festCard__scrim} style={{ opacity: scrim }} aria-hidden="true" />
+    </motion.article>
   );
 }
