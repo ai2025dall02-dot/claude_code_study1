@@ -673,7 +673,7 @@
 /* ── FESTIVALS — 큰 타이틀(뒤) + 세로 카드 제자리 스택(앞) ── */
 /* [A] FILMMAKERS(.fm, z:2) 아래로 깔리고 마지막 100vh 를 겹쳐, FILMMAKERS 가 위로 걷히면 드러남. */
 .fests {
-  background: #f8f8f8;
+  background: #f2f1ef; /* B: #f8f8f8 → 아주 살짝 어두운 오프화이트 */
   position: relative;
   z-index: 1;
   margin-top: -100vh;
@@ -689,7 +689,7 @@
   top: 0;
   height: 100vh;
   overflow: hidden;
-  background: #f8f8f8;
+  background: #f2f1ef; /* B: 섹션 배경과 동일하게 살짝 어둡게 */
 }
 
 /* B. 큰 타이틀(뒤 레이어) — FILMMAKERS 급. */
@@ -850,9 +850,13 @@
 }
 
 /* ── JOURNAL ────────────────────────────────────────── */
-/* 작업2: JOURNAL sticky 체류 트랙 (FESTIVALS 의 scroller+sticky 패턴) */
+/* 작업2: JOURNAL sticky 체류 트랙 (FESTIVALS 의 scroller+sticky 패턴)
+   [D] FESTIVALS(.fests z:1) 위에 얹혀(z:2) 마지막 100vh 를 겹침 → JOURNAL 이 아래에서 올라와 FESTIVALS 를
+   덮고, FESTIVALS 는 sticky 가 풀리며 위로 밀려남(전환). .journalSticky 배경이 불투명해 아래를 완전히 덮음. */
 .journalScroller {
   position: relative;
+  z-index: 2;
+  margin-top: -100vh;
   /* 작업1: 체류/무게감 핵심 조절점. 240vh → 340vh 로 늘려 JOURNAL 이 더 오래 고정되고 블라인드 상승도
      같은 진행도라도 더 많은 스크롤에 퍼져 묵직해짐. 더 무겁게 하려면 이 값을 키우면 됨(예 400vh). */
   height: 340vh;
