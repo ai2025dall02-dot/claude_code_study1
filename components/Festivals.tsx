@@ -36,12 +36,12 @@ const ENTER = 620; // 진입 시작 y(중앙 아래 px)
 const PEEK = 48; // B: 스택 시 한 장당 위로 삐져나오는 세로 간격(20→48 — 카드 사이 거리 확대)
 const TILT = 20; // 진입 시 rotateX(deg) — 눕혀진 상태에서 0 으로 펴짐
 const ENTER_SCALE = 1.16; // 진입 시 확대 배율(→ 1 로 축소되며 안착)
-const SETTLE = 0.74; // B: 이 진행도까지 카드가 -backTotal(벌어진 스택)로 안착 → 이후 FADE 전까지 그 간격 유지
-// C: 다음 섹션 전환 — JOURNAL 이 어느 정도 올라온 뒤(FADE_START) FESTIVALS 섹션 전체가
-//    천천히 opacity 1→0 + 위로 상승(SEC_RISE)하며 사라짐. (JOURNAL overlap 은 CSS z/margin)
-const FADE_START = 0.86; // 섹션 페이드/상승 시작(= JOURNAL 이 절반쯤 올라온 시점)
-const FADE_END = 1.0; // 끝 — 천천히
-const SEC_RISE = 150; // 섹션이 위로 상승하는 양(px)
+const SETTLE = 0.72; // 이 진행도까지 카드가 -backTotal(벌어진 스택)로 안착 → 이후 FADE 전까지 그 간격 유지
+// B: JOURNAL 이 올라오기 "전에" FESTIVALS 내용(카드+텍스트)이 먼저 상승+페이드아웃 되도록 순서 조정.
+//    FADE 구간을 앞당겨(0.78~0.88) 완료 → 그 뒤 CSS 의 짧아진 overlap(-45vh)에서 JOURNAL 이 올라옴(겹침 최소화).
+const FADE_START = 0.78; // 섹션 페이드/상승 시작
+const FADE_END = 0.88; // 이 시점까지 FESTIVALS 내용 완전히 사라짐(그 뒤 JOURNAL 등장)
+const SEC_RISE = 210; // 섹션이 위로 상승하는 양(px) — 확실히 화면 밖으로 빠지게
 // 등장 스냅 — 후반 급감속 이징(끝에서 톡 붙는 느낌).
 const snap = cubicBezier(0.16, 1, 0.3, 1);
 const lin = (t: number) => t;

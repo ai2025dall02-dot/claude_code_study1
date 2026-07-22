@@ -681,10 +681,10 @@
   margin-top: -100vh;
 }
 /* 긴 스크롤 래퍼 + 내부 sticky 무대. 타이틀(뒤)·카드 스택(앞)이 겹치고 카드만 스크롤 연동해 쌓임.
-   340vh → 440vh: A(카드 등장 지연) + F(순차 exit) 구간을 넉넉히 확보. */
+   440→500vh: 카드 안착 후 "먼저 상승+페이드아웃" 구간을 확보해 JOURNAL 등장과 순서를 분리(B). */
 .festsScroller {
   position: relative;
-  height: 440vh;
+  height: 500vh;
 }
 .festsSticky {
   position: sticky;
@@ -722,15 +722,16 @@
   font-size: clamp(4.5rem, 14vw, 13rem);
   line-height: 0.9;
 }
-/* A. 1줄(2행) — 조금 더 크고 살짝 더 굵게(볼드는 아님). */
+/* A. 1줄(2행) — 카드에 가리지 않게 크게(양옆으로 삐져나와 읽히도록). 2줄 유지 + 살짝 굵게. */
 .festLead {
   margin: 0;
-  max-width: 30ch;
+  max-width: none;
+  white-space: nowrap; /* 각 줄이 카드보다 넓게 → 좌우로 삐져나와 읽힘 */
   font-family: var(--font-sans);
-  font-size: clamp(1.6rem, 3.2vw, 2.6rem);
+  font-size: clamp(2.6rem, 6.6vw, 5.2rem);
   font-weight: 620;
-  line-height: 1.22;
-  letter-spacing: -0.015em;
+  line-height: 1.14;
+  letter-spacing: -0.02em;
   color: #0b0b0c;
 }
 /* D. 2줄 — 기존 본문 크기 그대로. (1줄 바로 아래 자연스럽게 배치) */
@@ -815,7 +816,7 @@
 .festCard__scrim {
   position: absolute;
   inset: 0;
-  background: #c9c9c4;
+  background: #b0b6c3; /* C: 푸른기 도는 어두운 쿨 그레이(블루 그레이). 단계는 JS opacity 로 */
   pointer-events: none;
 }
 
@@ -826,6 +827,10 @@
   }
   .festHead .title {
     white-space: normal;
+  }
+  .festLead {
+    white-space: normal; /* 모바일: 가로 넘침 방지(br 로 2줄 유지) */
+    font-size: clamp(1.7rem, 7.4vw, 2.4rem);
   }
 }
 
@@ -879,7 +884,9 @@
 .journalScroller {
   position: relative;
   z-index: 2;
-  margin-top: -100vh;
+  /* B: overlap 을 -100vh → -45vh 로 줄여, FESTIVALS 내용이 먼저 상승+페이드아웃 된 뒤에
+     JOURNAL 리스트가 올라오도록(둘이 동시에 크게 겹치지 않게). */
+  margin-top: -45vh;
   /* 작업1: 체류/무게감 핵심 조절점. 240vh → 340vh 로 늘려 JOURNAL 이 더 오래 고정되고 블라인드 상승도
      같은 진행도라도 더 많은 스크롤에 퍼져 묵직해짐. 더 무겁게 하려면 이 값을 키우면 됨(예 400vh). */
   height: 340vh;
