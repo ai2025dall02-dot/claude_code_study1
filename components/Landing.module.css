@@ -673,7 +673,7 @@
 /* ── FESTIVALS — 큰 타이틀(뒤) + 세로 카드 제자리 스택(앞) ── */
 /* [A] FILMMAKERS(.fm, z:2) 아래로 깔리고 마지막 100vh 를 겹쳐, FILMMAKERS 가 위로 걷히면 드러남. */
 .fests {
-  background: #f2f1ef; /* B: #f8f8f8 → 아주 살짝 어두운 오프화이트 */
+  background: #ffffff; /* A: 섹션 배경 흰색으로(카드와 스왑) */
   position: relative;
   z-index: 1;
   margin-top: -100vh;
@@ -689,7 +689,13 @@
   top: 0;
   height: 100vh;
   overflow: hidden;
-  background: #f2f1ef; /* B: 섹션 배경과 동일하게 살짝 어둡게 */
+  background: #ffffff; /* A: 섹션 배경 흰색 */
+}
+/* C: 섹션 콘텐츠 래퍼 — 전환 때 이 래퍼에 opacity/y 를 걸어 FESTIVALS 전체가 천천히 페이드+상승. */
+.festInner {
+  position: absolute;
+  inset: 0;
+  will-change: transform, opacity;
 }
 
 /* B. 큰 타이틀(뒤 레이어) — FILMMAKERS 급. */
@@ -740,7 +746,7 @@
   height: min(62vh, 500px);
   display: flex;
   flex-direction: column;
-  background: #ffffff; /* A: 흰 배경 유지 — 테두리/그림자는 제거(깔끔한 형태, 뒤 카드는 회색 DIM 으로 구분) */
+  background: #f2f1ef; /* A: 카드 배경을 오프화이트로(섹션 흰색과 스왑). 테두리/그림자는 제거 */
   border-radius: 16px;
   overflow: hidden;
   transform-style: preserve-3d; /* B: rotateX 입체 유지 */
@@ -822,6 +828,9 @@
     height: auto;
     overflow: visible;
     padding-block: clamp(3rem, 8vh, 5rem);
+  }
+  .festInner {
+    position: static;
   }
   .festHead {
     position: static;
