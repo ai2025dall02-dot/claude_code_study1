@@ -15,8 +15,10 @@ import {
 } from "framer-motion";
 import styles from "./About.module.css";
 
-// 영상 자리 placeholder — 실제 영상은 나중에 교체. 지금은 로컬 이미지로 대체.
-const PLACEHOLDER = "/posters-photo/m4.jpg";
+// 소개 영상. public/videos/about.mp4 를 올리면 재생됨(경로: /videos/about.mp4).
+// POSTER = 영상 로드 전/실패 시 보이는 이미지(파일 없어도 화면 안 깨지게).
+const VIDEO_SRC = "/videos/about.mp4";
+const POSTER = "/posters-photo/m4.jpg";
 const MINI_W = 780; // [C] 최종 미니플레이어 폭(px). 세로는 16:9 → 약 439px.
 
 export default function About() {
@@ -84,7 +86,16 @@ export default function About() {
       <div className={styles.pin}>
         <div className={styles.videoStage}>
           <motion.div ref={vidRef} className={styles.video} style={vidStyle}>
-            <img src={PLACEHOLDER} alt="필름 누벨 소개 영상 (placeholder)" />
+            <video
+              src={VIDEO_SRC}
+              poster={POSTER}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              aria-label="필름 누벨 소개 영상"
+            />
             <span className={styles.videoTag}>Showreel</span>
           </motion.div>
 
