@@ -821,9 +821,10 @@
 }
 
 @media (max-width: 767px) {
+  /* 모바일 카드: FILMMAKERS(.fmCard) 와 동일 폭 + 이미지 영역(3:4) 비율에 맞춤(260×~348 ≈ 3:4). */
   .festCard {
-    width: 86vw;
-    height: min(66vh, 480px);
+    width: clamp(260px, 22vw, 330px); /* = .fmCard 폭 (모바일에서 사실상 260px) */
+    height: min(56vh, 348px); /* 260*4/3 ≈ 3:4 — FILMMAKERS 이미지 영역과 같은 비율 */
   }
   .festHead .title {
     white-space: normal;
@@ -1378,10 +1379,9 @@
   .festCenterMeta { align-items: flex-end; text-align: right; }
   .festCenterFilm { font-size: clamp(0.9rem, 4vw, 1.1rem); }
 
-  /* [6][4] 제목/설명 ↔ 리스트 무대, 리스트 ↔ JOURNAL 간격 축소 (모바일).
-     트랙 길이(.festsScroller)를 540vh→300vh 로 줄여 과한 스크롤 여백 제거 → 리스트가 설명
-     바로 아래, JOURNAL 이 리스트 바로 아래로 붙음. (트랙 stride 측정은 DOM 기반이라 무관) */
-  .festsScroller { height: 300vh; }
+  /* 모바일: 스크롤 트랙 길이. 300→480vh 로 늘려, FILMMAKERS 가 완전히 올라가고 FESTIVALS 텍스트가
+     잠깐 보인 뒤에 카드 애니메이션이 시작되도록(JS START 등 상수는 그대로 두고 CSS 길이만 조정). */
+  .festsScroller { height: 480vh; }
   .festsIntro { padding-bottom: 0; }
   .festsSticky { padding-top: clamp(1.25rem, 3.5vh, 2rem); }
 
