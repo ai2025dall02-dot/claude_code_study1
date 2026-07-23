@@ -99,8 +99,8 @@
   font-family: var(--font-anton), "Arial Black", Helvetica, sans-serif;
   font-weight: 900;
   font-size: clamp(13px, 1vw, 15px); /* 11px → 반응형 확대 */
-  letter-spacing: 0.4em; /* 필름 리더 캡션답게 넉넉한 자간 */
-  text-indent: 0.4em; /* letter-spacing 과 동일 — 중앙 정렬 보정(마지막 글자 뒤 공백 상쇄) */
+  letter-spacing: 0.25em; /* 필름 리더 캡션 자간(0.4em 은 과해 0.25em 로 축소) */
+  text-indent: 0.25em; /* letter-spacing 과 동일 — 중앙 정렬 보정(마지막 글자 뒤 공백 상쇄) */
   color: rgba(244, 244, 242, 0.4);
 }
 
