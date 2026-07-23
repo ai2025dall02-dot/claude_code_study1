@@ -750,7 +750,7 @@
   position: absolute;
   inset: 0;
   z-index: 2;
-  perspective: 1400px;
+  perspective: 1800px; /* TILT 50° + ENTER_SCALE 1.9 에서 상단 사다리꼴 왜곡을 완화(1400→1800) */
 }
 .festCard {
   position: absolute;
