@@ -95,11 +95,12 @@
 .label {
   position: absolute;
   bottom: clamp(2rem, 7vh, 3.5rem);
-  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
-  font-weight: 800;
+  /* 히어로 공용 .title 과 동일 규격(Anton) — 아웃라인 없이 솔리드 한 덩어리(FILM/NOUVELLE 분리 없음). */
+  font-family: var(--font-anton), "Arial Black", Helvetica, sans-serif;
+  font-weight: 900;
   font-size: 11px;
-  letter-spacing: 0.5em;
-  text-indent: 0.5em;
+  letter-spacing: 0.05em;
+  text-indent: 0.05em; /* letter-spacing 축소에 맞춰 중앙 정렬 보정값도 축소 */
   color: rgba(244, 244, 242, 0.4);
 }
 

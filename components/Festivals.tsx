@@ -31,13 +31,13 @@ const FESTIVALS = [
 // 스택 타이밍 — 진행도 기준. 타이틀/본문이 다 드러난 뒤(START=0.30)부터 카드가 순차 등장.
 const START = 0.3; // 카드 등장 시작(뒤로 미룸)
 const GAP = 0.1; // 카드 간 등장 간격
-const RISE = 0.1; // 한 장이 올라와 안착하는 구간(페이드 제거로 살짝 길게)
+const RISE = 0.11; // 한 장이 올라와 안착하는 구간(확대 폭 커진 만큼 소폭 연장 · 마지막 inEnd 0.71<SETTLE 0.72)
 // ENTER(진입 시작 y)는 뷰포트·카드 높이에 맞춰 동적 계산(아래 useEffect). 고정 px 폐지.
 const ENTER_MARGIN = 48; // 대기 시 화면 밖으로 완전히 숨도록 하는 여유(px)
 const CARD_H_FALLBACK = 456; // 측정 전 기본 카드 높이(데스크탑 clamp 상한)
 const PEEK = 48; // B: 스택 시 한 장당 위로 삐져나오는 세로 간격(20→48 — 카드 사이 거리 확대)
 const TILT = 28; // 진입 시 rotateX(deg) — 눕혀진 상태에서 0 으로 펴짐(페이드 제거 → 눕힘 더 강조)
-const ENTER_SCALE = 1.4; // 진입 시 확대 배율(→ 1 로 축소되며 안착. 1.16→1.4 로 축소 폭 강화)
+const ENTER_SCALE = 1.9; // 진입 시 확대 배율(→ 1 로 축소되며 안착. 레퍼런스처럼 크게: 1.4→1.9)
 const SETTLE = 0.72; // 이 진행도까지 카드가 -backTotal(벌어진 스택)로 안착 → 이후 FADE 전까지 그 간격 유지
 // B: JOURNAL 이 올라오기 "전에" FESTIVALS 내용(카드+텍스트)이 먼저 상승+페이드아웃 되도록 순서 조정.
 //    FADE 구간을 앞당겨(0.78~0.88) 완료 → 그 뒤 CSS 의 짧아진 overlap(-45vh)에서 JOURNAL 이 올라옴(겹침 최소화).
