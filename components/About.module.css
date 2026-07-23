@@ -74,11 +74,17 @@
   left: var(--ln-gutter, clamp(1.4rem, 4vw, 3rem));
   bottom: clamp(2rem, 6vh, 3.5rem);
   z-index: 1;
-  max-width: 40ch;
+  /* 폭: 우측 하단 미니플레이어(MINI_W=780px, right:24)를 넘지 않는 선까지만 넓힘 →
+     넓은 데스크탑(~1400+)에선 두 문장이 각각 1줄(총 2줄). 좁아지면 미니플레이어에 겹치지 않고
+     어절 단위로 자연스레 접힘(텍스트가 미니플레이어 뒤로 숨지 않게 calc 로 폭을 제한). */
+  max-width: clamp(14rem, calc(100vw - 872px), 42rem);
   margin: 0;
-  font-size: clamp(0.86rem, 1.05vw, 1.02rem);
+  font-size: clamp(0.76rem, 0.85vw, 0.9rem); /* 한 줄에 들어오도록 살짝 축소 */
   line-height: 1.75;
   color: #0b0b0c; /* 요청: 본문(필름 누벨은 2014년부터~)을 검은색으로 */
+  /* 한글 줄바꿈: 글자 단위가 아니라 어절(단어) 단위로 끊기게 (특히 모바일 full-width) */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 /* 모바일: sticky 해제 → 일반 흐름(리드 → 영상 → 본문 순 스택) */
@@ -108,5 +114,6 @@
     position: static;
     max-width: none;
     margin-top: clamp(1.6rem, 5vh, 2.4rem);
+    font-size: clamp(0.86rem, 1.05vw, 1.02rem); /* 모바일 본문 크기는 기존 유지(데스크탑만 축소) */
   }
 }

@@ -763,7 +763,7 @@
   flex-direction: column;
   background: #ffffff; /* B: 카드 배경 흰색 */
   border: 1px solid #0b0b0c; /* B: 검은 얇은 1px 라인 복구 */
-  border-radius: 16px;
+  border-radius: 0; /* 각진 사각 */
   overflow: hidden;
   transform-style: preserve-3d; /* B: rotateX 입체 유지 */
   will-change: transform;
@@ -779,7 +779,7 @@
   width: 100%;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 0; /* 각진 사각(카드와 통일) */
   background: #e7e7e4;
   border: 1px solid #ececec;
 }
