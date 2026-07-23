@@ -438,6 +438,12 @@ img { max-width: 100%; display: block; }
   background: linear-gradient(var(--amber), transparent);
 }
 
+/* PlayCursor: 대상 영역에서만 기본 커서 숨김 — 커스텀 커서 활성(hover 지원 장치)일 때만. */
+html[data-playcursor-active="on"] [data-playcursor],
+html[data-playcursor-active="on"] [data-playcursor] * {
+  cursor: none;
+}
+
 /* ============================================================
    SECTION HEADER (shared)
    ============================================================ */

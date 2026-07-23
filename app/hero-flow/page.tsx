@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import IntroProvider from "@/components/Intro";
 import SiteNav from "@/components/SiteNav";
+import PlayCursor from "@/components/PlayCursor";
 import FlowHero from "@/components/FlowHero";
 import Landing from "@/components/Landing";
 
@@ -13,6 +14,7 @@ export default function HeroFlowPage() {
     <IntroProvider>
       <main>
         <SiteNav />
+        <PlayCursor />
         <FlowHero />
         <Landing />
       </main>
