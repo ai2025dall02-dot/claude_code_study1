@@ -383,7 +383,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans); /* 페이지 번호 숫자 → Pretendard */
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -792,7 +792,7 @@
 }
 .festCard__yr {
   display: block;
-  font-family: var(--font-meta, monospace);
+  font-family: var(--font-sans); /* 숫자(연도) 모노 → Pretendard */
   font-size: 11px;
   letter-spacing: 0.16em;
   color: #9a9a96;
@@ -993,7 +993,7 @@
 }
 .post__date {
   flex: none;
-  font-family: var(--font-meta, monospace);
+  font-family: var(--font-sans); /* 숫자(날짜) 모노 → Pretendard */
   font-size: 11px;
   letter-spacing: 0.06em;
   color: #0b0b0c; /* 회색 → 검정 */
