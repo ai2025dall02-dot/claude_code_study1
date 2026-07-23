@@ -1242,7 +1242,7 @@
   font-size: 10.5px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #8a8a86;
+  color: #f4f4f2; /* 흰색 */
   margin-bottom: 0.4rem;
 }
 .ci__value { margin: 0; font-size: 0.95rem; color: #f4f4f2; }
@@ -1251,24 +1251,32 @@
   font-family: var(--font-meta, monospace);
   font-size: 10.5px;
   letter-spacing: 0.04em;
-  color: #6f6f6b;
+  color: #f4f4f2; /* 저작권 흰색 */
   line-height: 1.9;
 }
-/* 우측 하단 — FOLLOW US */
+/* 우측 하단 — FOLLOW US. 라벨/링크 폰트는 CONTACT 워드마크와 동일(Anton), 링크는 대문자·흰색. */
 .followUs {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.45rem;
+  gap: 0.4rem;
   text-align: right;
 }
-.followUs .ci__label { margin-bottom: 0.25rem; }
-.followUs__link {
-  font-size: 0.95rem;
-  color: #c9c9c5;
-  transition: color 0.2s;
+.followUs .ci__label {
+  margin-bottom: 0.3rem;
+  font-family: var(--font-anton), "Arial Black", Helvetica, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.05em;
 }
-.followUs__link:hover { color: #ffffff; }
+.followUs__link {
+  font-family: var(--font-anton), "Arial Black", Helvetica, sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #f4f4f2; /* 흰색 */
+  transition: opacity 0.2s;
+}
+.followUs__link:hover { opacity: 0.6; }
 
 /* ── responsive (통일 브레이크포인트: 1280 / 1024 / 767) ───────────
    여백·헤더 여백·gap 은 globals.css 의 --ln-* 토큰이 단계별로 자동 축소하므로,
@@ -1299,9 +1307,9 @@
   .fest { grid-template-columns: 3rem 1fr; }
   /* 모바일 CONTACT: 워드마크 크기를 FILMMAKERS(.fmBg .title 모바일 값)와 동일하게 */
   .contact .title { font-size: clamp(3rem, 17vw, 6rem); }
-  /* 하단 좌(주소+저작권)/우(FOLLOW US) → 세로로 자연스럽게 쌓임 */
-  .contactBottom { flex-direction: column; align-items: flex-start; gap: 1.6rem; }
-  .followUs { align-items: flex-start; text-align: left; }
+  /* 하단: 세로 스택 + FOLLOW US 는 우측 정렬 유지(주소·저작권은 좌측) */
+  .contactBottom { flex-direction: column; align-items: stretch; gap: 1.6rem; }
+  .followUs { align-items: flex-end; text-align: right; }
 
   /* [2] ABOUT: 모바일에선 pin(sticky·100vh·overflow) 해제 → 화면을 넘는 본문이 잘리지 않게
      일반 흐름으로. 원형 reveal 레이어(lineupReveal/aboutInvert)는 pin 이 없으면 불필요 → 미표시.
