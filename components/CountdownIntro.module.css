@@ -78,8 +78,8 @@
 /* 카운트 숫자 */
 .num {
   position: relative;
-  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
-  font-weight: 900;
+  font-family: var(--font-anton), "Arial Black", Helvetica, sans-serif; /* 카운트 숫자 → Anton */
+  font-weight: 900; /* Anton 은 단일 400 이라 폴백(Arial Black)용 굵기 */
   font-size: clamp(7rem, 22vw, 12rem);
   line-height: 1;
   color: #f4f4f2;
@@ -95,12 +95,12 @@
 .label {
   position: absolute;
   bottom: clamp(2rem, 7vh, 3.5rem);
-  /* 히어로 공용 .title 과 동일 규격(Anton) — 아웃라인 없이 솔리드 한 덩어리(FILM/NOUVELLE 분리 없음). */
-  font-family: var(--font-anton), "Arial Black", Helvetica, sans-serif;
-  font-weight: 900;
+  /* 솔리드 한 덩어리(아웃라인 없음). 얇게 표현하려 가변 굵기 Pretendard 사용(Anton 은 단일 400 이라 얇게 불가). */
+  font-family: var(--font-sans);
+  font-weight: 500;
   font-size: clamp(13px, 1vw, 15px); /* 11px → 반응형 확대 */
-  letter-spacing: 0.25em; /* 필름 리더 캡션 자간(0.4em 은 과해 0.25em 로 축소) */
-  text-indent: 0.25em; /* letter-spacing 과 동일 — 중앙 정렬 보정(마지막 글자 뒤 공백 상쇄) */
+  letter-spacing: 0.2em; /* 필름 리더 캡션 자간(0.25em → 0.2em 로 조금 더 축소) */
+  text-indent: 0.2em; /* letter-spacing 과 동일 — 중앙 정렬 보정(마지막 글자 뒤 공백 상쇄) */
   color: rgba(244, 244, 242, 0.4);
 }
 
