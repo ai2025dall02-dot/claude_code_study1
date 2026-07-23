@@ -740,7 +740,7 @@
   font-family: var(--font-sans);
   font-size: clamp(0.9rem, 1.2vw, 1.05rem);
   line-height: 1.7;
-  color: #55554f;
+  color: #0b0b0c; /* 요청: 초청과 수상으로~ 서브텍스트를 검은색으로 */
 }
 
 /* C·D. 세로 카드 스택(앞 레이어) — 절대 중앙 겹침. 각 카드는 JS 로 눕힘→정면 + 아래→위 이동/축소.
@@ -1133,6 +1133,9 @@
   overflow: hidden;
   background: #0b0b0c; /* 다크 유지(블라인드 대비) */
   color: #f4f4f2;
+  /* 요청: 하단 여백 축소 — .section 기본 padding-block(≈9rem)이 스튜디오/저작권/FOLLOW US 블록을
+     바닥에서 크게 띄워 여백이 컸음. 상하 패딩을 줄여 하단 정보가 바닥 근처에 작은 여백만 남기게. */
+  padding-block: clamp(2rem, 5vh, 3.4rem);
 }
 /* JOURNAL sticky 패널 안 오버레이(블라인드 z5 위 z6). y 100%→0% 상승.
    레이아웃: .inner 세로 플렉스 — 상단 블록(세로 중앙) + 하단 정보(바닥 고정). */
@@ -1199,7 +1202,7 @@
   font-weight: 400;
   font-size: clamp(0.9rem, 1.2vw, 1.05rem);
   line-height: 1.7;
-  color: #b9b9b4; /* #55554f(밝은 배경용) → 다크 배경 톤 */
+  color: #f4f4f2; /* 요청: 한 편의 영화를 극장으로~ 리드를 흰색으로 */
 }
 /* 솔리드 사각 버튼 — 밝은 배경 + 어두운 글자(반전), 라운드 없음. 화살표 hover 이동 유지. */
 .contactBtn {

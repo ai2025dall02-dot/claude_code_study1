@@ -78,7 +78,7 @@
   margin: 0;
   font-size: clamp(0.86rem, 1.05vw, 1.02rem);
   line-height: 1.75;
-  color: #454542;
+  color: #0b0b0c; /* 요청: 본문(필름 누벨은 2014년부터~)을 검은색으로 */
 }
 
 /* 모바일: sticky 해제 → 일반 흐름(리드 → 영상 → 본문 순 스택) */
