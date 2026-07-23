@@ -40,7 +40,7 @@
 }
 .eyebrow {
   display: block;
-  font-family: var(--font-meta, monospace);
+  font-family: var(--font-sans); /* Pretendard (FILMMAKERS/FESTIVALS/JOURNAL/CONTACT 눈썹 공용) */
   font-size: 11px;
   letter-spacing: 0.28em;
   text-transform: uppercase;
@@ -120,7 +120,7 @@
 }
 .lineupEyebrow {
   display: block;
-  font-family: var(--font-meta, monospace);
+  font-family: var(--font-sans); /* Pretendard */
   font-size: 11px;
   letter-spacing: 0.28em;
   text-transform: uppercase;
@@ -242,11 +242,11 @@
   color: #f4f4f2;
 }
 .railCard__en {
-  font-family: var(--font-meta, monospace);
+  font-family: var(--font-sans); /* Pretendard */
   font-size: 12px; /* 카드 영문 확대(10→12px) */
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #8a8a86;
+  color: #f4f4f2; /* 흰색 */
 }
 /* 모바일: 트랙 소폭 단축 + 텍스트/카드 축소 */
 @media (max-width: 767px) {
@@ -796,7 +796,7 @@
   font-family: var(--font-sans); /* 숫자(연도) 모노 → Pretendard */
   font-size: 11px;
   letter-spacing: 0.16em;
-  color: #9a9a96;
+  color: #0b0b0c; /* 카드 텍스트 검정 */
 }
 .festCard__name {
   margin: 0.35rem 0 0;
@@ -811,7 +811,7 @@
   margin: 0.55rem 0 0;
   font-size: clamp(0.82rem, 1.05vw, 0.95rem);
   line-height: 1.55;
-  color: #55554f;
+  color: #0b0b0c; /* 카드 텍스트 검정 */
 }
 /* 뒤로 밀린 카드의 삐져나온 상단을 회색으로(딥스) — opacity 를 JS 로 0→0.42 */
 .festCard__scrim {
