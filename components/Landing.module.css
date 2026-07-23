@@ -637,7 +637,7 @@
 }
 .fmCard__name {
   margin: 0;
-  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
+  font-family: var(--font-sans); /* Pretendard — 굵기(900=볼드) 유지 */
   font-weight: 900;
   font-size: clamp(1.5rem, 2.4vw, 2.1rem);
   letter-spacing: -0.02em;
@@ -646,7 +646,7 @@
 }
 .fmCard__name span {
   display: block;
-  font-family: var(--font-meta, monospace);
+  font-family: var(--font-sans); /* Pretendard — 굵기(400=레귤러) 유지 */
   font-weight: 400;
   font-size: 10.5px;
   letter-spacing: 0.18em;
@@ -656,7 +656,7 @@
 }
 .fmCard__meta {
   margin: 0.8rem 0 0;
-  font-family: var(--font-meta, monospace);
+  font-family: var(--font-sans); /* Pretendard (레귤러) */
   font-size: 11px;
   letter-spacing: 0.06em;
   color: #a0a09c; /* 검은 배경용 밝은 회색 */
