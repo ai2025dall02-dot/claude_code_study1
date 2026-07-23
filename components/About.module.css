@@ -68,34 +68,6 @@
   object-fit: cover;
   display: block;
 }
-.videoTag {
-  position: absolute;
-  left: 0.9rem;
-  bottom: 0.8rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.7rem;
-  border-radius: 999px;
-  background: rgba(12, 12, 14, 0.55);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
-  color: #f4f4f2;
-  font-family: var(--font-meta, monospace);
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.videoTag::before {
-  content: "";
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 5px 0 5px 8px;
-  border-color: transparent transparent transparent #f4f4f2;
-}
-
 /* 본문 — sticky 무대 좌측 하단(영상 아래 z). 영상이 축소되며 물리적으로 드러남(opacity 아님). */
 .body {
   position: absolute;

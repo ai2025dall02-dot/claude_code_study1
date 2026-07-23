@@ -96,7 +96,6 @@ export default function About() {
               preload="metadata"
               aria-label="필름 누벨 소개 영상"
             />
-            <span className={styles.videoTag}>Showreel</span>
           </motion.div>
 
           {/* 본문 — 큰 영상(위 z)에 가려졌다가 영상이 우하단으로 축소되며 물리적으로 드러남. */}
