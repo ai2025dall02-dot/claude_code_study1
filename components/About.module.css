@@ -83,6 +83,11 @@
 
 /* 모바일: sticky 해제 → 일반 흐름(리드 → 영상 → 본문 순 스택) */
 @media (max-width: 767px) {
+  /* 리드(좋은 영화는~)와 영상 사이 간격을, 영상↔하단 본문 간격과 같게 —
+     lead 하단 패딩을 없애 gap = 영상 margin-top 만 남게. */
+  .lead {
+    padding-bottom: 0;
+  }
   .pin {
     height: auto;
   }

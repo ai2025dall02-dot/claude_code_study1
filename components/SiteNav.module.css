@@ -225,5 +225,5 @@
   :global(body[data-modal-open="true"]) .nav {
     display: none;
   }
-  .panel { width: min(320px, 86vw); }
+  .panel { width: min(300px, 80vw); } /* 모바일 패널 가로 살짝 축소 */
 }

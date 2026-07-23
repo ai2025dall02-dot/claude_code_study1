@@ -217,7 +217,6 @@ export default function SiteNav() {
               aria-label="메뉴 닫기"
               tabIndex={open ? 0 : -1}
             >
-              <span>Close</span>
               <span className={styles.closeX} aria-hidden="true" />
             </button>
           </div>

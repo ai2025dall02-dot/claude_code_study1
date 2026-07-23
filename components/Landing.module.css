@@ -597,11 +597,12 @@
 .fmHeadSub {
   display: block;
   margin-top: 1.2rem;
-  font-family: var(--font-meta, monospace);
-  font-size: 12px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: #9a9a96;
+  /* FESTIVALS .festHeadSub 와 동일 규격(크기·굵기·폰트) — 색만 흰색(검은 배경) */
+  font-family: var(--font-sans);
+  font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+  font-weight: 400;
+  line-height: 1.7;
+  color: #f4f4f2;
 }
 /* 가로 트랙 — 세로 스크롤 진행도에 x 연동 (좌우 패딩 없이 JS 로 중앙 정렬)
    gap 을 크게 벌려 pitch(카드 간격)를 뷰포트 폭에 가깝게 → 중앙 1 + 좌우 1씩만 보이게 */
@@ -1351,7 +1352,7 @@
 
   /* 큰 타이포·카드·이미지 상한 축소 (콘텐츠는 유지, 폰트/폭만 조정) */
   .fmBg .title { font-size: clamp(3rem, 17vw, 6rem); } /* 모바일: 크되 1줄 유지되게 조금 축소 */
-  .fmHeadSub { font-size: 10.5px; margin-top: 0.8rem; letter-spacing: 0.14em; } /* 복구 + 축소 */
+  .fmHeadSub { margin-top: 0.8rem; } /* 모바일: 간격만 축소 — 크기/굵기는 festHeadSub 와 동일(clamp) 유지 */
   .fmCard__name { font-size: clamp(1.35rem, 6vw, 1.8rem); }
   .fmCard__meta { font-size: 10px; margin-top: 0.6rem; }
   .fmCard__film { font-size: 11.5px; margin-top: 0.3rem; } /* 복구 + 축소(대표작 라인 유지) */
