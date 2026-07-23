@@ -14,6 +14,7 @@ import About from "@/components/About";
 import Lineup from "@/components/Lineup";
 import Filmmakers from "@/components/Filmmakers";
 import Festivals from "@/components/Festivals";
+import TypeTitle from "@/components/TypeTitle";
 import styles from "./Landing.module.css";
 
 /* 저널 / 소식 (데모용 가상 정보) — 작업1: 4개 → 8개로 확장(체류 구간 채우기) */
@@ -137,62 +138,57 @@ export default function Landing() {
       whileInView="show"
       viewport={{ once: true, margin: "0px 0px -15% 0px" }}
     >
-      <motion.header className={styles.head} variants={contentItem}>
-        <div>
-          {/* [E] CONTACT 제목 텍스트 제거 — 라벨/레이아웃/블라인드는 유지 */}
-          <span className={styles.eyebrow}>Contact &amp; Acquisitions</span>
-        </div>
-      </motion.header>
-
-      <motion.div className={styles.contactGrid} variants={contentGroup}>
-        {/* 좌: 대형 리드 */}
-        <motion.div className={styles.contactMain} variants={contentItem}>
-          <p className={styles.contactLead}>한 편의 영화를 극장으로 옮기고 싶다면.</p>
+      {/* 상단(세로 중앙): eyebrow + 대형 CONTACT 워드마크(TypeTitle) + 설명 + 솔리드 버튼 */}
+      <div className={styles.contactTop}>
+        <motion.span className={styles.eyebrow} variants={contentItem}>
+          Contact &amp; Acquisitions
+        </motion.span>
+        <motion.div variants={contentItem}>
+          <TypeTitle solid="CON" outline="TACT" inViewMargin="0px 0px -25% 0px" />
         </motion.div>
+        <motion.p className={styles.contactLead} variants={contentItem}>
+          한 편의 영화를 극장으로 옮기고 싶다면.
+        </motion.p>
+        <motion.a
+          className={styles.contactBtn}
+          href="mailto:booking@film-nouvelle.example"
+          variants={contentItem}
+        >
+          CONTACT <span aria-hidden="true">&gt;</span>
+        </motion.a>
+      </div>
 
-        {/* 우측 상단 = CTA */}
-        <motion.div className={styles.contactCta} variants={contentItem}>
-          <a className={styles.contactCta__link} href="mailto:booking@film-nouvelle.example">
-            협업 시작하기 <span aria-hidden="true">→</span>
-          </a>
-        </motion.div>
-
-        {/* 우측 하단 = 연락처 2×2 */}
-        <motion.div className={styles.ciList} variants={contentItem}>
-          <div>
+      {/* 하단(아래 고정): 정보 블록 가로 나열 + 저작권 라인 */}
+      <motion.div className={styles.contactBottom} variants={contentItem}>
+        <div className={styles.contactInfo}>
+          <div className={styles.ci}>
             <p className={styles.ci__label}>배급 · 상영 문의</p>
             <p className={styles.ci__value}>
               <a href="mailto:booking@film-nouvelle.example">booking@film-nouvelle.example</a>
             </p>
           </div>
-          <div>
+          <div className={styles.ci}>
             <p className={styles.ci__label}>작품 제안 (Acquisitions)</p>
             <p className={styles.ci__value}>
               <a href="mailto:acquisitions@film-nouvelle.example">acquisitions@film-nouvelle.example</a>
             </p>
           </div>
-          <div>
+          <div className={styles.ci}>
             <p className={styles.ci__label}>전화</p>
             <p className={styles.ci__value}>02-1234-5678 (평일 10–18시)</p>
           </div>
-          <div>
+          <div className={styles.ci}>
             <p className={styles.ci__label}>스튜디오</p>
             <p className={styles.ci__value}>서울특별시 마포구 와우산로 00, 3층</p>
           </div>
-        </motion.div>
-      </motion.div>
-
-      <motion.footer className={styles.footer} variants={contentItem}>
-        <div className={styles.footer__brand}>
-          필름 누벨
-          <small>FILM NOUVELLE</small>
         </div>
-        <p className={styles.footer__fine}>
-          © 2026 FILM NOUVELLE. 모든 작품·인물은 데모용 가상 정보입니다.
-          <br />
-          서울특별시 마포구 와우산로 00, 3층 · booking@film-nouvelle.example
-        </p>
-      </motion.footer>
+        <div className={styles.contactFootline}>
+          <p className={styles.footer__fine}>© 2026 FILM NOUVELLE. 모든 작품·인물은 데모용 가상 정보입니다.</p>
+          <div className={styles.footer__brand}>
+            필름 누벨 <small>FILM NOUVELLE</small>
+          </div>
+        </div>
+      </motion.div>
     </motion.div>
   );
 

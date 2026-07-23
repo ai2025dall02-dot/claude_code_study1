@@ -1127,29 +1127,30 @@
   line-height: 1.75;
 }
 
-/* ── CONTACT + FOOTER (black) ───────────────────────── */
+/* ── CONTACT + FOOTER (dark) — 중앙 대형 워드마크 + 하단 정보 ── */
 .contact {
   position: relative;
   overflow: hidden;
-  /* [D] 블라인드 전환을 위해 CONTACT 는 다크 배경 복구(전 섹션 통일 예외 — 블라인드 대비용) */
-  background: #0b0b0c;
+  background: #0b0b0c; /* 다크 유지(블라인드 대비) */
   color: #f4f4f2;
 }
-/* 작업3: CONTACT 를 JOURNAL sticky 패널 안 오버레이로 얹음(블라인드 z5 위 z6).
-   y 100%(패널 아래) → 0%(제자리)로 올라옴. 콘텐츠는 세로 중앙 정렬. */
+/* JOURNAL sticky 패널 안 오버레이(블라인드 z5 위 z6). y 100%→0% 상승.
+   레이아웃: .inner 세로 플렉스 — 상단 블록(세로 중앙) + 하단 정보(바닥 고정). */
 .contactReveal {
   position: absolute;
   inset: 0;
   z-index: 6;
   overflow: hidden;
   display: flex;
-  align-items: center;
+  align-items: stretch; /* .inner 가 100vh 를 채우게 */
   will-change: transform;
 }
-.contactReveal .inner { width: 100%; }
-/* 작업3: CONTACT 에서만 헤더↔하단 그리드 사이 간격 축소(공통 .head 값 override, 타 섹션 무영향) */
-.contact .head {
-  margin-bottom: clamp(1rem, 2.5vw, 1.6rem);
+/* .inner: 세로 플렉스(오버레이·reduce 폴백 공통). 상단 flex:1(중앙) + 하단 고정. */
+.contact .inner {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 /* 가로 블라인드 오버레이 — JOURNAL(밝은 배경) 위에 얹혀, 검은 수평 슬랫이 차오르며 덮음.
    JOURNAL 하단 기준으로 bottom:0 + height:100vh → 전환 시 뷰포트 한 화면을 덮음.
@@ -1171,55 +1172,67 @@
   transform-origin: center; /* scaleY 0→1 로 제자리에서 펼쳐지며 밝은 영역을 덮음 */
   will-change: transform;
 }
-/* 작업1: TRIONN 식 — 좌측 lead 가 두 행 세로 차지, 우측은 cta→contacts 순으로 쌓임 */
-.contactGrid {
-  display: grid;
-  grid-template-columns: 1fr 0.9fr;
-  grid-template-areas:
-    "lead cta"
-    "lead contacts";
-  gap: clamp(2rem, 4vw, 3rem) clamp(2rem, 6vw, 5rem);
-  align-items: start;
+/* 상단 블록 — eyebrow + 대형 워드마크 + 설명 + 버튼, 세로/좌우 중앙 */
+.contactTop {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: clamp(0.8rem, 2vh, 1.4rem);
+  padding-block: clamp(1.2rem, 4vh, 2.6rem);
 }
-/* 작업1: 좌측 — 대형 리드(킥커 문구 삭제) */
-.contactMain { grid-area: lead; }
-.contactLead {
-  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
-  font-weight: 900;
-  font-size: clamp(1.8rem, 4vw, 3rem);
-  letter-spacing: -0.03em;
-  line-height: 1.12;
-  max-width: 16ch;
-  color: #f4f4f2; /* [D] 다크 CONTACT 복구 */
-}
-/* 작업1: 우측 상단 — CTA 링크(우측 열 좌측 정렬) */
-.contactCta {
-  grid-area: cta;
-  align-self: start;
-  justify-self: start;
-}
-/* 작업2: 밑줄(border-bottom)/padding-bottom 제거. 색·화살표 이동 hover 만 유지 */
-.contactCta__link {
-  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
-  font-weight: 900;
-  font-size: clamp(1rem, 1.6vw, 1.25rem);
-  letter-spacing: -0.01em;
-  color: #f4f4f2; /* [D] */
+.contactTop .eyebrow { margin: 0; color: #8a8a86; }
+/* 대형 CONTACT 워드마크 — 다크 배경용 밝은 색 + 크게(중앙) */
+.contact .title {
+  color: #f4f4f2;
+  font-size: clamp(3.2rem, 13vw, 11rem);
+  line-height: 0.9;
   white-space: nowrap;
-  transition: color 0.25s;
 }
-.contactCta__link span { display: inline-block; transition: transform 0.25s; }
-.contactCta__link:hover { color: #fff; }
-.contactCta__link:hover span { transform: translateX(4px); }
-/* 작업1: 우측 하단 — 연락처 2×2 그리드(레퍼런스의 BUSINESS ENQUIRY / SOCIAL 식) */
-.ciList {
-  grid-area: contacts;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: clamp(1.4rem, 3vw, 2.2rem);
-  padding-top: clamp(1.8rem, 3vw, 2.4rem);
-  border-top: 1px solid rgba(255, 255, 255, 0.16); /* [D] */
+.contact .title em { -webkit-text-stroke-color: #f4f4f2; }
+/* 대형 워드마크에선 타이핑 캐럿(커서) 숨김 — 글자 타이핑 등장은 유지, 커서 잔상만 제거(중앙 정렬도 정확해짐) */
+.contact .caret { display: none; }
+/* 설명 — FESTIVALS .festHeadSub 와 동일 규격(색만 다크 톤). 기존 Arial Black/900 등 제거. */
+.contactLead {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+  line-height: 1.7;
+  color: #b9b9b4; /* #55554f(밝은 배경용) → 다크 배경 톤 */
 }
+/* 솔리드 사각 버튼 — 밝은 배경 + 어두운 글자(반전), 라운드 없음. 화살표 hover 이동 유지. */
+.contactBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: clamp(0.2rem, 1vh, 0.7rem);
+  padding: 0.8rem 1.6rem;
+  background: #f4f4f2;
+  color: #0b0b0c;
+  border-radius: 0; /* 각진 사각 */
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: clamp(0.95rem, 1.3vw, 1.1rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: background 0.25s, color 0.25s;
+}
+.contactBtn span { display: inline-block; transition: transform 0.25s; }
+.contactBtn:hover { background: #ffffff; }
+.contactBtn:hover span { transform: translateX(4px); }
+
+/* 하단 블록 — 정보 가로 나열 + 저작권 라인(바닥 고정) */
+.contactBottom { flex: 0 0 auto; }
+.contactInfo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(1.4rem, 3vw, 2.8rem) clamp(1.8rem, 4vw, 3.4rem);
+}
+.ci { min-width: 0; }
 .ci__label {
   font-family: var(--font-meta, monospace);
   font-size: 10.5px;
@@ -1228,52 +1241,47 @@
   color: #8a8a86;
   margin-bottom: 0.4rem;
 }
-.ci__value {
-  font-size: 1.05rem;
-  color: #f4f4f2; /* [D] */
-}
+.ci__value { margin: 0; font-size: 0.95rem; color: #f4f4f2; }
 .ci__value a {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3); /* [D] */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   padding-bottom: 1px;
   transition: border-color 0.25s, color 0.25s;
 }
 .ci__value a:hover { color: #fff; border-color: #fff; }
-
-.footer {
-  margin-top: clamp(3.5rem, 8vw, 6rem);
-  padding-top: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.16); /* [D] */
+/* 저작권 라인 — 좌: 저작권 / 우: 브랜드. 상단 구분선. */
+.contactFootline {
+  margin-top: clamp(1.4rem, 3.5vh, 2.4rem);
+  padding-top: clamp(1rem, 2vh, 1.5rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 1.6rem;
+  gap: 0.8rem 1.6rem;
 }
-.footer__brand {
-  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
-  font-weight: 900;
-  font-size: clamp(1.6rem, 4vw, 2.4rem);
-  letter-spacing: 0.02em;
-  line-height: 1;
-}
-.footer__brand small {
-  display: block;
-  font-family: var(--font-meta, monospace);
-  font-weight: 400;
-  font-size: 10px;
-  letter-spacing: 0.4em;
-  color: #8a8a86;
-  margin-top: 0.6rem;
-}
-/* 작업2: 내비 제거 → 저작권/주소를 로고 오른쪽에 배치(우측 정렬, 작은 meta 폰트) */
 .footer__fine {
-  width: auto;
-  text-align: right;
+  margin: 0;
   font-family: var(--font-meta, monospace);
   font-size: 10.5px;
   letter-spacing: 0.04em;
   color: #6f6f6b;
   line-height: 1.9;
+}
+.footer__brand {
+  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.05rem, 2vw, 1.4rem);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.footer__brand small {
+  font-family: var(--font-meta, monospace);
+  font-weight: 400;
+  font-size: 9.5px;
+  letter-spacing: 0.36em;
+  color: #8a8a86;
+  margin-left: 0.5rem;
 }
 
 /* ── responsive (통일 브레이크포인트: 1280 / 1024 / 767) ───────────
@@ -1287,17 +1295,6 @@
   .festsGrid { grid-template-columns: 1fr; }
   .festsLead { position: static; }
   .principles { grid-template-columns: 1fr; gap: 2rem; }
-  .contactGrid {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "lead"
-      "cta"
-      "contacts";
-  }
-  .contactCta { justify-self: start; align-self: start; }
-  .ciList { grid-template-columns: repeat(2, 1fr); } /* 태블릿 2열 → (모바일에서 1열) */
-  .footer { flex-direction: column; align-items: flex-start; gap: 1.2rem; }
-  .footer__fine { text-align: left; }
   .fmBg .title { font-size: clamp(3rem, 14vw, 8.5rem); } /* 넘침 방지용 상한만 축소 */
 }
 
@@ -1314,7 +1311,7 @@
   .card__media { aspect-ratio: 3 / 4 !important; }
   .maker { grid-template-columns: 2.2rem 1fr 2.2rem; }
   .fest { grid-template-columns: 3rem 1fr; }
-  .ciList { grid-template-columns: 1fr; } /* 모바일 1열 */
+  .contactInfo { gap: 1rem 1.6rem; } /* 모바일: 정보 블록 간격 축소(세로로 자연 줄바꿈) */
 
   /* [2] ABOUT: 모바일에선 pin(sticky·100vh·overflow) 해제 → 화면을 넘는 본문이 잘리지 않게
      일반 흐름으로. 원형 reveal 레이어(lineupReveal/aboutInvert)는 pin 이 없으면 불필요 → 미표시.
