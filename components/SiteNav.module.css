@@ -117,7 +117,7 @@
 .nav[data-dark="true"] .panel {
   --panel-bg: #f8f8f8;
   --panel-fg: #0b0b0c;
-  --panel-item: #8a8a86;
+  --panel-item: #b0b0ac; /* 흰 패널에선 비활성 회색을 조금 더 옅게(#8a8a86 → #b0b0ac) */
   --panel-item-on: #0b0b0c;
   --panel-shadow: 0 20px 52px rgba(0, 0, 0, 0.14);
 }

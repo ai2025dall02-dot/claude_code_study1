@@ -122,12 +122,18 @@ export default function SiteNav() {
   //   (풀스크린 딤 없음 — 패널은 화면 일부만 덮고, 바깥을 눌러 닫음)
   useEffect(() => {
     if (!open) return;
-    const html = document.documentElement;
-    const body = document.body;
-    const prevH = html.style.overflow;
-    const prevB = body.style.overflow;
-    html.style.overflow = "hidden";
-    body.style.overflow = "hidden";
+    // [수정] 과거 html/body { overflow:hidden } 으로 스크롤을 잠갔더니 position:sticky(영상 무대·
+    //   FILMMAKERS 캐러셀·JOURNAL/CONTACT 고정)가 깨져, 패널을 열면 고정 콘텐츠가 제자리에서 튕겨
+    //   화면이 비어 보였다. 레이아웃은 그대로 두고 스크롤 입력만 막아 "누른 시점 화면"을 얼려 그 위에
+    //   패널이 뜨게 한다. (wheel·touchmove + 스크롤 유발 키만 차단 — 버튼/링크 활성용 Space/Enter 는 유지)
+    const preventScroll = (e: Event) => e.preventDefault();
+    const SCROLL_KEYS = ["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"];
+    const onScrollKey = (e: KeyboardEvent) => {
+      if (SCROLL_KEYS.includes(e.key)) e.preventDefault();
+    };
+    window.addEventListener("wheel", preventScroll, { passive: false });
+    window.addEventListener("touchmove", preventScroll, { passive: false });
+    window.addEventListener("keydown", onScrollKey, { passive: false });
 
     const panel = panelRef.current;
     const items = () =>
@@ -165,8 +171,9 @@ export default function SiteNav() {
     document.addEventListener("keydown", onKey);
     document.addEventListener("mousedown", onDown);
     return () => {
-      html.style.overflow = prevH;
-      body.style.overflow = prevB;
+      window.removeEventListener("wheel", preventScroll);
+      window.removeEventListener("touchmove", preventScroll);
+      window.removeEventListener("keydown", onScrollKey);
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("mousedown", onDown);
     };
