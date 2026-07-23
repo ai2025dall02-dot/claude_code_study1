@@ -21,8 +21,13 @@
 .menuBtn {
   appearance: none;
   -webkit-appearance: none;
+  /* [반전] 섹션별 색은 CSS 변수로. 기본 = 밝은 배경용(어두운 글자/보더).
+     다크 섹션 override 는 .nav[data-dark="true"] .menuBtn 에서 변수만 교체 →
+     border-color/color 에 transition 이 없으므로 값 교체가 "즉시" 반영(딜레이 0). */
+  --nav-fg: #0c0c0c; /* 보더·글자·hover 채움색 */
+  --nav-bg: #f8f8f8; /* hover 시 글자색(채움 위 대비) */
   background: transparent;
-  border: 1px solid #0c0c0c;
+  border: 1px solid var(--nav-fg);
   border-radius: 9px;
   cursor: pointer;
   display: inline-flex;
@@ -36,24 +41,39 @@
   font-size: clamp(12px, 1.05vw, 14px);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #0c0c0c;
-  /* [C] 어두운↔밝은 배경 반전을 부드럽게(border-color/color/background 0.4s) + 인트로 등장 */
-  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease,
+  color: var(--nav-fg);
+  /* [반전] 섹션 전환 즉시: border-color/color 엔 transition 없음(변수 교체가 바로 보임).
+     hover 부드러움: background 만 transition(섹션 반전은 background 를 안 건드림 → 충돌 없음).
+     인트로 등장(opacity/transform 0.85s + delay 0.2s)은 유지. */
+  transition: background 0.35s ease,
     opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: 0s, 0s, 0s, 0.2s, 0.2s;
+  transition-delay: 0s, 0.2s, 0.2s;
 }
 .menuBtnLabel { display: inline-block; }
-/* 밝은 배경(기본) 호버 = 검정 채움 + 흰 글자 */
-.menuBtn:hover { background: #0c0c0c; color: #f8f8f8; }
-/* (색반전 data-dark 로직은 현재 비활성 — 전 섹션이 밝은 배경으로 통일됨) */
+/* 호버 = fg 채움 + bg 글자(밝은 섹션: 검정 채움+흰 글자 / 다크 섹션: 흰 채움+검정 글자).
+   hover 진입은 background·color 를 transition(부드럽게), hover 이탈은 background 만 부드럽게 →
+   섹션 반전(즉시)과 분리. hover 중에도 인트로 transition 유지하도록 함께 선언. */
+.menuBtn:hover {
+  background: var(--nav-fg);
+  color: var(--nav-bg);
+  transition: background 0.35s ease, color 0.3s ease,
+    opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: 0s, 0s, 0.2s, 0.2s;
+}
 .menuDot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: currentColor; /* 라벨색 따라감 → 반전/호버 시 점도 같이 */
+  background: currentColor; /* 라벨색(=var(--nav-fg)) 따라감 → 반전/호버 시 점도 같이(즉시) */
   display: inline-block;
-  transition: background 0.4s ease; /* [C] 색 반전 부드럽게 */
+}
+/* [반전] 다크 섹션(lineup/filmmakers/contact): 변수만 교체 → 즉시 반영.
+   보더·글자 밝게, hover 는 흰 채움 + 검은 글자(밝은 섹션의 반대). background 는 transparent 유지. */
+.nav[data-dark="true"] .menuBtn {
+  --nav-fg: #f4f4f2;
+  --nav-bg: #0b0b0c;
 }
 .nav[data-revealed="false"] .menuBtn {
   opacity: 0;
@@ -73,19 +93,33 @@
   right: 0; /* 버튼 우측 모서리에 정렬 → 왼쪽·아래로 펼쳐짐 */
   z-index: 2; /* 같은 wrap 안에서 버튼 위(버튼을 가려 "박스로 변형"된 것처럼) */
   width: min(340px, 84vw);
-  background: #0d0d0f;
-  color: #f4f4f2;
+  /* [반전] 패널 색도 변수화 — 다크 섹션에서 흰 패널 + 검은 글자로 반전(변수만 교체, 즉시).
+     기본 = 다크 패널. 열기/닫기 애니(opacity/transform/visibility)만 transition, 색은 transition 없음. */
+  --panel-bg: #0d0d0f;
+  --panel-fg: #f4f4f2;
+  --panel-item: #5c5c58; /* 비활성 항목(다크 패널용 회색) */
+  --panel-item-on: #f6f6f3; /* 활성/hover */
+  --panel-shadow: 0 22px 60px rgba(0, 0, 0, 0.3);
+  background: var(--panel-bg);
+  color: var(--panel-fg);
   border-radius: 10px;
   padding-bottom: 0.7rem;
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--panel-shadow);
   transform-origin: top right; /* 버튼(우상단)에서 자라나는 느낌 */
   opacity: 0;
   visibility: hidden;
   transform: scale(0.9) translateY(-6px);
   pointer-events: none;
   transition: opacity 0.26s ease, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-    visibility 0s linear 0.32s,
-    background 0.4s ease, color 0.4s ease; /* [B] 어두운↔밝은 반전 부드럽게 */
+    visibility 0s linear 0.32s;
+}
+/* [반전] 다크 섹션: 흰 패널 + 검은 글자, 밝은 배경용 회색 항목, 그림자 옅게. */
+.nav[data-dark="true"] .panel {
+  --panel-bg: #f8f8f8;
+  --panel-fg: #0b0b0c;
+  --panel-item: #8a8a86;
+  --panel-item-on: #0b0b0c;
+  --panel-shadow: 0 20px 52px rgba(0, 0, 0, 0.14);
 }
 .menuWrap[data-open="true"] .panel {
   opacity: 1;
@@ -117,8 +151,8 @@
   font-size: clamp(11px, 1vw, 13px);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #f4f4f2;
-  transition: opacity 0.2s, color 0.4s ease; /* [B] 반전 부드럽게 */
+  color: var(--panel-fg); /* [반전] 패널색 따라감(즉시) */
+  transition: opacity 0.2s;
 }
 .close:hover { opacity: 0.6; }
 .closeX {
@@ -150,8 +184,8 @@
 .menuList a {
   display: flex;
   align-items: baseline;
-  /* [D] 기본 비활성 회색 — 현재 섹션 항목만 활성 흰색 */
-  color: #5c5c58;
+  /* [D] 기본 비활성 회색 — 현재 섹션 항목만 활성. [반전] 패널색 변수 따라감 */
+  color: var(--panel-item);
   text-decoration: none;
   font-size: clamp(1.1rem, 2.4vw, 1.8rem);
   line-height: 1.5; /* [C] 행간 넓힘(1.18 → 1.5) */
@@ -167,9 +201,9 @@
   transform: none;
   transition-delay: calc(0.045s * var(--i) + 0.1s);
 }
-/* [D] 현재 보고 있는 섹션 = 활성(흰색). 호버도 흰색으로 피드백. */
-.menuList a[data-active="true"] { color: #f6f6f3; }
-.menuList a:hover { color: #f6f6f3; }
+/* [D] 현재 보고 있는 섹션 = 활성. 호버도 동일 강조색. [반전] 패널색 변수 따라감(다크 패널=흰, 흰 패널=검정) */
+.menuList a[data-active="true"] { color: var(--panel-item-on); }
+.menuList a:hover { color: var(--panel-item-on); }
 .menuLabel { display: inline-block; }
 
 @media (prefers-reduced-motion: reduce) {

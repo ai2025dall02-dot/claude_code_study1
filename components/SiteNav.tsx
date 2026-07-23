@@ -25,6 +25,8 @@ export default function SiteNav() {
   const revealed = useIntroRevealed();
   const [open, setOpen] = useState(false); // 패널 열림 상태
   const [active, setActive] = useState<string>(LINKS[0].href.slice(1)); // 현재 섹션 id(패널 활성 표시용)
+  const [dark, setDark] = useState(false); // [반전] 버튼 뒤(최상단) 배경이 어두운지 → data-dark
+  const navRef = useRef<HTMLElement>(null); // [반전] 배경 샘플링 시 헤더/버튼 자신을 제외하기 위한 참조
   const btnRef = useRef<HTMLButtonElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null); // 버튼+패널 앵커(바깥 클릭 판정 기준)
   const panelRef = useRef<HTMLDivElement>(null);
@@ -39,19 +41,74 @@ export default function SiteNav() {
     );
     if (sections.length === 0) return;
     let raf = 0;
+    let tailUntil = 0; // 스크롤 정지 후에도 잠시 rAF 유지 — 스프링/오버레이 정착(아래 참고) 반영
+
     const compute = () => {
-      raf = 0;
-      const refY = window.innerHeight * 0.35; // 기준선
+      const vh = window.innerHeight;
+      const refY = vh * 0.35; // 기준선(패널 활성 표시용 — "지금 읽는 섹션")
       let current = sections[0].id;
       for (const s of sections) {
         if (s.getBoundingClientRect().top - refY <= 0) current = s.id; // 기준선 위로 올라온 마지막 섹션
       }
       setActive(current);
+
+      // [반전] 버튼 색 전용 판정 — active(35%)와 분리. 버튼은 화면 최상단에 있어
+      //   "버튼 바로 뒤에 실제로 칠해진 배경이 어두운가"로 판정해야 정확함.
+      //   섹션 박스 기하(getBoundingClientRect)는 sticky 트랙·margin-top:-100vh 겹침·투명 섹션(.fests/.journal)
+      //   때문에 '보이는 색'과 어긋남 → elementsFromPoint 로 그 지점에 쌓인 요소들을 페인트 순서대로 훑어
+      //   첫 불투명 배경색의 명도로 판정(투명 섹션은 건너뛰고 뒤에 깔린 다크 FILMMAKERS 를 잡음, CONTACT 오버레이도 정확).
+      const btn = btnRef.current;
+      if (btn) {
+        const br = btn.getBoundingClientRect();
+        const x = br.left + br.width / 2;
+        const y = br.bottom + 10; // 버튼 바로 아래
+        const stack = document.elementsFromPoint(x, y);
+        let lum = 255; // 못 찾으면 밝음(기본)으로
+        for (const el of stack) {
+          if (nav?.contains(el)) continue; // 헤더/버튼 자신은 제외
+          const c = getComputedStyle(el as HTMLElement).backgroundColor;
+          const m = c.match(/rgba?\(([^)]+)\)/);
+          if (!m) continue;
+          const parts = m[1].split(",").map((s) => parseFloat(s));
+          const alpha = parts[3] === undefined ? 1 : parts[3];
+          if (alpha === 0) continue; // 투명 → 뒤 요소로
+          lum = 0.2126 * parts[0] + 0.7152 * parts[1] + 0.0722 * parts[2];
+          break;
+        }
+        const dk = lum < 128; // 명도 임계 — 실측값은 11~26(다크) / 248~255(밝음)로 뚜렷이 갈림
+        setDark(dk);
+        return dk;
+      }
+      return false;
+    };
+
+    // rAF 루프: 스크롤 중 매 프레임 + 정지 후 tail 동안 계속 계산.
+    //   CONTACT 오버레이는 useSpring 으로 스크롤이 멈춘 뒤에도 계속 올라와 화면을 덮으므로,
+    //   scroll 이벤트에만 의존하면 그 마지막 정착을 놓쳐 버튼이 검정 위 검정으로 사라짐.
+    //   값이 바뀌는 동안은 tail 을 계속 연장 → 스프링이 얼마나 오래 걸리든 안정된 뒤 짧게 멈춤.
+    const nav = navRef.current;
+    let lastDark: boolean | null = null;
+    const tick = () => {
+      const dk = compute();
+      const now = performance.now();
+      if (dk !== lastDark) {
+        lastDark = dk;
+        tailUntil = Math.max(tailUntil, now + 400); // 변할 때마다 조금 더 지켜봄
+      }
+      if (now < tailUntil) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        raf = 0;
+      }
     };
     const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(compute);
+      tailUntil = performance.now() + 1200;
+      if (!raf) raf = requestAnimationFrame(tick);
     };
-    compute();
+    // (재)마운트 직후 잠깐 계속 샘플링 — 인트로 오버레이가 걷히는 순간을 놓치지 않게(스크롤 없이도 갱신).
+    //   revealed 가 바뀌면(인트로 종료) 이 효과가 다시 실행되어 밝은 히어로를 올바로 읽음.
+    tailUntil = performance.now() + 800;
+    raf = requestAnimationFrame(tick);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
     return () => {
@@ -59,7 +116,7 @@ export default function SiteNav() {
       window.removeEventListener("resize", onScroll);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [revealed]);
 
   // [B] 열림: 배경 스크롤 잠금 + 첫 항목 포커스 + ESC/바깥클릭 닫기 + 포커스 트랩(Tab 순환).
   //   (풀스크린 딤 없음 — 패널은 화면 일부만 덮고, 바깥을 눌러 닫음)
@@ -116,7 +173,7 @@ export default function SiteNav() {
   }, [open]);
 
   return (
-    <header className={styles.nav} data-revealed={revealed}>
+    <header ref={navRef} className={styles.nav} data-revealed={revealed} data-dark={dark}>
       {/* [A] 버튼+패널 앵커 — 패널이 이 버튼 위치를 기준으로 아래로 펼쳐짐(풀스크린 아님) */}
       <div ref={wrapRef} className={styles.menuWrap} data-open={open}>
         <button
