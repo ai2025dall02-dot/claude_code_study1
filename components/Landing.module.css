@@ -1192,9 +1192,6 @@
   line-height: 0.9;
   white-space: nowrap;
 }
-.contact .title em { -webkit-text-stroke-color: #f4f4f2; }
-/* 대형 워드마크에선 타이핑 캐럿(커서) 숨김 — 글자 타이핑 등장은 유지, 커서 잔상만 제거(중앙 정렬도 정확해짐) */
-.contact .caret { display: none; }
 /* 설명 — FESTIVALS .festHeadSub 와 동일 규격(색만 다크 톤). 기존 Arial Black/900 등 제거. */
 .contactLead {
   margin: 0;
@@ -1214,10 +1211,10 @@
   background: #f4f4f2;
   color: #0b0b0c;
   border-radius: 0; /* 각진 사각 */
-  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
+  font-family: var(--font-anton), "Arial Black", Helvetica, sans-serif; /* 워드마크(.title)와 동일 */
   font-weight: 900;
   font-size: clamp(0.95rem, 1.3vw, 1.1rem);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em; /* .title 과 톤 통일 */
   text-transform: uppercase;
   transition: background 0.25s, color 0.25s;
 }
@@ -1225,12 +1222,19 @@
 .contactBtn:hover { background: #ffffff; }
 .contactBtn:hover span { transform: translateX(4px); }
 
-/* 하단 블록 — 정보 가로 나열 + 저작권 라인(바닥 고정) */
-.contactBottom { flex: 0 0 auto; }
-.contactInfo {
+/* 하단 블록 — 좌(스튜디오 주소 + 저작권) / 우(FOLLOW US). 바닥 고정. */
+.contactBottom {
+  flex: 0 0 auto;
   display: flex;
-  flex-wrap: wrap;
-  gap: clamp(1.4rem, 3vw, 2.8rem) clamp(1.8rem, 4vw, 3.4rem);
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  padding-top: clamp(1.4rem, 3.5vh, 2.4rem);
+}
+.contactBottom__left {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.7rem, 1.6vh, 1.1rem);
 }
 .ci { min-width: 0; }
 .ci__label {
@@ -1242,23 +1246,6 @@
   margin-bottom: 0.4rem;
 }
 .ci__value { margin: 0; font-size: 0.95rem; color: #f4f4f2; }
-.ci__value a {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  padding-bottom: 1px;
-  transition: border-color 0.25s, color 0.25s;
-}
-.ci__value a:hover { color: #fff; border-color: #fff; }
-/* 저작권 라인 — 좌: 저작권 / 우: 브랜드. 상단 구분선. */
-.contactFootline {
-  margin-top: clamp(1.4rem, 3.5vh, 2.4rem);
-  padding-top: clamp(1rem, 2vh, 1.5rem);
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 0.8rem 1.6rem;
-}
 .footer__fine {
   margin: 0;
   font-family: var(--font-meta, monospace);
@@ -1267,22 +1254,21 @@
   color: #6f6f6b;
   line-height: 1.9;
 }
-.footer__brand {
-  font-family: "Arial Black", var(--font-pretendard), Helvetica, sans-serif;
-  font-weight: 900;
-  font-size: clamp(1.05rem, 2vw, 1.4rem);
-  letter-spacing: 0.02em;
-  line-height: 1;
-  white-space: nowrap;
+/* 우측 하단 — FOLLOW US */
+.followUs {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.45rem;
+  text-align: right;
 }
-.footer__brand small {
-  font-family: var(--font-meta, monospace);
-  font-weight: 400;
-  font-size: 9.5px;
-  letter-spacing: 0.36em;
-  color: #8a8a86;
-  margin-left: 0.5rem;
+.followUs .ci__label { margin-bottom: 0.25rem; }
+.followUs__link {
+  font-size: 0.95rem;
+  color: #c9c9c5;
+  transition: color 0.2s;
 }
+.followUs__link:hover { color: #ffffff; }
 
 /* ── responsive (통일 브레이크포인트: 1280 / 1024 / 767) ───────────
    여백·헤더 여백·gap 은 globals.css 의 --ln-* 토큰이 단계별로 자동 축소하므로,
@@ -1311,7 +1297,11 @@
   .card__media { aspect-ratio: 3 / 4 !important; }
   .maker { grid-template-columns: 2.2rem 1fr 2.2rem; }
   .fest { grid-template-columns: 3rem 1fr; }
-  .contactInfo { gap: 1rem 1.6rem; } /* 모바일: 정보 블록 간격 축소(세로로 자연 줄바꿈) */
+  /* 모바일 CONTACT: 워드마크 크기를 FILMMAKERS(.fmBg .title 모바일 값)와 동일하게 */
+  .contact .title { font-size: clamp(3rem, 17vw, 6rem); }
+  /* 하단 좌(주소+저작권)/우(FOLLOW US) → 세로로 자연스럽게 쌓임 */
+  .contactBottom { flex-direction: column; align-items: flex-start; gap: 1.6rem; }
+  .followUs { align-items: flex-start; text-align: left; }
 
   /* [2] ABOUT: 모바일에선 pin(sticky·100vh·overflow) 해제 → 화면을 넘는 본문이 잘리지 않게
      일반 흐름으로. 원형 reveal 레이어(lineupReveal/aboutInvert)는 pin 이 없으면 불필요 → 미표시.
