@@ -96,7 +96,7 @@ export default function PlayCursor() {
       //    항목 사이 여백에서 커졌다 작아지는 깜빡임 방지 + 시트 내부에선 작은 사각형 유지.
       const t = e.target instanceof Element ? e.target : null;
       const interactive = !!t?.closest(
-        'a[href], button, [role="button"], input, select, textarea, label, #site-menu, [role="dialog"]'
+        'a[href], button, [role="button"], input, select, textarea, label, #site-menu, [role="dialog"], [data-cursor-square]'
       );
       setPressable((v) => (v === interactive ? v : interactive));
       // [data-cursor="light"|"dark"] 영역: 배경 명암 판정을 무시하고 커서 색을 강제.
@@ -137,10 +137,10 @@ export default function PlayCursor() {
           data-dark={forceDark ?? dark}
           data-press={pressable}
           style={{ x, y }}
-          initial={{ opacity: 0, scale: 0.5 }}
+          initial={{ opacity: 0, scale: 0.6 }}
           animate={{ opacity: 1, scale: pressable ? 0.2 : 1 }} // 클릭 요소 위: 작은 사각형(≈21px)
-          exit={{ opacity: 0, scale: 0.5 }}
-          transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
+          exit={{ opacity: 0, scale: 0.6 }}
+          transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }} // 등장 살짝 더 부드럽게(0.26→0.42)
           aria-hidden="true"
         >
           <div className={styles.square}>
@@ -152,10 +152,10 @@ export default function PlayCursor() {
               <g className={styles.spin}>
                 <motion.g
                   className={styles.suck}
-                  initial={{ scale: reduce ? 1 : 1.7, opacity: 0 }}
+                  initial={{ scale: reduce ? 1 : 1.6, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: reduce ? 1 : 1.6, opacity: 0 }}
-                  transition={{ duration: 0.34, ease: [0.16, 1, 0.3, 1] }}
+                  exit={{ scale: reduce ? 1 : 1.5, opacity: 0 }}
+                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }} // 텍스트 링 수축 더 부드럽게
                 >
                   <text className={styles.ring} textLength={CIRC} lengthAdjust="spacing">
                     <textPath href="#pcPath" startOffset="0">

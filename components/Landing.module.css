@@ -1311,9 +1311,15 @@
   .fest { grid-template-columns: 3rem 1fr; }
   /* 모바일 CONTACT: 워드마크 크기를 FILMMAKERS(.fmBg .title 모바일 값)와 동일하게 */
   .contact .title { font-size: clamp(3rem, 17vw, 6rem); }
-  /* 하단: 세로 스택 + FOLLOW US 는 우측 정렬 유지(주소·저작권은 좌측) */
-  .contactBottom { flex-direction: column; align-items: stretch; gap: 1.6rem; }
-  .followUs { align-items: flex-end; text-align: right; }
+  /* 하단: 좌(스튜디오·저작권) / 우(FOLLOW US) 를 한 줄로 두고 바닥 정렬(하단 맞춤). */
+  .contactBottom {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .contactBottom__left { flex: 1 1 auto; min-width: 0; } /* 저작권이 길면 줄바꿈되게(오른쪽 밀지 않음) */
+  .followUs { align-items: flex-end; text-align: right; flex: 0 0 auto; }
 
   /* [2] ABOUT: 모바일에선 pin(sticky·100vh·overflow) 해제 → 화면을 넘는 본문이 잘리지 않게
      일반 흐름으로. 원형 reveal 레이어(lineupReveal/aboutInvert)는 pin 이 없으면 불필요 → 미표시.

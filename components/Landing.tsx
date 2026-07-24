@@ -165,7 +165,7 @@ export default function Landing() {
           </div>
           <p className={styles.footer__fine}>© 2026 FILM NOUVELLE INC. ALL RIGHTS RESERVED</p>
         </div>
-        <div className={styles.followUs}>
+        <div className={styles.followUs} data-cursor-square>
           <p className={styles.ci__label}>Follow Us</p>
           <a className={styles.followUs__link} href="#">Instagram</a>
           <a className={styles.followUs__link} href="#">Youtube</a>
@@ -253,7 +253,7 @@ export default function Landing() {
 
               {/* 저널 페이지네이션 — 데스크톱/모바일 공통. 필터 결과가 1페이지면 미표시. */}
               {journalPageCount > 1 && (
-                <nav className={styles.pagination} aria-label="저널 페이지" data-cursor="light">
+                <nav className={styles.pagination} aria-label="저널 페이지" data-cursor="light" data-cursor-square>
                   <button
                     type="button"
                     className={styles.pageArrow}
