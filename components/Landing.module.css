@@ -50,7 +50,12 @@
 .title {
   /* 히어로와 동일한 공용 Anton. fill(solid)+outline(em) 구조는 그대로. */
   font-family: var(--font-anton), "Arial Black", Helvetica, sans-serif;
-  font-weight: 900;
+  /* Anton 은 단일 weight(400) 폰트 → 900 을 주면 브라우저가 faux-bold(가짜 굵게)를 합성해
+     글리프 stem 이 뭉개지고, 그 위에 -webkit-text-stroke 아웃라인이 얹히면 히어로 워드마크
+     (weight 미지정=본연의 400)와 라인이 근본적으로 달라 보였음. 히어로와 동일한 400 으로 통일하고
+     font-synthesis:none 으로 어떤 값에서도 faux-bold 를 차단 → 글리프·아웃라인이 히어로와 일치. */
+  font-weight: 400;
+  font-synthesis: none;
   /* [2] 크기: 전 섹션 소폭 확대(4.2rem→5rem 상한, 6vw→6.6vw) */
   font-size: clamp(2.5rem, 6.6vw, 5rem);
   line-height: 0.92;
@@ -130,7 +135,9 @@
 .lineupBig {
   margin: 0;
   font-family: var(--font-anton), "Arial Black", Helvetica, sans-serif;
-  font-weight: 900;
+  /* 히어로와 동일하게 Anton 본연의 400 (900 은 faux-bold 합성 → 히어로와 글리프/아웃라인 불일치). */
+  font-weight: 400;
+  font-synthesis: none;
   /* [A] 좌하단(안착) 기준 크기 — 히어로 워드마크급으로 확대(레퍼런스 ARTIST MESSAGE 처럼 시원하게).
      진입 시 JS 가 여기에 bigScale(≈1.2×) 을 곱함 → "LINE UP"(7자)이 폭에 들어가는 선으로 vw 조정. */
   font-size: clamp(3.2rem, 16vw, 12rem);
