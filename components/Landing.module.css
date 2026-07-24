@@ -747,7 +747,9 @@
   max-width: none;
   white-space: nowrap; /* 각 줄이 카드보다 넓게 → 좌우로 삐져나와 읽힘 */
   font-family: var(--font-sans);
-  font-size: clamp(2.6rem, 6.6vw, 5.2rem);
+  /* 문구가 6자로 짧아져 카드(≤380px)보다 폭이 조금밖에 안 커 양끝 한 글자만 삐져나왔음 →
+     크기를 키워 카드 양옆으로 여러 글자가 확실히 삐져나와 읽히게(1.45×). */
+  font-size: clamp(3.6rem, 9.5vw, 7.6rem);
   font-weight: 620;
   line-height: 1.14;
   letter-spacing: -0.02em;
@@ -851,7 +853,8 @@
   }
   .festLead {
     white-space: normal; /* 모바일: 가로 넘침 방지(br 로 2줄 유지) */
-    font-size: clamp(2.2rem, 10.5vw, 2.85rem); /* 카드에 묻히지 않게 키움(카드보다 넓어 좌우로 삐져나와 읽힘) */
+    /* 모바일도 문구가 짧아져 카드에 완전히 묻힘 → 화면 폭 가까이 키워 카드 양옆으로 삐져나오게. */
+    font-size: clamp(3rem, 15vw, 4.1rem);
   }
 }
 
