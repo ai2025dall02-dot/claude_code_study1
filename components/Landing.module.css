@@ -146,12 +146,12 @@
   -webkit-text-stroke: 0;
 }
 /* [A] "UP" = 아웃라인(라인) — 히어로 .wordNouvelle 과 동일한 방식(-webkit-text-stroke).
-   ※ 이 폰트(Anton)+크기에선 stroke 가 ~2.5px 미만이면 선이 이중(hollow)으로 렌더돼 오히려
-     뿌옇고 두껍게 보임 → 깔끔한 단일 선이 되는 최소 두께(3px)로. NOUVELLE 이 얇아 '보이는' 건
-     글자가 훨씬 커서(≈281px) 3.5px 이 가늘게 읽히는 것. stroke 색은 JS 가 흰→회색 전환. */
+   두께를 히어로 워드마크(FILM NOUVELLE)의 라인 굵기에 맞춤: 히어로 = 3.5px / 글자캡 19rem(≈304px)
+   = 비율 0.0115. LINEUP 글자캡 12rem(≈192px) × 0.0115 ≈ 2.2px (기존 3px 은 히어로 대비 두꺼웠음).
+   stroke 색은 JS 가 흰→회색 전환. */
 .luLine {
   color: transparent;
-  -webkit-text-stroke-width: 3px;
+  -webkit-text-stroke-width: 2.2px;
   -webkit-text-stroke-color: #5a5a57; /* [B] reduce 기본 stroke 색도 더 어둡게 */
 }
 /* [B] 가로 슬라이드 뷰포트(마퀴 + 드래그) — 무대 세로 중앙, 하단은 코너 텍스트 공간 확보. */
@@ -258,7 +258,9 @@
     font-size: clamp(2.6rem, 15vw, 5rem);
   }
   .luLine {
-    -webkit-text-stroke-width: 2px; /* 모바일(작은 글자)도 이중선 방지되는 최소 두께 */
+    /* 모바일도 히어로 비율에 맞춤: 히어로 모바일 2.4px / 캡 7.6rem(≈122px)=0.0197.
+       LINEUP 모바일 캡 5rem(≈80px) × 0.0197 ≈ 1.6px. */
+    -webkit-text-stroke-width: 1.6px;
   }
   .railViewport {
     padding-bottom: 14vh; /* [A] 모바일도 겹침 위해 카드 열을 조금 내림 */
@@ -593,8 +595,10 @@
 }
 .fmBg .title em {
   -webkit-text-stroke-color: #f4f4f2; /* MAKERS 아웃라인도 흰색 */
-  /* MAKERS 아웃라인을 또렷한 1px 라인으로(LINE UP 의 UP 과 동일 두께). 다른 섹션 제목은 0.25px 유지. */
-  -webkit-text-stroke-width: 1px;
+  /* MAKERS 아웃라인 두께를 히어로 워드마크(FILM NOUVELLE)의 라인 굵기에 맞춤.
+     히어로 NOUVELLE = 3.5px / 글자캡 19rem(≈304px) = 비율 0.0115.
+     FILMMAKERS 글자캡 13rem(≈208px) × 0.0115 ≈ 2.4px (1px 은 히어로 대비 너무 얇았음). */
+  -webkit-text-stroke-width: 2.4px;
 }
 .fmHeadSub {
   display: block;
@@ -1360,6 +1364,8 @@
 
   /* 큰 타이포·카드·이미지 상한 축소 (콘텐츠는 유지, 폰트/폭만 조정) */
   .fmBg .title { font-size: clamp(3rem, 17vw, 6rem); } /* 모바일: 크되 1줄 유지되게 조금 축소 */
+  /* MAKERS 아웃라인도 히어로 모바일 비율(2.4px/122px=0.0197)에 맞춤: 캡 6rem(≈96px)×0.0197 ≈ 1.9px */
+  .fmBg .title em { -webkit-text-stroke-width: 1.9px; }
   .fmHeadSub { margin-top: 0.8rem; } /* 모바일: 간격만 축소 — 크기/굵기는 festHeadSub 와 동일(clamp) 유지 */
   .fmCard__name { font-size: clamp(1.35rem, 6vw, 1.8rem); }
   .fmCard__meta { font-size: 10px; margin-top: 0.6rem; }
