@@ -87,13 +87,17 @@ export default function Filmmakers() {
   const centerOffset = (m.vw - m.cardW) / 2; // 카드 0 이 중앙일 때의 x (= X_0)
   const P_START = 0.28; // 카드 이동 시작 진행도
   const C0 = 0.35; // 첫 카드가 중앙에 오는 진행도
+  // 마지막 카드(Yuki Tanaka)가 중앙에 오는 진행도. 예전엔 1.0(섹션 끝)이라 마지막 카드 등장과 동시에
+  //   FILMMAKERS 가 걷히며 FESTIVALS 로 넘어갔음 → 0.9 로 앞당겨, 이후 [0.9~1.0] 구간엔 마지막 카드가
+  //   중앙에 "머무른"(pinned) 채 순수 FILMMAKERS 만 보이다가, 조금 더 스크롤하면 FESTIVALS 가 드러남.
+  const C_END = 0.9;
   // 중앙 sticky: 카드가 중앙에 오면 이 절반 폭(진행도)만큼 x 를 고정(플래토) → 스크롤해도 그 구간엔
   // 카드가 중앙에 "붙어" 머묾. 값↑ = 더 오래 고정(더 sticky). 카드 간격(0.13)의 절반 미만이어야 함(<0.065).
-  const DWELL = 0.055; // 0.03 → 0.055 로 중앙 고정 구간 확대(스냅/스티키 느낌 강화)
+  const DWELL = 0.045; // 중앙 고정(플래토) 반폭 — 카드 간격이 좁아진 만큼 축소해 전환 구간 유지
   const snapIn: number[] = [P_START];
   const snapOut: number[] = [m.start];
   for (let i = 0; i < N; i++) {
-    const ci = N > 1 ? C0 + (1 - C0) * (i / (N - 1)) : C0; // 카드 i 중앙 진행도 (마지막=1.0)
+    const ci = N > 1 ? C0 + (C_END - C0) * (i / (N - 1)) : C0; // 카드 i 중앙 진행도 (마지막=C_END)
     const Xi = centerOffset - i * m.pitch; // 카드 i 가 중앙일 때의 x
     const enter = Math.max(snapIn[snapIn.length - 1] + 0.001, ci - DWELL);
     snapIn.push(enter);
