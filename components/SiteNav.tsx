@@ -169,7 +169,20 @@ export default function SiteNav() {
                 // [D] 현재 섹션과 일치하는 항목만 활성(흰색), 나머지 비활성(회색)
                 data-active={active === l.href.slice(1)}
                 aria-current={active === l.href.slice(1) ? "true" : undefined}
-                onClick={() => setOpen(false)}
+                onClick={(e) => {
+                  // FESTIVALS(.fests)는 margin-top:-100vh 로 FILMMAKERS 와 100vh 겹쳐 있어,
+                  // 기본 앵커(#festivals 요소 상단)로 가면 아직 위 레이어인 FILMMAKERS(감독 카드)가
+                  // 덮고 있어 FESTIVALS 대신 감독 카드가 보인다 → 100vh 만큼 더 내려 FESTIVALS 가 드러난 지점으로.
+                  const id = l.href.slice(1);
+                  const el = document.getElementById(id);
+                  if (el) {
+                    e.preventDefault();
+                    let top = el.getBoundingClientRect().top + window.scrollY;
+                    if (id === "festivals") top += window.innerHeight;
+                    window.scrollTo({ top, behavior: "smooth" });
+                  }
+                  setOpen(false);
+                }}
                 tabIndex={open ? 0 : -1}
               >
                 <span className={styles.menuLabel}>{l.label}</span>
