@@ -47,6 +47,15 @@
   width: 104px;
   height: 104px;
   overflow: visible;
+  transition: opacity 0.18s ease;
+}
+.dot {
+  transition: opacity 0.18s ease;
+}
+/* 클릭 가능한 요소 위: 텍스트(원형)·중앙 원 숨김 → 작은 정사각형만(색 반전은 유지, scale 은 JS). */
+.cursor[data-press="true"] .svg,
+.cursor[data-press="true"] .dot {
+  opacity: 0;
 }
 .ring {
   font-family: var(--font-sans);

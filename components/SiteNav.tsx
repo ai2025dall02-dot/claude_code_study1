@@ -170,15 +170,19 @@ export default function SiteNav() {
                 data-active={active === l.href.slice(1)}
                 aria-current={active === l.href.slice(1) ? "true" : undefined}
                 onClick={(e) => {
-                  // FESTIVALS(.fests)는 margin-top:-100vh 로 FILMMAKERS 와 100vh 겹쳐 있어,
-                  // 기본 앵커(#festivals 요소 상단)로 가면 아직 위 레이어인 FILMMAKERS(감독 카드)가
-                  // 덮고 있어 FESTIVALS 대신 감독 카드가 보인다 → 100vh 만큼 더 내려 FESTIVALS 가 드러난 지점으로.
+                  // 일부 섹션은 sticky/overlap 구조라 "요소 상단"과 "실제로 보이는 지점"이 다르다 → 보정.
+                  //  · FESTIVALS(.fests): margin-top:-100vh 로 FILMMAKERS 와 100vh 겹침 → 요소 상단으로 가면
+                  //    아직 위 레이어 FILMMAKERS(감독 카드)가 덮음 → 100vh 더 내려 FESTIVALS 가 드러난 지점으로.
+                  //  · CONTACT(.contactReveal): JOURNAL sticky 트랙 안 오버레이(아래→위 상승)라 트랙 끝에서야
+                  //    완전히 드러남 → 페이지 최하단으로 스크롤해야 CONTACT 가 보임.
                   const id = l.href.slice(1);
                   const el = document.getElementById(id);
                   if (el) {
                     e.preventDefault();
                     let top = el.getBoundingClientRect().top + window.scrollY;
                     if (id === "festivals") top += window.innerHeight;
+                    else if (id === "contact")
+                      top = document.documentElement.scrollHeight - window.innerHeight;
                     window.scrollTo({ top, behavior: "smooth" });
                   }
                   setOpen(false);

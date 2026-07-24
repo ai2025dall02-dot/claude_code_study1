@@ -24,6 +24,7 @@ export default function PlayCursor() {
   const [enabled, setEnabled] = useState(false); // hover 지원(비터치) 장치만
   const [visible, setVisible] = useState(false); // 마우스가 뷰포트 안(=표시)인가
   const [modalOpen, setModalOpen] = useState(false);
+  const [pressable, setPressable] = useState(false); // 클릭 가능한 요소(링크·버튼) 위인가 → 작은 사각형
   const cursorRef = useRef<HTMLDivElement>(null);
   const mouse = useRef({ x: 0, y: 0 });
   const wasVisible = useRef(false);
@@ -84,6 +85,10 @@ export default function PlayCursor() {
       }
       wasVisible.current = true;
       setVisible(true);
+      // 클릭으로 기능이 실행되는 요소(링크·버튼 등) 위 → 텍스트 없는 작은 사각형으로 전환.
+      const t = e.target instanceof Element ? e.target : null;
+      const interactive = !!t?.closest('a[href], button, [role="button"], input, select, textarea, label');
+      setPressable((v) => (v === interactive ? v : interactive));
       kick();
     };
     const hide = () => {
@@ -115,9 +120,10 @@ export default function PlayCursor() {
           ref={cursorRef}
           className={styles.cursor}
           data-dark={dark}
+          data-press={pressable}
           style={{ x, y }}
           initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
+          animate={{ opacity: 1, scale: pressable ? 0.28 : 1 }} // 클릭 요소 위: 작은 사각형(≈29px)
           exit={{ opacity: 0, scale: 0.5 }}
           transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
           aria-hidden="true"
