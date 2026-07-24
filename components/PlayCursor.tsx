@@ -24,6 +24,8 @@ export default function PlayCursor() {
   const [enabled, setEnabled] = useState(false); // hover 지원(비터치) 장치만
   const [visible, setVisible] = useState(false); // 마우스가 뷰포트 안(=표시)인가
   const [pressable, setPressable] = useState(false); // 클릭 가능한 요소(링크·버튼) 위인가 → 작은 사각형
+  const [heroDone, setHeroDone] = useState(false); // 히어로 인트로 애니메이션 완료(FlowHero 신호) → 이때 등장
+  const [forceDark, setForceDark] = useState<boolean | null>(null); // [data-cursor] 강제 색(솔리드 컨트롤 위 오판정 보정)
   const cursorRef = useRef<HTMLDivElement>(null);
   const mouse = useRef({ x: 0, y: 0 });
   const wasVisible = useRef(false);
@@ -40,15 +42,28 @@ export default function PlayCursor() {
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  // 전역 기본 커서 숨김은 "커스텀 커서를 실제 쓰는 동안"에만 — 인트로 중엔 기본 커서 복귀.
+  // 히어로 인트로 완료 신호(FlowHero) 감지 → 이 시점부터 커서 등장(그 전엔 기본 커서, 히어로 애니 중).
+  useEffect(() => {
+    const read = () => setHeroDone(document.documentElement.getAttribute("data-hero-done") === "1");
+    read();
+    window.addEventListener("hero-intro-done", read);
+    const mo = new MutationObserver(read);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-hero-done"] });
+    return () => {
+      window.removeEventListener("hero-intro-done", read);
+      mo.disconnect();
+    };
+  }, []);
+
+  // 전역 기본 커서 숨김은 "커스텀 커서를 실제 쓰는 동안"에만 — 인트로·히어로 애니 중엔 기본 커서.
   //  (모달/바텀시트 중에도 커서를 계속 쓰므로 숨김 유지 — 커서 z 를 모달 위로 올려 그 위에 그린다.)
   useEffect(() => {
     const root = document.documentElement;
-    const active = enabled && revealed;
+    const active = enabled && revealed && heroDone;
     if (active) root.setAttribute("data-playcursor-active", "on");
     else root.removeAttribute("data-playcursor-active");
     return () => root.removeAttribute("data-playcursor-active");
-  }, [enabled, revealed]);
+  }, [enabled, revealed, heroDone]);
 
   // 배경 명암 → 색 반전(공용 훅). 마우스 좌표 샘플, 커서 자신은 제외.
   const { dark, kick } = useDarkBackdrop({
@@ -77,13 +92,18 @@ export default function PlayCursor() {
       wasVisible.current = true;
       setVisible(true);
       // 클릭으로 기능이 실행되는 요소(링크·버튼 등) 위 → 텍스트 없는 작은 사각형으로 전환.
-      //  · #site-menu(네비 패널) 전체를 press 로 처리 → 항목 사이 여백에서 커졌다 작아지는 깜빡임 방지(안정화).
-      //  · 바텀시트 모달은 내부 콘텐츠=일반 커서 / 닫기 X(button)만 이 규칙으로 작은 사각형.
+      //  · #site-menu(네비 패널)·[role="dialog"](LINEUP 바텀시트) 전체를 press 로 처리 →
+      //    항목 사이 여백에서 커졌다 작아지는 깜빡임 방지 + 시트 내부에선 작은 사각형 유지.
       const t = e.target instanceof Element ? e.target : null;
       const interactive = !!t?.closest(
-        'a[href], button, [role="button"], input, select, textarea, label, #site-menu'
+        'a[href], button, [role="button"], input, select, textarea, label, #site-menu, [role="dialog"]'
       );
       setPressable((v) => (v === interactive ? v : interactive));
+      // [data-cursor="light"|"dark"] 영역: 배경 명암 판정을 무시하고 커서 색을 강제.
+      //   (예: JOURNAL 페이지네이션 — 밝은 섹션인데 활성 페이지 버튼이 검은 솔리드라 커서가 흰색으로 오판정됨)
+      const attr = t?.closest("[data-cursor]")?.getAttribute("data-cursor");
+      const f = attr === "light" ? false : attr === "dark" ? true : null;
+      setForceDark((v) => (v === f ? v : f));
       kick();
     };
     const hide = () => {
@@ -106,7 +126,7 @@ export default function PlayCursor() {
 
   if (!enabled) return null; // 터치/모바일: 렌더 안 함
 
-  const show = revealed && visible; // 인트로 중엔 숨김(모달 중엔 표시 — z 로 모달 위)
+  const show = revealed && heroDone && visible; // 인트로·히어로 애니 끝난 뒤 등장(모달 중엔 표시)
 
   return (
     <AnimatePresence>
@@ -114,7 +134,7 @@ export default function PlayCursor() {
         <motion.div
           ref={cursorRef}
           className={styles.cursor}
-          data-dark={dark}
+          data-dark={forceDark ?? dark}
           data-press={pressable}
           style={{ x, y }}
           initial={{ opacity: 0, scale: 0.5 }}

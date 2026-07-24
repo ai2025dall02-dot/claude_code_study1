@@ -323,6 +323,15 @@ export default function FlowHero() {
     };
   }, [reduce, introComplete]);
 
+  // 히어로 인트로가 끝나는 시점을 전역에 알림 → PlayCursor 가 그때 "뿅" 등장(그 전엔 기본 커서).
+  //   (히어로가 흰색으로 안착한 뒤 첫 샘플이라 커서 색이 흰 배경 위 검정으로 올바르게 잡힘)
+  useEffect(() => {
+    if (reduce || introComplete) {
+      document.documentElement.setAttribute("data-hero-done", "1");
+      window.dispatchEvent(new Event("hero-intro-done"));
+    }
+  }, [reduce, introComplete]);
+
   return (
     <section className={styles.stage} id="home" data-revealed={revealed}>
       {/* 중앙 워드마크 FILMNOUVELLE — GSAP 가로 커튼 웨이브. z:1 → WebGL 덱(z:3)보다 뒤 = 카드 틈으로 비침 */}

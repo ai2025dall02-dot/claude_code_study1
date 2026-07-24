@@ -253,7 +253,7 @@ export default function Landing() {
 
               {/* 저널 페이지네이션 — 데스크톱/모바일 공통. 필터 결과가 1페이지면 미표시. */}
               {journalPageCount > 1 && (
-                <nav className={styles.pagination} aria-label="저널 페이지">
+                <nav className={styles.pagination} aria-label="저널 페이지" data-cursor="light">
                   <button
                     type="button"
                     className={styles.pageArrow}
