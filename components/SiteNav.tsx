@@ -54,7 +54,10 @@ export default function SiteNav() {
     },
     reinitDeps: [revealed],
     initialKickMs: 800,
-    scrollKickMs: 1200,
+    // CONTACT 오버레이(모바일)는 체인 스프링으로 ~2초에 걸쳐 천천히 올라와, 샘플 지점이 검정으로
+    //   바뀌는 시점이 스크롤 종료보다 한참 뒤다. tail 은 "값이 바뀔 때만" 연장되는데 그동안 계속 흰색이라
+    //   1200ms 창이 먼저 닫혀 반전을 놓쳤다 → 창을 3000ms 로 넓혀 느린 정착까지 샘플링이 살아있게 함.
+    scrollKickMs: 3000,
   });
 
   // [B] 열림: 배경 스크롤 잠금 + 첫 항목 포커스 + ESC/바깥클릭 닫기 + 포커스 트랩(Tab 순환).
