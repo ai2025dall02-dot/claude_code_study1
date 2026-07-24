@@ -85,9 +85,9 @@ export default function Festivals() {
             <div className={styles.festHead}>
               <span className={styles.eyebrow}>Selections &amp; Awards</span>
               <h2 className={styles.festLead}>
-                세계 유수 영화제가
+                세계 영화제가
                 <br />
-                먼저 알아본 이름들
+                선택한 작품들
               </h2>
               <p className={styles.festHeadSub}>초청과 수상으로 이어진 배급작의 궤적</p>
             </div>
