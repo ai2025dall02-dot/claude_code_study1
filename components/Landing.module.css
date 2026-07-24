@@ -551,7 +551,8 @@
 .fm {
   position: relative;
   z-index: 2; /* [A] FESTIVALS(z:1) 위에 얹혀, 끝에서 위로 걷히며 FESTIVALS 를 드러냄 */
-  height: 500vh; /* 세로 스크롤 길이 — 마지막 카드(C_END=0.9) 안착 후 FESTIVALS 전까지 머무름 구간 확보 */
+  height: 620vh; /* 세로 스크롤 길이 — 마지막 카드(C_END=0.82) 안착 후 FESTIVALS 전까지 머무름 구간을
+                    절대량으로 확보(스크롤 범위 520vh · 꼬리 [0.82~1.0]=0.18≈94vh). 500→620 으로 확대 */
   background: #0b0b0c; /* 검은 배경 (LINEUP 과 동일 톤) */
   color: #f4f4f2;
   /* [1] 섹션 사이 가로 구분선 제거(전 브레이크포인트) */
