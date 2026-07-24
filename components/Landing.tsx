@@ -219,7 +219,6 @@ export default function Landing() {
                     <em aria-hidden="true">NAL</em>
                   </h2>
                 </div>
-                <span className={styles.index}>개봉 · 인터뷰 · 상영회</span>
               </header>
 
               {/* 상단 카테고리 필터 탭 — 활성 검정 볼드 / 나머지 회색. 클릭 시 해당 cat 만 필터(페이지 리셋). */}
