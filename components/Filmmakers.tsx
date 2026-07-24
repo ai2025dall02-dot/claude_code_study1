@@ -200,7 +200,7 @@ function FmCard({
       };
 
   return (
-    <motion.article className={styles.fmCard} style={style} data-playcursor>
+    <motion.article className={styles.fmCard} style={style}>
       <div className={styles.fmCard__photo}>
         <Image
           src={mk.photo}

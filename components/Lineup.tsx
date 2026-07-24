@@ -210,7 +210,6 @@ export default function Lineup() {
           key={`${keyPrefix}-${f.id}`}
           type="button"
           className={styles.railCard}
-          data-playcursor
           onClick={() => openCard(f)}
           tabIndex={ariaHidden ? -1 : 0}
           aria-label={`${f.title} 상세 보기`}
