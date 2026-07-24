@@ -59,8 +59,8 @@
   /* [2] 크기: 전 섹션 소폭 확대(4.2rem→5rem 상한, 6vw→6.6vw) */
   font-size: clamp(2.5rem, 6.6vw, 5rem);
   line-height: 0.92;
-  /* [2] 자간: 좁던 -0.03em → 0.05em 로 넓혀 글자 사이 여유(심플·시원) */
-  letter-spacing: 0.05em;
+  /* [2] 자간: 0.05em 에서 0.02em 으로 조금 더 좁힘(히어로 .word 는 별도 클래스라 영향 없음). */
+  letter-spacing: 0.02em;
   color: #0b0b0c;
 }
 .title em {
@@ -69,6 +69,12 @@
      이보다 얇으면 저해상도(1x)에서 선이 끊겨/사라져 보일 수 있어 여기가 안전한 하한. */
   -webkit-text-stroke: 0.25px #0b0b0c;
   color: transparent;
+}
+/* JOURNAL 제목의 아웃라인("NAL")은 밝은 배경 위에 놓여, 공용 0.25px 헤어라인이면 검정색인데도
+   너무 옅어(회색처럼) 보임 → JOURNAL 만 두께를 1.2px 로 올려 "JOUR"(솔리드 검정)와 동일하게
+   또렷한 검정 라인으로 읽히게 함. (어두운 배경의 FILMMAKERS/LINEUP 아웃라인과 반대 상황이라 별도 스코프.) */
+.journal .title em {
+  -webkit-text-stroke-width: 1.2px;
 }
 /* RiseTitle — 글자별 "아래→위" 등장(히어로 방식). .riseMask = 고정 창(clip-path): 하단은 닫고
    상단은 열어(-45%) 잉크 안 잘림 → 안쪽(.riseInner)이 창 아래(y:115%)에서 0 으로 올라오며 드러남. */
