@@ -1,10 +1,10 @@
-/* 마우스 따라다니는 "FILM / MOVIE" 재생 커서 (레퍼런스: houseofyellow.nl).
-   - 정사각형 + 중앙 원(사각과 동일색 = 마스크) + 대각선 2단어가 모서리→중앙으로 빨려듦(무한).
-   - 두 단어 세트 전체가 중심 기준 시계방향 등속 무한 회전.
-   - 배경 명암에 따라 색 즉시 반전(data-dark), 등장/퇴장 fade·scale 만 부드럽게. pointer-events:none. */
+/* 마우스 따라다니는 "Film · Movie" 재생 커서.
+   - 정사각형 배경 + 중앙 원 + 원 둘레 회전 텍스트(SVG textPath).
+   - 색은 배경 명암에 따라 즉시 반전(data-dark), 등장/퇴장 fade·scale 만 부드럽게.
+   - pointer-events:none 으로 아래 요소 클릭/hover 를 막지 않음. */
 
-/* (전역 cursor:none 규칙은 globals.css 에 있음:
-   html[data-playcursor-active="on"], ... * { cursor: none !important }) */
+/* (대상 영역 기본 커서 숨김 규칙은 전역 셀렉터라 globals.css 에 있음:
+   html[data-playcursor-active="on"] [data-playcursor] { cursor: none }) */
 
 .cursor {
   position: fixed;
@@ -16,10 +16,11 @@
   z-index: 150; /* nav(100) 위 · 인트로 leader(200)/모달(300) 아래 → 인트로·모달 중엔 렌더 안 함 */
   pointer-events: none;
   will-change: transform;
-  /* 색 변수 — 밝은 배경(기본): 검은 사각 + 흰 텍스트. transition 없이 즉시 반영. */
+  /* 색 변수 — 밝은 배경(기본): 검은 사각 + 흰 텍스트/원. transition 없이 즉시 반영. */
   --pc-bg: #0b0b0c;
   --pc-fg: #f4f4f2;
 }
+/* 다크 배경 섹션: 흰 사각 + 검은 텍스트/원 (즉시 반전) */
 .cursor[data-dark="true"] {
   --pc-bg: #f4f4f2;
   --pc-fg: #0b0b0c;
@@ -28,16 +29,35 @@
 .square {
   position: absolute;
   inset: 0;
+  display: grid;
+  place-items: center;
   background: var(--pc-bg);
   border-radius: 0; /* 각진 사각(사이트 톤) */
-  overflow: hidden; /* 모서리 밖으로 나온 단어 클립 */
 }
-
-/* 회전 로터 — 중심 기준 시계방향 등속 무한(11초/바퀴). 안에 대각선 2단어. */
-.rotor {
+.dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--pc-fg);
+}
+.svg {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  width: 104px;
+  height: 104px;
+  overflow: visible;
+}
+.ring {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  fill: var(--pc-fg);
+}
+/* 시계방향 등속 무한 회전(11초/바퀴) — 그룹 자체를 중심 기준으로 돌림. */
+.spin {
   transform-box: fill-box;
   transform-origin: center;
   animation: pc-spin 11s linear infinite;
@@ -47,78 +67,14 @@
     transform: rotate(360deg);
   }
 }
-
-/* 각 단어 레이어 — 자기 대각선 각도로 회전(전체 레이어 rotate → 단어가 그 각도로 기울어짐).
-   두 단어는 서로 90° 차이. */
-.word {
-  position: absolute;
-  inset: 0;
+/* 등장 시 "빨려들어감" 수축용 그룹(중심 기준 scale). framer 가 scale 을 제어. */
+.suck {
   transform-box: fill-box;
   transform-origin: center;
 }
-.wordA {
-  transform: rotate(-40deg);
-}
-.wordB {
-  transform: rotate(50deg);
-}
-
-/* 단어 텍스트 — 회전축(대각선) 방향으로 바깥(모서리 근처)→중앙 원 쪽으로 이동, 무한 반복.
-   중앙에서 opacity 0 + 원(마스크)에 가려져 "빨려들어가 사라짐". */
-.wordInner {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  white-space: nowrap;
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--pc-fg);
-  transform: translate(-50%, -50%) translateX(0);
-  animation: pc-slide 2.6s linear infinite;
-}
-.wordB .wordInner {
-  animation-delay: -1.3s; /* 위상 반대 → 두 단어 교차 등장 */
-}
-@keyframes pc-slide {
-  0% {
-    transform: translate(-50%, -50%) translateX(40px);
-    opacity: 0;
-  }
-  20% {
-    opacity: 1;
-  }
-  72% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) translateX(0px);
-    opacity: 0;
-  }
-}
-
-/* 중앙 원 — 사각 배경색과 동일(2-a, 마스크). 텍스트 위(2-b, DOM 마지막 + z:2)에서 단어를 삼킴. */
-.dot {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 32px;
-  height: 32px;
-  margin: -16px 0 0 -16px;
-  border-radius: 50%;
-  background: var(--pc-bg);
-  z-index: 2;
-}
 
 @media (prefers-reduced-motion: reduce) {
-  .rotor {
-    animation: none; /* 회전 정지 */
-  }
-  .wordInner {
-    animation: none; /* 안쪽 이동 정지 — 중간 지점에 정적 표시 */
-    transform: translate(-50%, -50%) translateX(22px);
-    opacity: 1;
+  .spin {
+    animation: none; /* 회전 정지 — 커서는 표시하되 정적 */
   }
 }

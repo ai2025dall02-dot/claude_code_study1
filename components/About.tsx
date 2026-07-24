@@ -85,7 +85,7 @@ export default function About() {
       {/* 영상 전용 sticky 트랙 — 이 트랙(.pin)을 스크롤하는 동안 .videoStage 만 화면에 붙어 영상이 축소된다. */}
       <div className={styles.pin}>
         <div className={styles.videoStage}>
-          <motion.div ref={vidRef} className={styles.video} style={vidStyle}>
+          <motion.div ref={vidRef} className={styles.video} style={vidStyle} data-playcursor>
             <video
               src={VIDEO_SRC}
               poster={POSTER}
