@@ -130,6 +130,18 @@ export default function Lineup() {
   const railOpacity = useTransform(p, [0.16, MOVE_END], [0, 1]);
   const railShift = useTransform(p, [0.16, MOVE_END], [50, 0]);
 
+  // 리스트(레일)가 실제로 드러나기 전엔 카드가 인터랙티브하지 않게(투명 카드가 hover/click 안 되게) →
+  //   PlayCursor 가 리스트 등장 전에 "작은 사각형"으로 바뀌는 문제 방지. 등장(railOpacity>0.55) 후 활성화.
+  const [railReady, setRailReady] = useState(false);
+  useEffect(() => {
+    if (reduce) {
+      setRailReady(true);
+      return;
+    }
+    setRailReady(railOpacity.get() > 0.55);
+    return railOpacity.on("change", (v) => setRailReady(v > 0.55));
+  }, [reduce, railOpacity]);
+
   // ── [B] 가로 자동 슬라이드(마퀴) + 드래그 ─────────────────────────
   const railX = useMotionValue(0);
   const setRef = useRef<HTMLDivElement | null>(null); // 카드 한 세트(폭 측정)
@@ -242,7 +254,11 @@ export default function Lineup() {
           {/* [B] 가로 슬라이드 뷰포트 — 자동 마퀴 + 드래그 */}
           <motion.div
             className={styles.railViewport}
-            style={reduce ? undefined : { opacity: railOpacity, y: railShift }}
+            style={
+              reduce
+                ? undefined
+                : { opacity: railOpacity, y: railShift, pointerEvents: railReady ? "auto" : "none" }
+            }
             onPointerDown={onPointerDown}
           >
             <motion.div
