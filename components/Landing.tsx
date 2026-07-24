@@ -192,7 +192,11 @@ export default function Landing() {
           작업3: CONTACT 를 JOURNAL sticky 패널 안 오버레이로 얹어, 블라인드 상승과 CONTACT 등장을
           같은 journalProgress 로 이어지게 함(트랙 밖 별도 스크롤 제거 → 끊김/지연 없음).
           reduce 면 sticky/오버레이 없이 JOURNAL·CONTACT 를 일반 흐름으로 렌더. */}
-      <div ref={journalTrackRef} className={flat ? undefined : styles.journalScroller}>
+      <div
+        ref={journalTrackRef}
+        id="journalTrack"
+        className={flat ? undefined : styles.journalScroller}
+      >
         <div className={flat ? undefined : styles.journalSticky}>
           <section className={`${styles.section} ${styles.journal}`} id="journal">
             {/* 검은 가로 블라인드를 밝은 JOURNAL 위에 얹어 대비가 보이게 함. journalProgress 뒤 구간

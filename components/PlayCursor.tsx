@@ -23,7 +23,6 @@ export default function PlayCursor() {
   const reduce = useReducedMotion();
   const [enabled, setEnabled] = useState(false); // hover 지원(비터치) 장치만
   const [visible, setVisible] = useState(false); // 마우스가 뷰포트 안(=표시)인가
-  const [modalOpen, setModalOpen] = useState(false);
   const [pressable, setPressable] = useState(false); // 클릭 가능한 요소(링크·버튼) 위인가 → 작은 사각형
   const cursorRef = useRef<HTMLDivElement>(null);
   const mouse = useRef({ x: 0, y: 0 });
@@ -41,23 +40,15 @@ export default function PlayCursor() {
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  // LINEUP 바텀시트 모달(body[data-modal-open]) 열림 감지 → 커서 숨김 + 기본 커서 복귀
-  useEffect(() => {
-    const read = () => setModalOpen(document.body.getAttribute("data-modal-open") === "true");
-    read();
-    const mo = new MutationObserver(read);
-    mo.observe(document.body, { attributes: true, attributeFilter: ["data-modal-open"] });
-    return () => mo.disconnect();
-  }, []);
-
-  // 전역 기본 커서 숨김은 "커스텀 커서를 실제 쓰는 동안"에만 — 인트로/모달 중엔 기본 커서 복귀.
+  // 전역 기본 커서 숨김은 "커스텀 커서를 실제 쓰는 동안"에만 — 인트로 중엔 기본 커서 복귀.
+  //  (모달/바텀시트 중에도 커서를 계속 쓰므로 숨김 유지 — 커서 z 를 모달 위로 올려 그 위에 그린다.)
   useEffect(() => {
     const root = document.documentElement;
-    const active = enabled && revealed && !modalOpen;
+    const active = enabled && revealed;
     if (active) root.setAttribute("data-playcursor-active", "on");
     else root.removeAttribute("data-playcursor-active");
     return () => root.removeAttribute("data-playcursor-active");
-  }, [enabled, revealed, modalOpen]);
+  }, [enabled, revealed]);
 
   // 배경 명암 → 색 반전(공용 훅). 마우스 좌표 샘플, 커서 자신은 제외.
   const { dark, kick } = useDarkBackdrop({
@@ -86,8 +77,12 @@ export default function PlayCursor() {
       wasVisible.current = true;
       setVisible(true);
       // 클릭으로 기능이 실행되는 요소(링크·버튼 등) 위 → 텍스트 없는 작은 사각형으로 전환.
+      //  · #site-menu(네비 패널) 전체를 press 로 처리 → 항목 사이 여백에서 커졌다 작아지는 깜빡임 방지(안정화).
+      //  · 바텀시트 모달은 내부 콘텐츠=일반 커서 / 닫기 X(button)만 이 규칙으로 작은 사각형.
       const t = e.target instanceof Element ? e.target : null;
-      const interactive = !!t?.closest('a[href], button, [role="button"], input, select, textarea, label');
+      const interactive = !!t?.closest(
+        'a[href], button, [role="button"], input, select, textarea, label, #site-menu'
+      );
       setPressable((v) => (v === interactive ? v : interactive));
       kick();
     };
@@ -111,7 +106,7 @@ export default function PlayCursor() {
 
   if (!enabled) return null; // 터치/모바일: 렌더 안 함
 
-  const show = revealed && visible && !modalOpen; // 인트로·모달 중엔 숨김
+  const show = revealed && visible; // 인트로 중엔 숨김(모달 중엔 표시 — z 로 모달 위)
 
   return (
     <AnimatePresence>
@@ -123,7 +118,7 @@ export default function PlayCursor() {
           data-press={pressable}
           style={{ x, y }}
           initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: pressable ? 0.28 : 1 }} // 클릭 요소 위: 작은 사각형(≈29px)
+          animate={{ opacity: 1, scale: pressable ? 0.2 : 1 }} // 클릭 요소 위: 작은 사각형(≈21px)
           exit={{ opacity: 0, scale: 0.5 }}
           transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
           aria-hidden="true"

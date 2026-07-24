@@ -175,8 +175,12 @@ export default function SiteNav() {
                   //    아직 위 레이어 FILMMAKERS(감독 카드)가 덮음 → 100vh 더 내려 FESTIVALS 가 드러난 지점으로.
                   //  · CONTACT(.contactReveal): JOURNAL sticky 트랙 안 오버레이(아래→위 상승)라 트랙 끝에서야
                   //    완전히 드러남 → 페이지 최하단으로 스크롤해야 CONTACT 가 보임.
+                  //  · JOURNAL(#journal): sticky 로 고정돼 있어 요소 top+scrollY 가 "현재 스크롤"을 반환 →
+                  //    CONTACT(트랙 끝)에서 누르면 제자리(변화 없음). 트랙 래퍼(#journalTrack) 상단으로 이동해야
+                  //    JOURNAL 리스트가 드러남.
                   const id = l.href.slice(1);
-                  const el = document.getElementById(id);
+                  let el = document.getElementById(id);
+                  if (id === "journal") el = document.getElementById("journalTrack") ?? el;
                   if (el) {
                     e.preventDefault();
                     let top = el.getBoundingClientRect().top + window.scrollY;

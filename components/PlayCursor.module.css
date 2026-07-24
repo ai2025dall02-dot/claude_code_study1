@@ -13,7 +13,7 @@
   width: 104px;
   height: 104px;
   margin: -52px 0 0 -52px; /* 좌표(스프링 translate) 기준 중앙 정렬 */
-  z-index: 150; /* nav(100) 위 · 인트로 leader(200)/모달(300) 아래 → 인트로·모달 중엔 렌더 안 함 */
+  z-index: 400; /* nav(100)·인트로 leader(200)·모달(300) 위 → 모달/바텀시트 위에도 커서가 그려짐(인트로 중엔 미표시) */
   pointer-events: none;
   will-change: transform;
   /* 색 변수 — 밝은 배경(기본): 검은 사각 + 흰 텍스트/원. transition 없이 즉시 반영. */
