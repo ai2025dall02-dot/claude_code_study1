@@ -76,7 +76,7 @@
 /* [E] NOUVELLE — 아웃라인(라인) 스타일: 속 비고 외곽선만. [A] 커진 폰트에 맞게 두께 살짝 굵게. */
 .wordNouvelle {
   color: transparent;
-  -webkit-text-stroke: 3.5px #7d7d79; /* [A] 커진 폰트에 맞춰 아웃라인 굵게(2.5→3.5). 색은 옅은 그레이 */
+  -webkit-text-stroke: 3.5px #9aa3b1; /* [A] 아웃라인 3.5px. 색은 푸른기가 살짝 도는 연한 그레이 */
 }
 /* 각 글자 = 바깥 span(.letter) + 안쪽 span(.letterInner).
    .letter = 고정 마스크 창: clip-path(inset) 로 글자 원래 영역만 남기고(가로=글자 폭, 세로는 넉넉히 열어 잉크 안 잘림),

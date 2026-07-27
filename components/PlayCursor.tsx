@@ -138,7 +138,7 @@ export default function PlayCursor() {
           data-press={pressable}
           style={{ x, y }}
           initial={{ opacity: 0, scale: 0.6 }}
-          animate={{ opacity: 1, scale: pressable ? 0.2 : 1 }} // 클릭 요소 위: 작은 사각형(≈21px)
+          animate={{ opacity: 1, scale: pressable ? 0.2 : 0.85 }} // 기본 0.85(형태 유지·소폭 축소) / 클릭 요소 위: 작은 사각형(0.2≈21px 유지)
           exit={{ opacity: 0, scale: 0.6 }}
           transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }} // 등장 살짝 더 부드럽게(0.26→0.42)
           aria-hidden="true"
