@@ -938,7 +938,10 @@
   background: transparent; /* D: 불투명 배경 제거 — .land 흰색 위에서 콘텐츠만 올라오게(FESTIVALS 를 가리지 않음) */
   /* [1] 섹션 사이 가로 구분선 제거(전 브레이크포인트) */
   display: flex;
-  align-items: center;
+  /* safe center: 콘텐츠(제목+리스트+페이지네이션)가 100vh 보다 크면 일반 center 는 상하를 모두 잘라
+     (overflow:hidden) 제목/리스트가 뷰포트 밖으로 사라질 수 있음 → safe 를 붙여 넘칠 땐 상단 정렬로
+     폴백(제목+리스트가 항상 위에서부터 보임, 잘리는 건 하단 여백뿐). 짧은 창에서 "JOURNAL 안 보임" 방지. */
+  align-items: safe center;
   /* 작업1: .post 여백을 키운 대신 패널 위아래 여백을 줄여 8개가 100vh 에 들어가게 */
   padding-block: clamp(1rem, 2.5vh, 1.75rem);
   box-sizing: border-box;
@@ -987,6 +990,15 @@
 }
 .posts .post:last-child { border-bottom: 1px solid #0b0b0c; }
 .post:hover { padding-inline: 0.5rem; } /* 유지: hover 시 살짝 들여쓰기(클릭 어포던스) */
+
+/* 짧은 창(노트북 등 세로 ≤800px): 8개 리스트+헤더+페이지네이션이 100vh sticky 를 넘겨 잘리던 것을
+   방지 — 행/헤더/필터/페이지네이션 간격을 압축해 전체가 뷰포트 안에 들어오게 함(safe center 와 함께 작동). */
+@media (max-height: 800px) {
+  .journal .head { margin-bottom: 0.7rem; }
+  .journalFilter { margin-bottom: 0.6rem; }
+  .post { padding-block: 0.6rem; }
+  .pagination { margin-top: 1.1rem; }
+}
 /* 윗줄: 카테고리 라벨(pill 제거 → 텍스트만, 작은 회색 대문자 메타) */
 .post__cat {
   font-family: var(--font-meta, monospace);
