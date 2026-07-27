@@ -76,7 +76,7 @@
 /* [E] NOUVELLE — 아웃라인(라인) 스타일: 속 비고 외곽선만. [A] 커진 폰트에 맞게 두께 살짝 굵게. */
 .wordNouvelle {
   color: transparent;
-  -webkit-text-stroke: 3.5px #9a9a96; /* [A] 아웃라인 3.5px. 색은 사이트 공용 회색 텍스트(.eyebrow)와 동일 */
+  -webkit-text-stroke: 3px #0c0c0c; /* [A] FILM 과 동일한 검정 라인. 굵기 3.5→3px 로 조금 얇게 */
 }
 /* 각 글자 = 바깥 span(.letter) + 안쪽 span(.letterInner).
    .letter = 고정 마스크 창: clip-path(inset) 로 글자 원래 영역만 남기고(가로=글자 폭, 세로는 넉넉히 열어 잉크 안 잘림),
@@ -107,6 +107,6 @@
     font-size: clamp(2.6rem, 19vw, 7.6rem); /* [A] 모바일도 같은 비율로 살짝 축소 */
   }
   .wordNouvelle {
-    -webkit-text-stroke-width: 2.4px; /* 아웃라인도 폭에 맞춰(1.6→2.4) */
+    -webkit-text-stroke-width: 2px; /* 모바일도 살짝 얇게(2.4→2px) */
   }
 }

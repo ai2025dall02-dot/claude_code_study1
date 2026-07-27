@@ -74,7 +74,7 @@
    너무 옅어(회색처럼) 보임 → JOURNAL 만 두께를 1.2px 로 올려 "JOUR"(솔리드 검정)와 동일하게
    또렷한 검정 라인으로 읽히게 함. (어두운 배경의 FILMMAKERS/LINEUP 아웃라인과 반대 상황이라 별도 스코프.) */
 .journal .title em {
-  -webkit-text-stroke-width: 1.2px;
+  -webkit-text-stroke-width: 1px; /* NOUVELLE 을 얇게 맞춰 1.2→1px (밝은 배경 위 검정 라인 유지) */
 }
 /* RiseTitle — 글자별 "아래→위" 등장(히어로 방식). .riseMask = 고정 창(clip-path): 하단은 닫고
    상단은 열어(-45%) 잉크 안 잘림 → 안쪽(.riseInner)이 창 아래(y:115%)에서 0 으로 올라오며 드러남. */
@@ -610,8 +610,8 @@
   -webkit-text-stroke-color: #f4f4f2; /* MAKERS 아웃라인도 흰색 */
   /* MAKERS 아웃라인 두께를 히어로 워드마크(FILM NOUVELLE)의 라인 굵기에 맞춤.
      히어로 NOUVELLE = 3.5px / 글자캡 19rem(≈304px) = 비율 0.0115.
-     FILMMAKERS 글자캡 13rem(≈208px) × 0.0115 ≈ 2.4px (1px 은 히어로 대비 너무 얇았음). */
-  -webkit-text-stroke-width: 2.4px;
+     FILMMAKERS 글자캡 13rem(≈208px) × 0.0115 ≈ 2.4px. NOUVELLE 을 얇게(3→3px) 맞춰 2.4→2px 로 축소. */
+  -webkit-text-stroke-width: 2px;
 }
 .fmHeadSub {
   display: block;
@@ -1393,7 +1393,7 @@
   /* 큰 타이포·카드·이미지 상한 축소 (콘텐츠는 유지, 폰트/폭만 조정) */
   .fmBg .title { font-size: clamp(3rem, 17vw, 6rem); } /* 모바일: 크되 1줄 유지되게 조금 축소 */
   /* MAKERS 아웃라인도 히어로 모바일 비율(2.4px/122px=0.0197)에 맞춤: 캡 6rem(≈96px)×0.0197 ≈ 1.9px */
-  .fmBg .title em { -webkit-text-stroke-width: 1.9px; }
+  .fmBg .title em { -webkit-text-stroke-width: 1.6px; }
   .fmHeadSub { margin-top: 0.8rem; } /* 모바일: 간격만 축소 — 크기/굵기는 festHeadSub 와 동일(clamp) 유지 */
   .fmCard__name { font-size: clamp(1.35rem, 6vw, 1.8rem); }
   .fmCard__meta { font-size: 10px; margin-top: 0.6rem; }
